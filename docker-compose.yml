@@ -1,0 +1,70 @@
+services:
+  cauth:
+    build: ./cauth
+    container_name: cauth-container
+    networks:
+      java-network:
+        ipv4_address: 172.20.0.10
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./crypto_do_once/cauth_server_keystore.p12:/app/keystore.p12
+      - ./crypto_do_once/cauth_truststore.p12:/app/truststore.p12
+    restart: unless-stopped
+
+  sp:
+    build: ./sp
+    container_name: sp-container
+    networks:
+      java-network:
+        ipv4_address: 172.20.0.11
+    volumes:
+      - ./crypto_do_once/sp_truststore.p12:/app/truststore.p12
+      - ./crypto_do_once/root_ca.crt:/app/root_ca.crt
+      - sp_keystore:/app/sp_keystore_data
+    depends_on:
+      - cauth
+    restart: unless-stopped
+
+  ho:
+    build: ./ho
+    container_name: ho-container
+    networks:
+      java-network:
+        ipv4_address: 172.20.0.12
+    volumes:
+      - ./crypto_do_once/ho_truststore.p12:/app/truststore.p12
+      - ./crypto_do_once/root_ca.crt:/app/root_ca.crt
+      - ho_keystore:/app/ho_keystore_data
+    depends_on:
+      - cauth
+      - sp
+    restart: "no"
+
+  co:
+    build: ./co
+    container_name: co-container
+    networks:
+      java-network:
+        ipv4_address: 172.20.0.13
+    volumes:
+      - ./crypto_do_once/co_truststore.p12:/app/truststore.p12
+      - ./crypto_do_once/root_ca.crt:/app/root_ca.crt
+      - co_keystore:/app/co_keystore_data
+    depends_on:
+      - cauth
+      - sp
+      - ho
+    restart: "no"
+networks:
+  java-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1
+
+volumes:
+  co_keystore:
+  ho_keystore:
+  sp_keystore:

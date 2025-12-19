@@ -21,7 +21,13 @@ services:
     volumes:
       - ./crypto_do_once/sp_truststore.p12:/app/truststore.p12
       - ./crypto_do_once/root_ca.crt:/app/root_ca.crt
-      - sp_keystore:/app/sp_keystore_data
+      - sp_keystore:/app/keystore
+    environment:
+      - KEYSTORE_PASSWORD=serverpassword
+      - TRUSTSTORE_PASSWORD=trustpassword
+      - SP_KEY_ALIAS=sp
+      - CAUTH_HOST=cauth
+      - CAUTH_PORT=8443
     depends_on:
       - cauth
     restart: unless-stopped

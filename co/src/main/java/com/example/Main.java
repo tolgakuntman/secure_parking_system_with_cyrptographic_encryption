@@ -64,6 +64,7 @@ public class Main {
         X509Certificate hoCertificate;
         String hoHost = "ho"; // HO container hostname
         int hoPort = 8445;    // HO reservation server port
+        int hoPayPort = 8445;
     }
     
     private static DiscoveredAvailability discoveredAvailability = null;
@@ -813,6 +814,13 @@ public class Main {
             // Store signed reservation as cryptographic proof
             storeReservationProof(reservationId, response, avail);
 
+            // After successful reservation, send a payment request to HO (Milestone 3.1)
+            try {
+                sendPaymentToHO(avail, reservationId);
+            } catch (Exception e) {
+                System.err.println("⚠ Warning: sendPaymentToHO failed: " + e.getMessage());
+            }
+
             System.out.println("\n═══════════════════════════════════════════════════════════");
             System.out.println("   RESERVATION HANDSHAKE COMPLETE");
             System.out.println("   Verdict: " + verdict);
@@ -946,6 +954,115 @@ public class Main {
         } catch (Exception e) {
             System.err.println("⚠ Warning: Failed to store reservation proof: " + e.getMessage());
             // Non-fatal for demo, but in production this should be critical
+        }
+    }
+
+    /**
+     * Send a PayRequest JSON to HO over mTLS (Milestone 3.1).
+     * Generates a REAL hash chain and sends valid tokens that HO will verify.
+     */
+    private static void sendPaymentToHO(DiscoveredAvailability avail, String reservationId) throws Exception {
+        System.out.println("\n--- Sending payment request to HO (Milestone 3.1 - Real Hash Chain) ---");
+
+        // Generate a REAL hash chain using SHA-256
+        String chainId = UUID.randomUUID().toString();
+        int x = 5; // full chain length (H^5(secret))
+        int startIndex = 1; // start spending from token[1]
+        int spendCount = 3; // spend 3 tokens
+        
+        // Generate a random secret
+        byte[] secret = new byte[32];
+        SecureRandom rnd = new SecureRandom();
+        rnd.nextBytes(secret);
+        
+        // Compute full chain: secret -> H(secret) -> H^2(secret) -> ... -> H^5(secret)
+        java.util.List<byte[]> fullChain = computeChain(secret, x);
+        
+        // Extract tokensToSpend: indices [startIndex, startIndex+spendCount)
+        // These are the actual preimages at those positions in the chain
+        java.util.List<byte[]> tokensToSpend = new java.util.ArrayList<>();
+        for (int i = startIndex; i < startIndex + spendCount && i < fullChain.size(); i++) {
+            tokensToSpend.add(fullChain.get(i));
+        }
+        
+        // root = H^x(secret) = fullChain.get(x) = the top of the chain
+        byte[] root = fullChain.get(x);
+        
+        // Convert to Base64 strings
+        java.util.List<String> tokensB64 = new java.util.ArrayList<>();
+        for (byte[] token : tokensToSpend) {
+            tokensB64.add(b64encode(token));
+        }
+        
+        // Dummy rootSignature (won't be verified in M3.1)
+        byte[] dummyRootSig = new byte[64];
+        rnd.nextBytes(dummyRootSig);
+        
+        JSONObject pay = new JSONObject();
+        pay.put("method", "pay");
+        pay.put("reservationId", reservationId);
+        pay.put("chainId", chainId);
+        pay.put("x", x);
+        pay.put("root", b64encode(root));
+        pay.put("rootSignature", b64encode(dummyRootSig));
+        pay.put("startIndex", startIndex);
+        pay.put("tokensToSpend", new org.json.JSONArray(tokensB64));
+
+        System.out.println("  Generated hash chain of length " + x + " from random secret");
+        System.out.println("  tokensToSpend: indices [" + startIndex + ", " + (startIndex + spendCount) + ")");
+        System.out.println("  chainId: " + chainId);
+        
+        // Build mTLS connection to HO
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+        try (FileInputStream fis = new FileInputStream(CO_KEYSTORE_PATH)) {
+            keyStore.load(fis, CO_KEYSTORE_PASSWORD.toCharArray());
+        }
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        kmf.init(keyStore, CO_KEYSTORE_PASSWORD.toCharArray());
+
+        KeyStore trustStore = KeyStore.getInstance("PKCS12");
+        try (FileInputStream fis = new FileInputStream(TRUSTSTORE_PATH)) {
+            trustStore.load(fis, TRUSTSTORE_PASSWORD.toCharArray());
+        }
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        tmf.init(trustStore);
+
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), new SecureRandom());
+
+        SSLSocket socket = null;
+        PrintWriter writer = null;
+        BufferedReader reader = null;
+        try {
+            socket = (SSLSocket) sslContext.getSocketFactory().createSocket(avail.hoHost, avail.hoPort);
+            socket.setEnabledProtocols(new String[]{"TLSv1.3", "TLSv1.2"});
+            socket.startHandshake();
+
+            writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8), true);
+            reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+
+            System.out.println("→ Sending pay request to HO at " + avail.hoHost + ":" + avail.hoPort);
+            writer.println(pay.toString());
+
+            String respLine = reader.readLine();
+            if (respLine == null) {
+                System.err.println("No response from HO on pay request");
+                return;
+            }
+            JSONObject resp = new JSONObject(respLine);
+            System.out.println("← HO pay response:");
+            System.out.println(resp.toString(2));
+            
+            if ("success".equals(resp.optString("status"))) {
+                System.out.println("✓✓✓ PAYMENT ACCEPTED BY HO ✓✓✓");
+            } else {
+                System.err.println("✗ HO rejected payment: " + resp.optString("message", "(no message)"));
+            }
+
+        } finally {
+            if (reader != null) try { reader.close(); } catch (Exception e) {}
+            if (writer != null) try { writer.close(); } catch (Exception e) {}
+            if (socket != null) try { socket.close(); } catch (Exception e) {}
         }
     }
 
@@ -1206,5 +1323,47 @@ public class Main {
             }
         }
         throw new SecurityException("Certificate does not contain CN field");
+    }
+
+    /**
+     * Compute SHA-256 hash of input bytes.
+     */
+    private static byte[] sha256(byte[] input) throws NoSuchAlgorithmException {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        return digest.digest(input);
+    }
+
+    /**
+     * Decode Base64 string to bytes.
+     */
+    private static byte[] b64decode(String encoded) {
+        return Base64.getDecoder().decode(encoded);
+    }
+
+    /**
+     * Encode bytes to Base64 string.
+     */
+    private static String b64encode(byte[] data) {
+        return Base64.getEncoder().encodeToString(data);
+    }
+
+    /**
+     * Compute the full hash chain of length x using SHA-256.
+     * Returns a list where:
+     *   chain[0] = secret
+     *   chain[1] = H(secret)
+     *   chain[2] = H^2(secret)
+     *   ...
+     *   chain[x] = H^x(secret) = root
+     */
+    private static java.util.List<byte[]> computeChain(byte[] secret, int x) throws NoSuchAlgorithmException {
+        java.util.List<byte[]> chain = new java.util.ArrayList<>();
+        chain.add(secret);
+        byte[] current = secret;
+        for (int i = 1; i <= x; i++) {
+            current = sha256(current);
+            chain.add(current);
+        }
+        return chain;
     }
 }

@@ -24,6 +24,9 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.security.MessageDigest;
 import java.util.Base64;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -35,6 +38,8 @@ public class Main {
     private static final String SP_HOST = System.getenv().getOrDefault("SP_HOST", "localhost");
     private static final int SP_PORT = Integer.parseInt(System.getenv().getOrDefault("SP_PORT", "8444"));
     private static final int HO_SERVER_PORT = Integer.parseInt(System.getenv().getOrDefault("HO_SERVER_PORT", "8445"));
+    // For backward compatibility some code referenced HO_PAY_PORT; alias it to HO_SERVER_PORT
+    private static final int HO_PAY_PORT = HO_SERVER_PORT;
     
     private static final String HO_KEYSTORE_PATH = "/app/keystore/ho_keystore.p12";
     private static final String KEYSTORE_PASSWORD = System.getenv().getOrDefault("KEYSTORE_PASSWORD", "changeit");
@@ -52,6 +57,12 @@ public class Main {
     private static KeyPair hoKeyPair;
     private static X509Certificate hoCertificate;
     private static String publishedAvailabilityId; // Store for validation
+    // In-memory payment attempts storage (keyed by reservationId)
+    private static final ConcurrentMap<String, PaymentRecord> payments = new ConcurrentHashMap<>();
+    // Reservation registry: reservationId -> created timestamp (for binding payment to valid reservation)
+    private static final ConcurrentMap<String, Instant> reservationRegistry = new ConcurrentHashMap<>();
+    // Double-spend prevention: chainId -> lastSpentIndex (reject if new startIndex <= lastSpentIndex)
+    private static final ConcurrentMap<String, Long> chainSpendTracking = new ConcurrentHashMap<>();
 
     public static void main(String[] args) {
         // Register BC provider (needed for CSR + extensions reliably)
@@ -94,8 +105,8 @@ public class Main {
             // STEP 2: Publish parking availability to SP
             publishAvailability();
 
-            // STEP 3: Start reservation server to handle CO requests
-            System.out.println("\n=== Starting HO Reservation Server ===");
+            // STEP 3: Start reservation & payment server to handle CO requests (both on port 8445)
+            System.out.println("\n=== Starting HO Reservation & Payment Server ===");
             startReservationServer();
 
         } catch (Exception e) {
@@ -103,6 +114,28 @@ public class Main {
             System.err.println("Reason: " + e.getMessage());
             e.printStackTrace();
             System.exit(1);
+        }
+    }
+
+    // Simple record to store a payment attempt in-memory
+    static class PaymentRecord {
+        public final String reservationId;
+        public final String chainId;
+        public final int startIndex;
+        public final int tokenCount;
+        public final Instant receivedAt;
+        public final String callerCN;
+        public final String callerCertFingerprint;
+
+        public PaymentRecord(String reservationId, String chainId, int startIndex, int tokenCount,
+                             Instant receivedAt, String callerCN, String callerCertFingerprint) {
+            this.reservationId = reservationId;
+            this.chainId = chainId;
+            this.startIndex = startIndex;
+            this.tokenCount = tokenCount;
+            this.receivedAt = receivedAt;
+            this.callerCN = callerCN;
+            this.callerCertFingerprint = callerCertFingerprint;
         }
     }
 
@@ -393,6 +426,116 @@ public class Main {
     // Reservation Server (Milestone 2.4)
     // -------------------------
 
+    private static void startPaymentServer() throws Exception {
+    // Load keystore for server authentication
+    KeyStore keyStore = KeyStore.getInstance("PKCS12");
+    try (FileInputStream fis = new FileInputStream(HO_KEYSTORE_PATH)) {
+        keyStore.load(fis, KEYSTORE_PASSWORD.toCharArray());
+    }
+    KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+    kmf.init(keyStore, KEYSTORE_PASSWORD.toCharArray());
+
+    // Load truststore to verify CO certificates
+    KeyStore trustStore = KeyStore.getInstance("PKCS12");
+    try (FileInputStream fis = new FileInputStream(TRUSTSTORE_PATH)) {
+        trustStore.load(fis, TRUSTSTORE_PASSWORD.toCharArray());
+    }
+    TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+    tmf.init(trustStore);
+
+    SSLContext sslContext = SSLContext.getInstance("TLS");
+    sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), new SecureRandom());
+
+    SSLServerSocketFactory ssf = sslContext.getServerSocketFactory();
+    SSLServerSocket serverSocket = (SSLServerSocket) ssf.createServerSocket(HO_PAY_PORT);
+
+    // Harden protocols
+    String[] desiredProtocols = new String[]{"TLSv1.3", "TLSv1.2"};
+    String[] protocols = intersect(serverSocket.getSupportedProtocols(), desiredProtocols);
+    if (protocols.length == 0) throw new IllegalStateException("No TLSv1.3/1.2 supported");
+    serverSocket.setEnabledProtocols(protocols);
+
+    // Enforce mTLS
+    serverSocket.setNeedClientAuth(true);
+
+    System.out.println("\n╔═══════════════════════════════════════════════════════════╗");
+    System.out.println("║   HO PAYMENT SERVER READY (Milestone 3.x)                 ║");
+    System.out.println("╚═══════════════════════════════════════════════════════════╝");
+    System.out.println("Listening on port: " + HO_PAY_PORT);
+    System.out.println("mTLS enforcement: ENABLED (CO certificates REQUIRED)");
+    System.out.println("Protocols: " + java.util.Arrays.toString(protocols));
+    System.out.println("==========================================\n");
+
+    ExecutorService executor = Executors.newCachedThreadPool();
+    while (true) {
+        SSLSocket clientSocket = (SSLSocket) serverSocket.accept();
+        executor.submit(new PaymentHandler(clientSocket));
+    }
+}
+
+static class PaymentHandler implements Runnable {
+    private final SSLSocket clientSocket;
+    PaymentHandler(SSLSocket clientSocket) { this.clientSocket = clientSocket; }
+
+    @Override
+    public void run() {
+        String coCN = null;
+        try (
+            BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true)
+        ) {
+            System.out.println("\n=== Inbound Payment Request ===");
+
+            // Force handshake (mTLS enforced)
+            clientSocket.startHandshake();
+
+            // Identify CO
+            X509Certificate[] clientCerts = (X509Certificate[]) clientSocket.getSession().getPeerCertificates();
+            X509Certificate coCert = clientCerts[0];
+
+            coCN = extractCN(coCert);
+
+            // Read one-line JSON
+            String line = reader.readLine();
+            if (line == null) throw new IOException("No request received");
+
+            JSONObject req = new JSONObject(line);
+            String method = req.optString("method", "");
+
+            JSONObject resp;
+            if ("pay".equals(method)) {
+                resp = handlePayRequest(req, coCert, coCN, clientSocket);
+            } else {
+                resp = new JSONObject()
+                        .put("status", "error")
+                        .put("code", "bad_request")
+                        .put("message", "unknown method");
+            }
+
+            writer.println(resp.toString());
+        } catch (SSLHandshakeException hs) {
+            System.err.println("TLS handshake failed (missing/invalid client cert): " + hs.getMessage());
+        } catch (Exception e) {
+            System.err.println("Payment handler error: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            try { clientSocket.close(); } catch (Exception ignored) {}
+            System.out.println((coCN != null ? coCN : "Client") + " disconnected");
+        }
+    }
+}
+
+private static String extractCN(X509Certificate cert) {
+    try {
+        String dn = cert.getSubjectX500Principal().getName();
+        LdapName ldap = new LdapName(dn);
+        for (Rdn rdn : ldap.getRdns()) {
+            if ("CN".equalsIgnoreCase(rdn.getType())) return String.valueOf(rdn.getValue());
+        }
+    } catch (Exception ignored) {}
+    return "Unknown";
+}
+
     /**
      * Start mTLS server to accept reservation requests from CO.
      * Uses same hardened TLS configuration: TLS 1.3/1.2, AEAD ciphers, client cert required.
@@ -514,22 +657,36 @@ public class Main {
                 System.out.println("  Cipher suite: " + clientSocket.getSession().getCipherSuite());
                 System.out.println("═══════════════════════════════════════════\n");
 
-                // Read reservation request
+                // Read inbound request (method-based dispatch)
                 String requestLine = reader.readLine();
                 if (requestLine == null) {
                     throw new IOException("No request received from CO");
                 }
 
                 JSONObject request = new JSONObject(requestLine);
-                System.out.println("Received reservation request from " + coCN + ":");
+                System.out.println("Received request from " + coCN + ":");
                 System.out.println(request.toString(2));
 
-                // Process reservation and generate signed response
-                JSONObject response = handleReservationRequest(request, coCert);
-
-                writer.println(response.toString());
-                System.out.println("\nSent signed reservation response:");
-                System.out.println(response.toString(2));
+                // Dispatch based on method field
+                JSONObject response;
+                String method = request.optString("method", "");
+                if ("requestReservation".equals(method)) {
+                    response = handleReservationRequest(request, coCert);
+                    writer.println(response.toString());
+                    System.out.println("\nSent signed reservation response:");
+                    System.out.println(response.toString(2));
+                } else if ("pay".equals(method)) {
+                    response = handlePayRequest(request, coCert, coCN, clientSocket);
+                    writer.println(response.toString());
+                    System.out.println("\nSent pay response:");
+                    System.out.println(response.toString(2));
+                } else {
+                    response = new JSONObject();
+                    response.put("status", "error");
+                    response.put("message", "unknown method");
+                    writer.println(response.toString());
+                    System.out.println("\nSent error response (unknown method)");
+                }
 
             } catch (Exception e) {
                 System.err.println("Error processing reservation request: " + e.getMessage());
@@ -620,6 +777,9 @@ public class Main {
             // Generate reservationId
             String reservationId = UUID.randomUUID().toString();
             System.out.println("Generated Reservation ID: " + reservationId);
+            
+            // Register reservation in-memory (for payment binding validation)
+            reservationRegistry.put(reservationId, Instant.now());
 
             // Get HO identity
             String hoIdentity = null;
@@ -693,6 +853,170 @@ public class Main {
         }
         
         return response;
+    }
+
+    /**
+     * Handle incoming payment request from CO (Milestone 3.1).
+     * Validates hash-chain, enforces double-spend prevention, binds to reservation.
+     */
+    private static JSONObject handlePayRequest(JSONObject request, X509Certificate coCert, String coCN, SSLSocket clientSocket) {
+        JSONObject response = new JSONObject();
+        String logTag = "[PAY] ";
+
+        try {
+            // Schema validation
+            if (!request.has("method") || !"pay".equals(request.getString("method"))) {
+                throw new IllegalArgumentException("Invalid method");
+            }
+            if (!request.has("reservationId")) throw new IllegalArgumentException("Missing reservationId");
+            if (!request.has("chainId")) throw new IllegalArgumentException("Missing chainId");
+            if (!request.has("x")) throw new IllegalArgumentException("Missing x");
+            if (!request.has("root")) throw new IllegalArgumentException("Missing root");
+            if (!request.has("rootSignature")) throw new IllegalArgumentException("Missing rootSignature");
+            if (!request.has("startIndex")) throw new IllegalArgumentException("Missing startIndex");
+            if (!request.has("tokensToSpend")) throw new IllegalArgumentException("Missing tokensToSpend");
+
+            String reservationId = request.getString("reservationId");
+            String chainId = request.getString("chainId");
+            int x = request.getInt("x");
+            String rootB64 = request.getString("root");
+            int startIndex = request.getInt("startIndex");
+            org.json.JSONArray tokensArray = request.getJSONArray("tokensToSpend");
+
+            // Sanity checks
+            if (reservationId == null || reservationId.isBlank()) throw new IllegalArgumentException("reservationId blank");
+            if (chainId == null || chainId.isBlank()) throw new IllegalArgumentException("chainId blank");
+            if (x <= 0) throw new IllegalArgumentException("x must be > 0");
+            if (startIndex < 0) throw new IllegalArgumentException("startIndex must be >= 0");
+            if (tokensArray.length() == 0) throw new IllegalArgumentException("tokensToSpend cannot be empty");
+
+            int tokenCount = tokensArray.length();
+
+            // 1. BINDING TO RESERVATION: verify reservationId exists
+            if (!reservationRegistry.containsKey(reservationId)) {
+                throw new SecurityException("Reservation " + reservationId + " not found (invalid or expired)");
+            }
+
+            // 2. DOUBLE-SPEND PREVENTION: check if this chain has been spent already
+            Long lastSpentIndex = chainSpendTracking.getOrDefault(chainId, -1L);
+            if (startIndex <= lastSpentIndex) {
+                throw new SecurityException("Double-spend detected: startIndex=" + startIndex + " <= lastSpentIndex=" + lastSpentIndex);
+            }
+
+            // 3. HASH-CHAIN VERIFICATION: decode tokens and verify hash forward to root
+            byte[] rootBytes = b64decode(rootB64);
+            java.util.List<byte[]> tokens = new java.util.ArrayList<>();
+            for (int i = 0; i < tokensArray.length(); i++) {
+                tokens.add(b64decode(tokensArray.getString(i)));
+            }
+
+            // Verify tokens are contiguous by hashing forward: each token hashes to the next
+            byte[] current = tokens.get(0);
+            for (int i = 1; i < tokens.size(); i++) {
+                byte[] nextExpected = sha256(current);
+                if (!java.util.Arrays.equals(nextExpected, tokens.get(i))) {
+                    throw new SecurityException("Hash chain broken: token[" + i + "] does not hash to token[" + (i+1) + "]");
+                }
+                current = tokens.get(i);
+            }
+
+            // Verify last token hashes to root (accounting for remaining hashes beyond tokenCount)
+            byte[] computed = current;
+            long lastIndex = startIndex + tokenCount - 1;
+            int hashesToRoot = x - (int) lastIndex;
+            if (hashesToRoot < 0) throw new SecurityException("Invalid indices: chain length/x mismatch");
+            for (int i = 0; i < hashesToRoot; i++) {
+                computed = sha256(computed);
+            }
+            if (!java.util.Arrays.equals(computed, rootBytes)) {
+                throw new SecurityException("Hash chain does not reach provided root. Chain verification failed.");
+            }
+
+            System.out.println(logTag + "received from " + coCN);
+            System.out.println(logTag + "  reservationId=" + reservationId);
+            System.out.println(logTag + "  chainId=" + chainId);
+            System.out.println(logTag + "  tokenCount=" + tokenCount);
+            System.out.println(logTag + "  startIndex=" + startIndex);
+            System.out.println(logTag + "  x=" + x);
+            System.out.println(logTag + "  Hash-chain verification: SUCCESS");
+
+            // 4. STORE PAYMENT RECORD
+            String callerFingerprint = "unknown";
+            try {
+                MessageDigest md = MessageDigest.getInstance("SHA-256");
+                byte[] digest = md.digest(coCert.getEncoded());
+                callerFingerprint = bytesToHex(digest);
+            } catch (Exception e) {
+                // ignore
+            }
+
+            PaymentRecord rec = new PaymentRecord(reservationId, chainId, startIndex, tokenCount,
+                    Instant.now(), coCN, callerFingerprint);
+            payments.put(reservationId, rec);
+
+            // 5. UPDATE DOUBLE-SPEND TRACKING: store the new lastSpentIndex
+            long newLastSpentIndex = (long) (startIndex + tokenCount - 1);
+            chainSpendTracking.put(chainId, newLastSpentIndex);
+
+            // 6. BUILD SUCCESS RESPONSE
+            response.put("status", "success");
+            response.put("message", "payment accepted");
+            response.put("reservationId", reservationId);
+            response.put("chainId", chainId);
+            response.put("startIndex", startIndex);
+            response.put("spentCount", tokenCount);
+            response.put("newLastSpentIndex", newLastSpentIndex);
+            response.put("timestamp", Instant.now().toString());
+
+            System.out.println(logTag + "Payment ACCEPTED. newLastSpentIndex=" + newLastSpentIndex);
+
+        } catch (SecurityException e) {
+            System.err.println(logTag + "SECURITY FAILURE: " + e.getMessage());
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+            response.put("reason", "security_violation");
+        } catch (IllegalArgumentException e) {
+            System.err.println(logTag + "Validation error: " + e.getMessage());
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+            response.put("reason", "bad_request");
+        } catch (Exception e) {
+            System.err.println(logTag + "Unexpected error: " + e.getMessage());
+            e.printStackTrace();
+            response.put("status", "error");
+            response.put("message", "Payment processing failed: " + e.getMessage());
+            response.put("reason", "internal_error");
+        }
+
+        return response;
+    }
+
+    private static String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) sb.append(String.format("%02X", b));
+        return sb.toString();
+    }
+
+    /**
+     * Compute SHA-256 hash of input bytes.
+     */
+    private static byte[] sha256(byte[] input) throws NoSuchAlgorithmException {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        return digest.digest(input);
+    }
+
+    /**
+     * Decode Base64 string to bytes.
+     */
+    private static byte[] b64decode(String encoded) {
+        return Base64.getDecoder().decode(encoded);
+    }
+
+    /**
+     * Encode bytes to Base64 string.
+     */
+    private static String b64encode(byte[] data) {
+        return Base64.getEncoder().encodeToString(data);
     }
 
     // Utility methods

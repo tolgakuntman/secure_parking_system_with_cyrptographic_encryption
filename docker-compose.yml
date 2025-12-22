@@ -58,6 +58,7 @@ services:
       - LOCATION_ZONE=Downtown-North
       - PRICE_TOKENS=5
       - AVAILABILITY_HOURS=8
+      - HO_PAY_PORT=8445
     depends_on:
       - cauth
       - sp

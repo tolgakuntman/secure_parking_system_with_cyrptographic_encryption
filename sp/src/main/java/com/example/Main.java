@@ -591,7 +591,11 @@ public class Main {
         ExecutorService executor = Executors.newCachedThreadPool();
         while (true) {
             SSLSocket clientSocket = (SSLSocket) serverSocket.accept();
-            // Client auth inherited from serverSocket
+
+            clientSocket.setUseClientMode(false);
+            clientSocket.setNeedClientAuth(true);
+            clientSocket.setEnabledProtocols(enabledProtocols); // reuse the same enabledProtocols you computed
+
             executor.submit(new ClientHandler(clientSocket));
         }
     }

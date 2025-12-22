@@ -48,6 +48,7 @@ public class Main {
 
     private static KeyPair spKeyPair;
     private static X509Certificate spCertificate;
+    private static X509Certificate intermediateCACert; // Intermediate CA certificate for HO chain validation
     private static SSLContext sslContext;
 
     // Token chain storage (chainId -> chain metadata)
@@ -78,10 +79,12 @@ public class Main {
         final String locationZone;
         final String metadata;
         final String publishedAt;
+        final X509Certificate hoCertificate; // HO certificate from mTLS session
+        final String hoCertFingerprint; // SHA-256 fingerprint for identity binding
 
         ParkingAvailability(String availabilityId, String homeOwnerId, String spotId,
                           String validFrom, String validTo, int priceTokens,
-                          String locationZone, String metadata) {
+                          String locationZone, String metadata, X509Certificate hoCertificate) {
             this.availabilityId = availabilityId;
             this.homeOwnerId = homeOwnerId;
             this.spotId = spotId;
@@ -91,6 +94,16 @@ public class Main {
             this.locationZone = locationZone;
             this.metadata = metadata;
             this.publishedAt = java.time.Instant.now().toString();
+            this.hoCertificate = hoCertificate;
+            
+            // Compute SHA-256 fingerprint of certificate for identity binding
+            try {
+                MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                byte[] fingerprint = digest.digest(hoCertificate.getEncoded());
+                this.hoCertFingerprint = bytesToHex(fingerprint);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to compute certificate fingerprint", e);
+            }
         }
     }
 
@@ -206,6 +219,13 @@ public class Main {
         }
 
         System.out.println("✓ Certificate chain loaded (" + chain.length + " certificates)");
+        
+        // Store intermediate CA certificate (index 1 in chain) for including in availability responses
+        if (chain.length >= 2) {
+            intermediateCACert = (X509Certificate) chain[1];
+            System.out.println("✓ Intermediate CA certificate stored for HO chain validation");
+        }
+        
         validateCertificateChain(chain);
     }
 
@@ -655,7 +675,10 @@ public class Main {
                                 response = handleTokenRequest(request, cn);
                             }
                             case "publishAvailability" -> {
-                                response = handlePublishAvailability(request, cn);
+                                response = handlePublishAvailability(request, cn, clientCerts[0]);
+                            }
+                            case "getAvailability" -> {
+                                response = handleGetAvailability(cn);
                             }
                             default -> {
                                 response.put("status", "error");
@@ -781,7 +804,7 @@ public class Main {
         return response;
     }
 
-    private static JSONObject handlePublishAvailability(JSONObject request, String clientCN) {
+    private static JSONObject handlePublishAvailability(JSONObject request, String clientCN, X509Certificate hoCertificate) {
         JSONObject response = new JSONObject();
         try {
             // Validate required fields
@@ -841,10 +864,10 @@ public class Main {
             // Generate availability ID
             String availabilityId = UUID.randomUUID().toString();
 
-            // Store availability
+            // Store availability with HO certificate from mTLS session
             ParkingAvailability availability = new ParkingAvailability(
                 availabilityId, homeOwnerId, spotId, validFrom, validTo,
-                priceTokens, locationZone, metadata
+                priceTokens, locationZone, metadata, hoCertificate
             );
             availabilities.put(availabilityId, availability);
 
@@ -864,6 +887,102 @@ public class Main {
             e.printStackTrace();
             response.put("status", "error");
             response.put("message", "Failed to publish availability: " + e.getMessage());
+        }
+        return response;
+    }
+
+    private static JSONObject handleGetAvailability(String clientCN) {
+        JSONObject response = new JSONObject();
+        try {
+            System.out.println("\n=== Availability Discovery Request from " + clientCN + " ===");
+            System.out.println("  Total availabilities in system: " + availabilities.size());
+
+            JSONArray availabilityList = new JSONArray();
+
+            for (ParkingAvailability avail : availabilities.values()) {
+                JSONObject item = new JSONObject();
+                
+                // Security-relevant fields for authenticated service discovery
+                item.put("availabilityId", avail.availabilityId);
+                item.put("spotId", avail.spotId);
+                item.put("priceTokens", avail.priceTokens);
+                item.put("validFrom", avail.validFrom);
+                item.put("validTo", avail.validTo);
+                item.put("locationZone", avail.locationZone);
+                item.put("homeOwnerId", avail.homeOwnerId);
+                
+                // HO identity binding fields
+                item.put("hoCertFingerprint", avail.hoCertFingerprint);
+                
+                // Extract HO certificate CN for logging
+                String hoCN = "";
+                try {
+                    String hoDN = avail.hoCertificate.getSubjectX500Principal().getName();
+                    LdapName ldapDN = new LdapName(hoDN);
+                    for (Rdn rdn : ldapDN.getRdns()) {
+                        if (rdn.getType().equalsIgnoreCase("CN")) {
+                            hoCN = rdn.getValue().toString();
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    hoCN = "Unknown";
+                }
+                item.put("hoIdentity", hoCN);
+                
+                // Encode HO certificate as Base64 PEM for CO to verify chain
+                try {
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    baos.write("-----BEGIN CERTIFICATE-----\n".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    String b64 = Base64.getEncoder().encodeToString(avail.hoCertificate.getEncoded());
+                    // Split into 64-char lines
+                    for (int i = 0; i < b64.length(); i += 64) {
+                        baos.write(b64.substring(i, Math.min(i + 64, b64.length())).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                        baos.write('\n');
+                    }
+                    baos.write("-----END CERTIFICATE-----\n".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    item.put("hoCertificate", baos.toString("UTF-8"));
+                } catch (Exception e) {
+                    System.err.println("  ⚠ Failed to encode HO certificate: " + e.getMessage());
+                    item.put("hoCertificate", "");
+                }
+                
+                // Include intermediate CA certificate for chain validation
+                if (intermediateCACert != null) {
+                    try {
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        baos.write("-----BEGIN CERTIFICATE-----\n".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                        String b64 = Base64.getEncoder().encodeToString(intermediateCACert.getEncoded());
+                        for (int i = 0; i < b64.length(); i += 64) {
+                            baos.write(b64.substring(i, Math.min(i + 64, b64.length())).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                            baos.write('\n');
+                        }
+                        baos.write("-----END CERTIFICATE-----\n".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                        item.put("intermediateCACert", baos.toString("UTF-8"));
+                    } catch (Exception e) {
+                        System.err.println("  ⚠ Failed to encode intermediate CA certificate: " + e.getMessage());
+                    }
+                }
+                
+                availabilityList.put(item);
+                
+                System.out.println("  [" + avail.availabilityId + "] " + avail.spotId + " - " + 
+                                 avail.priceTokens + " tokens (HO: " + hoCN + ")");
+            }
+
+            response.put("status", "success");
+            response.put("availabilities", availabilityList);
+            response.put("count", availabilities.size());
+            response.put("timestamp", java.time.Instant.now().toString());
+
+            System.out.println("✓ Returned " + availabilities.size() + " availability record(s) to " + clientCN);
+            System.out.println("═".repeat(50));
+
+        } catch (Exception e) {
+            System.err.println("Error retrieving availabilities: " + e.getMessage());
+            e.printStackTrace();
+            response.put("status", "error");
+            response.put("message", "Failed to retrieve availabilities: " + e.getMessage());
         }
         return response;
     }

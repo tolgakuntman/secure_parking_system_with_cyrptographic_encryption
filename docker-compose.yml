@@ -39,6 +39,8 @@ services:
     networks:
       java-network:
         ipv4_address: 172.20.0.12
+    ports:
+      - "8445:8445"
     volumes:
       - ./crypto_do_once/ho_truststore.p12:/app/truststore.p12
       - ./crypto_do_once/root_ca.crt:/app/root_ca.crt
@@ -50,6 +52,7 @@ services:
       - CAUTH_PORT=8443
       - SP_HOST=sp
       - SP_PORT=8444
+      - HO_SERVER_PORT=8445
       - HOME_OWNER_ID=HO-001
       - SPOT_ID=SPOT-A1
       - LOCATION_ZONE=Downtown-North
@@ -58,7 +61,7 @@ services:
     depends_on:
       - cauth
       - sp
-    restart: "no"
+    restart: unless-stopped
 
   co:
     build: ./co

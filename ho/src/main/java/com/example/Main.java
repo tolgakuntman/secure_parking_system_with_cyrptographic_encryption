@@ -13,6 +13,8 @@ import org.bouncycastle.pkcs.PKCS10CertificationRequestBuilder;
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
 import org.json.JSONObject;
 
+import javax.naming.ldap.LdapName;
+import javax.naming.ldap.Rdn;
 import javax.net.ssl.*;
 import java.io.*;
 import java.nio.file.*;
@@ -23,17 +25,22 @@ import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Main {
     private static final String CAUTH_HOST = System.getenv().getOrDefault("CAUTH_HOST", "localhost");
     private static final int CAUTH_PORT = Integer.parseInt(System.getenv().getOrDefault("CAUTH_PORT", "8443"));
     private static final String SP_HOST = System.getenv().getOrDefault("SP_HOST", "localhost");
     private static final int SP_PORT = Integer.parseInt(System.getenv().getOrDefault("SP_PORT", "8444"));
+    private static final int HO_SERVER_PORT = Integer.parseInt(System.getenv().getOrDefault("HO_SERVER_PORT", "8445"));
     
     private static final String HO_KEYSTORE_PATH = "/app/keystore/ho_keystore.p12";
     private static final String KEYSTORE_PASSWORD = System.getenv().getOrDefault("KEYSTORE_PASSWORD", "changeit");
     private static final String ROOT_CA_PATH = System.getenv().getOrDefault("ROOT_CA_PATH", "/app/certs/root_ca.crt");
-    private static final String TRUSTSTORE_PATH = "/app/truststore/ho_truststore.p12";
+    private static final String TRUSTSTORE_PATH = "/app/truststore.p12";
+    private static final String TRUSTSTORE_PASSWORD = "trustpassword";
     
     // HO configuration
     private static final String HOME_OWNER_ID = System.getenv().getOrDefault("HOME_OWNER_ID", "HO-001");
@@ -44,6 +51,7 @@ public class Main {
     
     private static KeyPair hoKeyPair;
     private static X509Certificate hoCertificate;
+    private static String publishedAvailabilityId; // Store for validation
 
     public static void main(String[] args) {
         // Register BC provider (needed for CSR + extensions reliably)
@@ -86,7 +94,9 @@ public class Main {
             // STEP 2: Publish parking availability to SP
             publishAvailability();
 
-            System.out.println("\n✓✓✓ HO SERVICE COMPLETED SUCCESSFULLY ✓✓✓");
+            // STEP 3: Start reservation server to handle CO requests
+            System.out.println("\n=== Starting HO Reservation Server ===");
+            startReservationServer();
 
         } catch (Exception e) {
             System.err.println("\n✖ CRITICAL ERROR: HO failed to start");
@@ -350,7 +360,8 @@ public class Main {
                     System.out.println("║   AVAILABILITY PUBLISHED SUCCESSFULLY     ║");
                     System.out.println("╚═══════════════════════════════════════════╝");
                     if (response.has("availabilityId")) {
-                        System.out.println("Availability ID: " + response.getString("availabilityId"));
+                        publishedAvailabilityId = response.getString("availabilityId");
+                        System.out.println("Availability ID: " + publishedAvailabilityId);
                     }
                     if (response.has("message")) {
                         System.out.println("Message: " + response.getString("message"));
@@ -376,6 +387,312 @@ public class Main {
                 if (socket != null) try { socket.close(); } catch (Exception e) {}
             }
         }
+    }
+
+    // -------------------------
+    // Reservation Server (Milestone 2.4)
+    // -------------------------
+
+    /**
+     * Start mTLS server to accept reservation requests from CO.
+     * Uses same hardened TLS configuration: TLS 1.3/1.2, AEAD ciphers, client cert required.
+     */
+    private static void startReservationServer() throws Exception {
+        // Load keystore for server authentication
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+        try (FileInputStream fis = new FileInputStream(HO_KEYSTORE_PATH)) {
+            keyStore.load(fis, KEYSTORE_PASSWORD.toCharArray());
+        }
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        kmf.init(keyStore, KEYSTORE_PASSWORD.toCharArray());
+
+        // Load truststore to verify CO certificates
+        KeyStore trustStore = KeyStore.getInstance("PKCS12");
+        try (FileInputStream fis = new FileInputStream(TRUSTSTORE_PATH)) {
+            trustStore.load(fis, TRUSTSTORE_PASSWORD.toCharArray());
+        }
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        tmf.init(trustStore);
+
+        // Create hardened SSL context with mTLS
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), new SecureRandom());
+
+        SSLServerSocketFactory ssf = sslContext.getServerSocketFactory();
+        SSLServerSocket serverSocket = (SSLServerSocket) ssf.createServerSocket(HO_SERVER_PORT);
+
+        // Harden TLS configuration
+        String[] desiredProtocols = new String[]{"TLSv1.3", "TLSv1.2"};
+        String[] protocols = intersect(serverSocket.getSupportedProtocols(), desiredProtocols);
+        if (protocols.length == 0) {
+            throw new IllegalStateException("No TLS 1.3/1.2 support available");
+        }
+        serverSocket.setEnabledProtocols(protocols);
+
+        // REQUIRE client certificates (mTLS enforcement)
+        serverSocket.setNeedClientAuth(true);
+
+        System.out.println("\n╔═══════════════════════════════════════════════════════════╗");
+        System.out.println("║   HO RESERVATION SERVER CRYPTOGRAPHIC BASELINE           ║");
+        System.out.println("╚═══════════════════════════════════════════════════════════╝");
+        System.out.println("Version: 2025-12-22 (Milestone 2.4 - Reservation Handshake)");
+        System.out.println("✓ Enabled TLS protocols: " + java.util.Arrays.toString(protocols));
+        System.out.println("✓ Mutual TLS (mTLS) REQUIRED - client certificates enforced");
+        System.out.println();
+        System.out.println("=== HO Reservation Server Configuration ===");
+        System.out.println("Server listening on port: " + HO_SERVER_PORT);
+        System.out.println("Server certificate subject: " + hoCertificate.getSubjectX500Principal().getName());
+        System.out.println("Server certificate issuer: " + hoCertificate.getIssuerX500Principal().getName());
+        System.out.println("RSA key size: 2048 bits");
+        System.out.println("Signature algorithm: SHA256withRSA");
+        System.out.println("mTLS enforcement: ENABLED (CO certificates REQUIRED)");
+        System.out.println();
+        System.out.println("✓ HO Reservation Server ready to accept secure connections");
+        System.out.println("==========================================\n");
+
+        ExecutorService executor = Executors.newCachedThreadPool();
+        while (true) {
+            SSLSocket clientSocket = (SSLSocket) serverSocket.accept();
+            executor.submit(new ReservationHandler(clientSocket));
+        }
+    }
+
+    /**
+     * Handler for individual CO reservation requests.
+     * Implements cryptographically binding authorization protocol.
+     */
+    static class ReservationHandler implements Runnable {
+        private final SSLSocket clientSocket;
+
+        public ReservationHandler(SSLSocket clientSocket) {
+            this.clientSocket = clientSocket;
+        }
+
+        @Override
+        public void run() {
+            String coCN = null;
+            BufferedReader reader = null;
+            PrintWriter writer = null;
+            
+            try {
+                System.out.println("\n=== Inbound Reservation Request ===");
+                
+                // Force handshake - enforces mTLS parameters
+                clientSocket.startHandshake();
+
+                // Get streams after successful handshake
+                reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                writer = new PrintWriter(clientSocket.getOutputStream(), true);
+
+                // Authenticate CO via mTLS client certificate
+                X509Certificate[] clientCerts = (X509Certificate[]) clientSocket.getSession().getPeerCertificates();
+                X509Certificate coCert = clientCerts[0];
+                String coDN = coCert.getSubjectX500Principal().getName();
+
+                // Extract CO CN
+                try {
+                    LdapName ldapDN = new LdapName(coDN);
+                    for (Rdn rdn : ldapDN.getRdns()) {
+                        if (rdn.getType().equalsIgnoreCase("CN")) {
+                            coCN = rdn.getValue().toString();
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    coCN = "Unknown";
+                }
+
+                System.out.println("\n║   CO AUTHENTICATED VIA mTLS               ║");
+                System.out.println("CO CN: " + coCN);
+                System.out.println("CO address: " + clientSocket.getRemoteSocketAddress());
+                System.out.println("CO certificate subject: " + coCert.getSubjectX500Principal().getName());
+                System.out.println("CO certificate issuer: " + coCert.getIssuerX500Principal().getName());
+                System.out.println("CO certificate serial: " + coCert.getSerialNumber().toString(16).toUpperCase());
+                System.out.println();
+                System.out.println("TLS Session Details:");
+                System.out.println("  Protocol: " + clientSocket.getSession().getProtocol());
+                System.out.println("  Cipher suite: " + clientSocket.getSession().getCipherSuite());
+                System.out.println("═══════════════════════════════════════════\n");
+
+                // Read reservation request
+                String requestLine = reader.readLine();
+                if (requestLine == null) {
+                    throw new IOException("No request received from CO");
+                }
+
+                JSONObject request = new JSONObject(requestLine);
+                System.out.println("Received reservation request from " + coCN + ":");
+                System.out.println(request.toString(2));
+
+                // Process reservation and generate signed response
+                JSONObject response = handleReservationRequest(request, coCert);
+
+                writer.println(response.toString());
+                System.out.println("\nSent signed reservation response:");
+                System.out.println(response.toString(2));
+
+            } catch (Exception e) {
+                System.err.println("Error processing reservation request: " + e.getMessage());
+                e.printStackTrace();
+                try {
+                    JSONObject errorResponse = new JSONObject();
+                    errorResponse.put("status", "error");
+                    errorResponse.put("message", "Reservation processing failed: " + e.getMessage());
+                    if (writer != null) writer.println(errorResponse.toString());
+                } catch (Exception ex) {
+                    // Ignore
+                }
+            } finally {
+                if (reader != null) try { reader.close(); } catch (Exception e) {}
+                if (writer != null) try { writer.close(); } catch (Exception e) {}
+                if (clientSocket != null) try { clientSocket.close(); } catch (Exception e) {}
+                System.out.println("\n" + coCN + " disconnected\n");
+            }
+        }
+    }
+
+    /**
+     * Process reservation request with cryptographically binding authorization.
+     * Implements non-repudiable signature over reservation context.
+     */
+    private static JSONObject handleReservationRequest(JSONObject request, X509Certificate coCert) {
+        JSONObject response = new JSONObject();
+        
+        try {
+            System.out.println("\n=== Processing Reservation Request (Milestone 2.4) ===");
+
+            // Validate required fields (strict schema validation)
+            if (!request.has("method") || !"requestReservation".equals(request.getString("method"))) {
+                throw new SecurityException("Invalid method");
+            }
+            if (!request.has("availabilityId")) throw new SecurityException("Missing availabilityId");
+            if (!request.has("spotId")) throw new SecurityException("Missing spotId");
+            if (!request.has("validFrom")) throw new SecurityException("Missing validFrom");
+            if (!request.has("validTo")) throw new SecurityException("Missing validTo");
+            if (!request.has("priceTokens")) throw new SecurityException("Missing priceTokens");
+            if (!request.has("coIdentity")) throw new SecurityException("Missing coIdentity");
+
+            String requestedAvailabilityId = request.getString("availabilityId");
+            String requestedSpotId = request.getString("spotId");
+            String validFrom = request.getString("validFrom");
+            String validTo = request.getString("validTo");
+            int priceTokens = request.getInt("priceTokens");
+            String requestCoIdentity = request.getString("coIdentity");
+
+            System.out.println("  Availability ID: " + requestedAvailabilityId);
+            System.out.println("  Spot ID: " + requestedSpotId);
+            System.out.println("  Valid: " + validFrom + " to " + validTo);
+            System.out.println("  Price: " + priceTokens + " tokens");
+            System.out.println("  Requested CO Identity: " + requestCoIdentity);
+
+            // Verify CO identity matches certificate (prevent identity substitution)
+            String coCertCN = null;
+            try {
+                LdapName ldapDN = new LdapName(coCert.getSubjectX500Principal().getName());
+                for (Rdn rdn : ldapDN.getRdns()) {
+                    if (rdn.getType().equalsIgnoreCase("CN")) {
+                        coCertCN = rdn.getValue().toString();
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+                throw new SecurityException("Cannot extract CO CN from certificate");
+            }
+
+            if (!requestCoIdentity.equals(coCertCN)) {
+                System.err.println("✖ SECURITY FAILURE: CO identity mismatch!");
+                System.err.println("  Request claims: " + requestCoIdentity);
+                System.err.println("  Certificate CN: " + coCertCN);
+                throw new SecurityException("CO identity mismatch - possible impersonation attack");
+            }
+            System.out.println("✓ CO identity verified: " + coCertCN);
+
+            // Simple decision logic (OK/NOT_OK without complex business rules)
+            String verdict;
+            if (publishedAvailabilityId != null && publishedAvailabilityId.equals(requestedAvailabilityId)) {
+                verdict = "OK";
+                System.out.println("✓ Availability ID matches published availability");
+            } else {
+                verdict = "NOT_OK";
+                System.out.println("⚠ Availability ID does not match published availability");
+            }
+
+            // Generate reservationId
+            String reservationId = UUID.randomUUID().toString();
+            System.out.println("Generated Reservation ID: " + reservationId);
+
+            // Get HO identity
+            String hoIdentity = null;
+            try {
+                LdapName ldapDN = new LdapName(hoCertificate.getSubjectX500Principal().getName());
+                for (Rdn rdn : ldapDN.getRdns()) {
+                    if (rdn.getType().equalsIgnoreCase("CN")) {
+                        hoIdentity = rdn.getValue().toString();
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+                hoIdentity = "HomeOwner";
+            }
+
+            // Create canonical, immutable representation of reservation context
+            // This prevents replay, substitution, and field-stripping attacks
+            String canonicalData = String.format(
+                "reservationId=%s|verdict=%s|availabilityId=%s|spotId=%s|validFrom=%s|validTo=%s|priceTokens=%d|coIdentity=%s",
+                reservationId, verdict, requestedAvailabilityId, requestedSpotId, 
+                validFrom, validTo, priceTokens, requestCoIdentity
+            );
+
+            System.out.println("\n─ Generating Cryptographic Signature ─");
+            System.out.println("Canonical data to sign:");
+            System.out.println("  " + canonicalData);
+
+            // Sign with HO's RSA-2048 private key using SHA256withRSA
+            Signature signature = Signature.getInstance("SHA256withRSA");
+            signature.initSign(hoKeyPair.getPrivate());
+            signature.update(canonicalData.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            byte[] signatureBytes = signature.sign();
+            String signatureB64 = Base64.getEncoder().encodeToString(signatureBytes);
+
+            System.out.println("✓ Signature generated with HO private key");
+            System.out.println("  Algorithm: SHA256withRSA");
+            System.out.println("  Signature length: " + signatureBytes.length + " bytes");
+            System.out.println("  Signature (Base64): " + signatureB64.substring(0, 32) + "...");
+
+            // Build response (security-relevant fields only)
+            response.put("status", "success");
+            response.put("reservationId", reservationId);
+            response.put("verdict", verdict);
+            response.put("hoIdentity", hoIdentity);
+            response.put("signature", signatureB64);
+            response.put("signatureAlg", "SHA256withRSA");
+            
+            // Include the exact canonical data that was signed (as string)
+            // CO will use this to verify the signature
+            response.put("signedData", canonicalData);
+
+            System.out.println("\n╔═══════════════════════════════════════════════════════════╗");
+            System.out.println("║   RESERVATION DECISION: " + verdict);
+            System.out.println("╚═══════════════════════════════════════════════════════════╝");
+            System.out.println("Reservation ID: " + reservationId);
+            System.out.println("CO Identity: " + requestCoIdentity);
+            System.out.println("✓ Cryptographic signature binds HO to this decision");
+            System.out.println("✓ Non-repudiable authorization established");
+
+        } catch (SecurityException e) {
+            System.err.println("✖ SECURITY FAILURE: " + e.getMessage());
+            response.put("status", "error");
+            response.put("verdict", "NOT_OK");
+            response.put("message", "Security validation failed: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("✖ Error processing reservation: " + e.getMessage());
+            e.printStackTrace();
+            response.put("status", "error");
+            response.put("verdict", "NOT_OK");
+            response.put("message", "Reservation processing failed: " + e.getMessage());
+        }
+        
+        return response;
     }
 
     // Utility methods

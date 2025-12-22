@@ -42,7 +42,19 @@ services:
     volumes:
       - ./crypto_do_once/ho_truststore.p12:/app/truststore.p12
       - ./crypto_do_once/root_ca.crt:/app/root_ca.crt
-      - ho_keystore:/app/ho_keystore_data
+      - ho_keystore:/app/keystore
+    environment:
+      - KEYSTORE_PASSWORD=changeit
+      - ROOT_CA_PATH=/app/root_ca.crt
+      - CAUTH_HOST=cauth
+      - CAUTH_PORT=8443
+      - SP_HOST=sp
+      - SP_PORT=8444
+      - HOME_OWNER_ID=HO-001
+      - SPOT_ID=SPOT-A1
+      - LOCATION_ZONE=Downtown-North
+      - PRICE_TOKENS=5
+      - AVAILABILITY_HOURS=8
     depends_on:
       - cauth
       - sp

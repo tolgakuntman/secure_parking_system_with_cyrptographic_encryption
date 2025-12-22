@@ -53,6 +53,9 @@ public class Main {
     // Token chain storage (chainId -> chain metadata)
     private static final Map<String, TokenChainMetadata> issuedChains = new ConcurrentHashMap<>();
 
+    // Parking availability storage (availabilityId -> availability record)
+    private static final Map<String, ParkingAvailability> availabilities = new ConcurrentHashMap<>();
+
     static class TokenChainMetadata {
         final byte[] root;
         final int x;
@@ -62,6 +65,32 @@ public class Main {
             this.root = root;
             this.x = x;
             this.lastSpentIndex = 0;
+        }
+    }
+
+    static class ParkingAvailability {
+        final String availabilityId;
+        final String homeOwnerId;
+        final String spotId;
+        final String validFrom;
+        final String validTo;
+        final int priceTokens;
+        final String locationZone;
+        final String metadata;
+        final String publishedAt;
+
+        ParkingAvailability(String availabilityId, String homeOwnerId, String spotId,
+                          String validFrom, String validTo, int priceTokens,
+                          String locationZone, String metadata) {
+            this.availabilityId = availabilityId;
+            this.homeOwnerId = homeOwnerId;
+            this.spotId = spotId;
+            this.validFrom = validFrom;
+            this.validTo = validTo;
+            this.priceTokens = priceTokens;
+            this.locationZone = locationZone;
+            this.metadata = metadata;
+            this.publishedAt = java.time.Instant.now().toString();
         }
     }
 
@@ -625,6 +654,9 @@ public class Main {
                             case "requestTokens" -> {
                                 response = handleTokenRequest(request, cn);
                             }
+                            case "publishAvailability" -> {
+                                response = handlePublishAvailability(request, cn);
+                            }
                             default -> {
                                 response.put("status", "error");
                                 response.put("message", "Unknown method: " + method);
@@ -745,6 +777,93 @@ public class Main {
             e.printStackTrace();
             response.put("status", "error");
             response.put("message", "Token generation failed: " + e.getMessage());
+        }
+        return response;
+    }
+
+    private static JSONObject handlePublishAvailability(JSONObject request, String clientCN) {
+        JSONObject response = new JSONObject();
+        try {
+            // Validate required fields
+            if (!request.has("homeOwnerId") || !request.has("spotId") || 
+                !request.has("validFrom") || !request.has("validTo") || 
+                !request.has("priceTokens")) {
+                response.put("status", "error");
+                response.put("message", "Missing required fields: homeOwnerId, spotId, validFrom, validTo, priceTokens");
+                return response;
+            }
+
+            String homeOwnerId = request.getString("homeOwnerId");
+            String spotId = request.getString("spotId");
+            String validFrom = request.getString("validFrom");
+            String validTo = request.getString("validTo");
+            int priceTokens = request.getInt("priceTokens");
+            String locationZone = request.optString("locationZone", "");
+            String metadata = request.optJSONObject("metadata") != null ? 
+                            request.getJSONObject("metadata").toString() : "{}";
+
+            System.out.println("\n=== Publishing Parking Availability from " + clientCN + " ===");
+            System.out.println("  Home Owner: " + homeOwnerId);
+            System.out.println("  Spot ID: " + spotId);
+            System.out.println("  Valid: " + validFrom + " to " + validTo);
+            System.out.println("  Price: " + priceTokens + " tokens");
+            System.out.println("  Location: " + locationZone);
+
+            // Validate price
+            if (priceTokens <= 0) {
+                response.put("status", "error");
+                response.put("message", "Invalid price (must be > 0)");
+                return response;
+            }
+
+            // Validate time window (basic validation)
+            try {
+                java.time.Instant from = java.time.Instant.parse(validFrom);
+                java.time.Instant to = java.time.Instant.parse(validTo);
+                
+                if (to.isBefore(from)) {
+                    response.put("status", "error");
+                    response.put("message", "Invalid time window: validTo must be after validFrom");
+                    return response;
+                }
+
+                if (from.isBefore(java.time.Instant.now().minusSeconds(300))) {
+                    response.put("status", "error");
+                    response.put("message", "validFrom is too far in the past");
+                    return response;
+                }
+            } catch (java.time.format.DateTimeParseException e) {
+                response.put("status", "error");
+                response.put("message", "Invalid date format (use ISO-8601)");
+                return response;
+            }
+
+            // Generate availability ID
+            String availabilityId = UUID.randomUUID().toString();
+
+            // Store availability
+            ParkingAvailability availability = new ParkingAvailability(
+                availabilityId, homeOwnerId, spotId, validFrom, validTo,
+                priceTokens, locationZone, metadata
+            );
+            availabilities.put(availabilityId, availability);
+
+            System.out.println("✓ Availability stored with ID: " + availabilityId);
+            System.out.println("✓ Total availabilities in system: " + availabilities.size());
+            System.out.println("═".repeat(50));
+
+            // Build success response
+            response.put("status", "success");
+            response.put("availabilityId", availabilityId);
+            response.put("message", "Parking availability published successfully");
+            response.put("spotId", spotId);
+            response.put("publishedAt", availability.publishedAt);
+
+        } catch (Exception e) {
+            System.err.println("Error publishing availability: " + e.getMessage());
+            e.printStackTrace();
+            response.put("status", "error");
+            response.put("message", "Failed to publish availability: " + e.getMessage());
         }
         return response;
     }

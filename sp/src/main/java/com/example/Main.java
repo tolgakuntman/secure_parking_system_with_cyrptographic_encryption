@@ -6,9 +6,10 @@ import javax.naming.ldap.Rdn;
 import javax.net.ssl.*;
 import java.security.*;
 import java.security.cert.X509Certificate;
-import java.util.Date;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
@@ -18,6 +19,7 @@ import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class Main {
@@ -48,6 +50,21 @@ public class Main {
     private static X509Certificate spCertificate;
     private static SSLContext sslContext;
 
+    // Token chain storage (chainId -> chain metadata)
+    private static final Map<String, TokenChainMetadata> issuedChains = new ConcurrentHashMap<>();
+
+    static class TokenChainMetadata {
+        final byte[] root;
+        final int x;
+        int lastSpentIndex;
+
+        TokenChainMetadata(byte[] root, int x) {
+            this.root = root;
+            this.x = x;
+            this.lastSpentIndex = 0;
+        }
+    }
+
     public static void main(String[] args) {
         // Register BC provider (needed for CSR + extensions reliably)
         Security.addProvider(new BouncyCastleProvider());
@@ -62,9 +79,11 @@ public class Main {
 
         try {
             System.out.println("\n=== Service Provider Starting ===");
+            System.out.println("Initializing cryptographic baseline...\n");
 
             ensureParentDirExists(SP_KEYSTORE_PATH);
 
+            // CRITICAL: Establish cryptographic identity before starting server
             if (hasCertificate()) {
                 System.out.println("Found existing certificate, loading from keystore...");
                 loadExistingCertificate();
@@ -73,19 +92,35 @@ public class Main {
                 enrollWithCAuth();
             }
 
-            if (spCertificate != null) {
-                System.out.println("\n=== Certificate Ready ===");
-                System.out.println("Subject: " + spCertificate.getSubjectX500Principal().getName());
-                System.out.println("Valid from: " + spCertificate.getNotBefore());
-                System.out.println("Valid until: " + spCertificate.getNotAfter());
-                System.out.println("Issuer: " + spCertificate.getIssuerX500Principal().getName());
+            // CRITICAL: Verify we have valid cryptographic material
+            if (spCertificate == null) {
+                throw new IllegalStateException("CRITICAL: SP certificate is null after initialization");
+            }
+            if (spKeyPair == null || spKeyPair.getPrivate() == null) {
+                throw new IllegalStateException("CRITICAL: SP private key is null after initialization");
             }
 
-            System.out.println("\n=== Starting SP Server ===");
+            // Display certificate information
+            System.out.println("\n\u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557");
+            System.out.println("\u2551   CRYPTOGRAPHIC IDENTITY ESTABLISHED     \u2551");
+            System.out.println("\u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255d");
+            System.out.println("Subject: " + spCertificate.getSubjectX500Principal().getName());
+            System.out.println("Issuer: " + spCertificate.getIssuerX500Principal().getName());
+            System.out.println("Valid from: " + spCertificate.getNotBefore());
+            System.out.println("Valid until: " + spCertificate.getNotAfter());
+            System.out.println("Serial: " + spCertificate.getSerialNumber().toString(16).toUpperCase());
+            System.out.println("\u2713 Certificate and private key verified\n");
+
+            System.out.println("=== Starting SP Server ===");
             startServer();
 
         } catch (Exception e) {
+            System.err.println("\n\u2716 CRITICAL ERROR: SP failed to start");
+            System.err.println("Reason: " + e.getMessage());
             e.printStackTrace();
+            System.err.println("\n\u2716 SP cannot operate without valid cryptographic material");
+            System.err.println("Exiting...");
+            System.exit(1);
         }
     }
 
@@ -115,39 +150,63 @@ public class Main {
         }
 
         spCertificate = (X509Certificate) ks.getCertificate(SP_KEY_ALIAS);
+        if (spCertificate == null) {
+            throw new IllegalStateException("CRITICAL: SP certificate not found in keystore under alias: " + SP_KEY_ALIAS);
+        }
+
         PrivateKey privateKey = (PrivateKey) ks.getKey(SP_KEY_ALIAS, SP_KEYSTORE_PASSWORD.toCharArray());
+        if (privateKey == null) {
+            throw new IllegalStateException("CRITICAL: SP private key not found in keystore under alias: " + SP_KEY_ALIAS);
+        }
+
         PublicKey publicKey = spCertificate.getPublicKey();
         spKeyPair = new KeyPair(publicKey, privateKey);
 
+        // STRICT: Certificate MUST be valid
         try {
             spCertificate.checkValidity();
+            System.out.println("✓ Certificate validity period verified");
         } catch (Exception e) {
-            System.out.println("Warning: Certificate has expired or is not yet valid!");
+            throw new IllegalStateException("CRITICAL: Certificate has expired or is not yet valid: " + e.getMessage());
         }
+
+        // Verify certificate chain
+        java.security.cert.Certificate[] chain = ks.getCertificateChain(SP_KEY_ALIAS);
+        if (chain == null || chain.length == 0) {
+            throw new IllegalStateException("CRITICAL: No certificate chain found in keystore");
+        }
+
+        System.out.println("✓ Certificate chain loaded (" + chain.length + " certificates)");
+        validateCertificateChain(chain);
     }
 
     private static void enrollWithCAuth() throws Exception {
         System.out.println("Step 1: Generating RSA key pair...");
         spKeyPair = generateKeyPair();
-        System.out.println("Key pair generated successfully");
+        System.out.println("✓ RSA-2048 key pair generated successfully");
 
         System.out.println("\nStep 2: Creating Certificate Signing Request (CSR)...");
         PKCS10CertificationRequest csr = createCSR(spKeyPair);
-        System.out.println("CSR created successfully");
+        System.out.println("✓ CSR created with subject: CN=ServiceProvider, O=Parking System, C=BE");
 
-        System.out.println("\nStep 3: Connecting to CAuth server...");
+        System.out.println("\nStep 3: Connecting to CAuth server over TLS...");
         X509Certificate[] certChain = requestCertificateFromCAuth(csr);
 
         if (certChain == null || certChain.length == 0 || certChain[0] == null) {
-            throw new IllegalStateException("Enrollment failed: CAuth did not return a valid certificate.");
+            throw new IllegalStateException("CRITICAL: Enrollment failed - CAuth did not return a valid certificate.");
         }
 
         spCertificate = certChain[0];
-        System.out.println("Certificate received from CAuth");
+        System.out.println("✓ Certificate received from CAuth");
 
-        System.out.println("\nStep 4: Storing certificate and private key...");
+        // Validate received certificate before storing
+        System.out.println("\nStep 4: Validating received certificate...");
+        validateReceivedCertificate(spCertificate, certChain);
+        System.out.println("✓ Certificate chain validation successful");
+
+        System.out.println("\nStep 5: Storing certificate and private key securely...");
         storeCertificateAndKey(certChain);
-        System.out.println("Credentials stored in " + SP_KEYSTORE_PATH);
+        System.out.println("✓ Credentials stored in " + SP_KEYSTORE_PATH);
     }
 
     private static KeyPair generateKeyPair() throws Exception {
@@ -156,9 +215,96 @@ public class Main {
         return keyGen.generateKeyPair();
     }
 
+    /**
+     * Validates the certificate received from CAuth during enrollment.
+     * Ensures the certificate is valid, properly signed, and matches our public key.
+     */
+    private static void validateReceivedCertificate(X509Certificate cert, X509Certificate[] chain) throws Exception {
+        // 1. Check validity period
+        try {
+            cert.checkValidity();
+            System.out.println("  ✓ Certificate is within validity period");
+            System.out.println("    Valid from: " + cert.getNotBefore());
+            System.out.println("    Valid until: " + cert.getNotAfter());
+        } catch (Exception e) {
+            throw new IllegalStateException("Certificate validity check failed: " + e.getMessage());
+        }
+
+        // 2. Verify public key matches what we generated
+        if (!cert.getPublicKey().equals(spKeyPair.getPublic())) {
+            throw new IllegalStateException("Certificate public key does not match generated key pair");
+        }
+        System.out.println("  ✓ Certificate public key matches generated key pair");
+
+        // 3. Validate certificate chain
+        validateCertificateChain(chain);
+    }
+
+    /**
+     * Validates the full certificate chain against the truststore.
+     * This ensures the chain terminates at our trusted Root CA.
+     */
+    private static void validateCertificateChain(java.security.cert.Certificate[] chain) throws Exception {
+        if (chain == null || chain.length == 0) {
+            throw new IllegalStateException("Certificate chain is empty");
+        }
+
+        System.out.println("  Validating certificate chain (" + chain.length + " certificates):");
+        for (int i = 0; i < chain.length; i++) {
+            X509Certificate cert = (X509Certificate) chain[i];
+            System.out.println("    [" + i + "] " + cert.getSubjectX500Principal().getName());
+            System.out.println("        Issuer: " + cert.getIssuerX500Principal().getName());
+            
+            // Verify each cert is valid
+            try {
+                cert.checkValidity();
+            } catch (Exception e) {
+                throw new IllegalStateException("Certificate [" + i + "] in chain is invalid: " + e.getMessage());
+            }
+
+            // Verify signature chain (except for root which is self-signed)
+            if (i < chain.length - 1) {
+                X509Certificate issuerCert = (X509Certificate) chain[i + 1];
+                try {
+                    cert.verify(issuerCert.getPublicKey());
+                    System.out.println("        ✓ Signature verified by issuer");
+                } catch (Exception e) {
+                    throw new IllegalStateException("Certificate [" + i + "] signature verification failed: " + e.getMessage());
+                }
+            }
+        }
+
+        // Verify the chain terminates at a trusted root from our truststore
+        KeyStore trustStore = KeyStore.getInstance("PKCS12");
+        try (FileInputStream fis = new FileInputStream(TRUSTSTORE_PATH)) {
+            trustStore.load(fis, TRUSTSTORE_PASSWORD.toCharArray());
+        }
+
+        X509Certificate rootCert = (X509Certificate) chain[chain.length - 1];
+        boolean foundTrustedRoot = false;
+        
+        var aliases = trustStore.aliases();
+        while (aliases.hasMoreElements()) {
+            String alias = aliases.nextElement();
+            java.security.cert.Certificate trustedCert = trustStore.getCertificate(alias);
+            if (trustedCert instanceof X509Certificate && trustedCert.equals(rootCert)) {
+                foundTrustedRoot = true;
+                System.out.println("  ✓ Chain terminates at trusted Root CA: " + alias);
+                break;
+            }
+        }
+
+        if (!foundTrustedRoot) {
+            throw new IllegalStateException("Certificate chain does not terminate at a trusted Root CA");
+        }
+
+        System.out.println("  ✓ Certificate chain validation complete");
+    }
+
     private static PKCS10CertificationRequest createCSR(KeyPair keyPair) throws Exception {
+        // Stable identity (no timestamp) for consistent CN across enrollments
         X500Name subject = new X500Name(
-                "CN=ServiceProvider-" + System.currentTimeMillis() + ", O=Parking System, C=BE"
+                "CN=ServiceProvider, O=Parking System, C=BE"
         );
 
         JcaPKCS10CertificationRequestBuilder csrBuilder =
@@ -196,14 +342,54 @@ public class Main {
              PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
              BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
 
+            // Harden enrollment connection: restrict to modern TLS protocols only
+            String[] desiredProtocols = new String[]{"TLSv1.3", "TLSv1.2"};
+            String[] enrollProtocols = intersect(socket.getSupportedProtocols(), desiredProtocols);
+            if (enrollProtocols.length == 0) {
+                throw new IllegalStateException("No modern TLS protocols (1.2/1.3) supported for enrollment connection");
+            }
+            socket.setEnabledProtocols(enrollProtocols);
+
+            // Restrict to strong cipher suites (same allowlist as server)
+            String[] preferredCiphers = new String[]{
+                // TLS 1.3 ciphers
+                "TLS_AES_256_GCM_SHA384",
+                "TLS_AES_128_GCM_SHA256",
+                "TLS_CHACHA20_POLY1305_SHA256",
+                // TLS 1.2 strong ciphers with PFS
+                "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+                "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+                "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+                "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+                "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384",
+                "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256"
+            };
+            String[] enrollCiphers = intersect(socket.getSupportedCipherSuites(), preferredCiphers);
+            if (enrollCiphers.length == 0) {
+                throw new IllegalStateException("No strong cipher suites available for enrollment connection (modern TLS requirement)");
+            }
+            socket.setEnabledCipherSuites(enrollCiphers);
+
             socket.startHandshake();
+
+            // Log TLS connection details for audit
+            System.out.println("✓ TLS connection established to CAuth");
+            System.out.println("  Protocol: " + socket.getSession().getProtocol());
+            System.out.println("  Cipher suite: " + socket.getSession().getCipherSuite());
+            
+            // Verify CAuth certificate
+            X509Certificate[] cauthCerts = (X509Certificate[]) socket.getSession().getPeerCertificates();
+            if (cauthCerts.length > 0) {
+                System.out.println("  CAuth certificate verified:");
+                System.out.println("    Subject: " + cauthCerts[0].getSubjectX500Principal().getName());
+                System.out.println("    Issuer: " + cauthCerts[0].getIssuerX500Principal().getName());
+            }
 
             JSONObject request = new JSONObject();
             request.put("method", "signCSR");
             request.put("csr", java.util.Base64.getEncoder().encodeToString(csr.getEncoded()));
 
-            System.out.println("Connected to CAuth at " + CAUTH_HOST + ":" + CAUTH_PORT);
-            System.out.println("Sending CSR to CAuth...");
+            System.out.println("\n→ Sending CSR to CAuth for signing...");
             writer.println(request.toString());
 
             String response = reader.readLine();
@@ -299,36 +485,64 @@ public class Main {
         SSLServerSocketFactory factory = sslContext.getServerSocketFactory();
         SSLServerSocket serverSocket = (SSLServerSocket) factory.createServerSocket(SP_SERVER_PORT);
 
-        System.out.println("=== SP CODE VERSION: 2025-12-19-C (mTLS enforced) ===");
+        System.out.println("\n=== SP CRYPTOGRAPHIC BASELINE ESTABLISHED ===");
+        System.out.println("Version: 2025-12-22 (Hardened TLS with mTLS enforcement)");
 
-        // Configure protocols FIRST
-        serverSocket.setEnabledProtocols(intersect(serverSocket.getSupportedProtocols(),
-                new String[]{"TLSv1.3", "TLSv1.2"}));
+        // Configure protocols: ONLY TLS 1.3 and TLS 1.2 (modern, secure versions)
+        String[] enabledProtocols = intersect(serverSocket.getSupportedProtocols(),
+                new String[]{"TLSv1.3", "TLSv1.2"});
+        serverSocket.setEnabledProtocols(enabledProtocols);
+        System.out.println("✓ Enabled TLS protocols: " + java.util.Arrays.toString(enabledProtocols));
 
-        // Configure client-auth LAST (best-effort)
-        SSLParameters serverParams = sslContext.getDefaultSSLParameters();
-        serverParams.setNeedClientAuth(true);
-        serverParams.setWantClientAuth(false);
-        serverSocket.setSSLParameters(serverParams);
+        // Configure strong cipher suites: Prefer AEAD ciphers (GCM), exclude weak/anonymous ciphers
+        String[] preferredCiphers = new String[]{
+            // TLS 1.3 ciphers (if available)
+            "TLS_AES_256_GCM_SHA384",
+            "TLS_AES_128_GCM_SHA256",
+            "TLS_CHACHA20_POLY1305_SHA256",
+            // TLS 1.2 strong ciphers with Perfect Forward Secrecy
+            "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+            "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+            "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384",
+            "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256"
+        };
+        String[] enabledCiphers = intersect(serverSocket.getSupportedCipherSuites(), preferredCiphers);
+        if (enabledCiphers.length > 0) {
+            serverSocket.setEnabledCipherSuites(enabledCiphers);
+            System.out.println("✓ Strong cipher suites configured: " + enabledCiphers.length + " suites");
+            // for (String cipher : enabledCiphers) {
+            //     System.out.println("    - " + cipher);
+            // }
+        } else {
+            System.out.println("Warning: No preferred cipher suites available, using platform defaults");
+        }
 
-        // Some runtimes lie in getter; we still enforce on accepted sockets
-        System.out.println("ServerSocket class: " + serverSocket.getClass().getName());
-        System.out.println("ServerSocket.getNeedClientAuth(): " + serverSocket.getNeedClientAuth());
-        System.out.println("ServerSocket SSLParameters needClientAuth: " + serverSocket.getSSLParameters().getNeedClientAuth());
+        // Configure client-auth: MUST be set on server socket before accept()
+        serverSocket.setNeedClientAuth(true);
+        System.out.println(" Mutual TLS (mTLS) REQUIRED - client certificates enforced");
 
-        System.out.println("SP Server started on port " + SP_SERVER_PORT);
-        System.out.println("Waiting for inbound connections...");
+        // Log security configuration
+        System.out.println("\n=== TLS Server Configuration ===");
+        System.out.println("Server listening on port: " + SP_SERVER_PORT);
+        System.out.println("Server certificate subject: " + spCertificate.getSubjectX500Principal().getName());
+        System.out.println("Server certificate issuer: " + spCertificate.getIssuerX500Principal().getName());
+        System.out.println("Certificate serial: " + spCertificate.getSerialNumber().toString(16).toUpperCase());
+        System.out.println("Certificate algorithm: " + spCertificate.getSigAlgName());
+        System.out.println("Public key algorithm: " + spCertificate.getPublicKey().getAlgorithm());
+        if (spCertificate.getPublicKey().getAlgorithm().equals("RSA")) {
+            java.security.interfaces.RSAPublicKey rsaKey = (java.security.interfaces.RSAPublicKey) spCertificate.getPublicKey();
+            System.out.println("RSA key size: " + rsaKey.getModulus().bitLength() + " bits");
+        }
+        System.out.println("mTLS enforcement: ENABLED (client certificates REQUIRED)");
+        System.out.println("\n✓ SP Server ready to accept secure connections");
+        System.out.println("==========================================\n");
 
         ExecutorService executor = Executors.newCachedThreadPool();
         while (true) {
             SSLSocket clientSocket = (SSLSocket) serverSocket.accept();
-
-            // ENFORCE mTLS ON THE SOCKET (reliable)
-            SSLParameters p = clientSocket.getSSLParameters();
-            p.setNeedClientAuth(true);
-            p.setWantClientAuth(false);
-            clientSocket.setSSLParameters(p);
-
+            // Client auth inherited from serverSocket
             executor.submit(new ClientHandler(clientSocket));
         }
     }
@@ -347,14 +561,19 @@ public class Main {
         @Override
         public void run() {
             String cn = null;
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                 PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true)) {
-
+            BufferedReader reader = null;
+            PrintWriter writer = null;
+            try {
                 System.out.println("\n=== Inbound Connection ===");
-
-                // Handshake will FAIL here if client does not provide a valid cert
+                
+                // Force handshake - this will enforce the mTLS parameters we set on the socket
                 clientSocket.startHandshake();
 
+                // Now get streams after successful handshake
+                reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                writer = new PrintWriter(clientSocket.getOutputStream(), true);
+
+                // Get peer certificates - this will throw SSLPeerUnverifiedException if client didn't provide cert
                 X509Certificate[] clientCerts = (X509Certificate[]) clientSocket.getSession().getPeerCertificates();
                 String dn = clientCerts[0].getSubjectX500Principal().getName();
 
@@ -370,12 +589,23 @@ public class Main {
                     e.printStackTrace();
                 }
 
-                System.out.println("\n=== " + cn + " Connected ===");
+                System.out.println("\n║   CLIENT AUTHENTICATED VIA mTLS           ║");
+                System.out.println("Client CN: " + cn);
                 System.out.println("Client address: " + clientSocket.getRemoteSocketAddress());
-                System.out.println("Client certificate: " + clientCerts[0].getSubjectX500Principal().getName());
-                System.out.println("Certificate issuer: " + clientCerts[0].getIssuerX500Principal().getName());
-                System.out.println("Cipher suite: " + clientSocket.getSession().getCipherSuite());
-                System.out.println("Protocol: " + clientSocket.getSession().getProtocol());
+                System.out.println("Client certificate subject: " + clientCerts[0].getSubjectX500Principal().getName());
+                System.out.println("Client certificate issuer: " + clientCerts[0].getIssuerX500Principal().getName());
+                System.out.println("Client certificate serial: " + clientCerts[0].getSerialNumber().toString(16).toUpperCase());
+                System.out.println("Certificate valid from: " + clientCerts[0].getNotBefore());
+                System.out.println("Certificate valid until: " + clientCerts[0].getNotAfter());
+                System.out.println("\nTLS Session Details:");
+                System.out.println("  Protocol: " + clientSocket.getSession().getProtocol());
+                System.out.println("  Cipher suite: " + clientSocket.getSession().getCipherSuite());
+                byte[] sessionId = clientSocket.getSession().getId();
+                if (sessionId != null && sessionId.length > 0) {
+                    String hexId = bytesToHex(sessionId).substring(0, Math.min(16, sessionId.length * 2));
+                    System.out.println("  Session ID: " + hexId + "...");
+                }
+                System.out.println("═══════════════════════════════════════════\n");
 
                 String inputLine;
                 while ((inputLine = reader.readLine()) != null) {
@@ -391,6 +621,9 @@ public class Main {
                                 response.put("status", "success");
                                 response.put("message", "Hello " + clientCerts[0].getSubjectX500Principal().getName() + "! Welcome to SP.");
                                 response.put("timestamp", new Date().toString());
+                            }
+                            case "requestTokens" -> {
+                                response = handleTokenRequest(request, cn);
                             }
                             default -> {
                                 response.put("status", "error");
@@ -417,13 +650,103 @@ public class Main {
                 e.printStackTrace();
             } finally {
                 try {
-                    clientSocket.close();
-                    System.out.println("\n" + (cn != null ? cn : "Client") + " disconnected");
-                } catch (Exception e) {
-                    System.err.println("Error closing socket: " + e.getMessage());
-                }
+                    if (reader != null) reader.close();
+                } catch (Exception ignored) {}
+                try {
+                    if (writer != null) writer.close();
+                } catch (Exception ignored) {}
+                try {
+                    if (clientSocket != null && !clientSocket.isClosed()) {
+                        clientSocket.close();
+                    }
+                } catch (Exception ignored) {}
+                System.out.println("\n" + (cn != null ? cn : "Client") + " disconnected");
             }
         }
+    }
+
+    // -------------------------
+    // Token generation (hash chain)
+    // -------------------------
+
+    private static JSONObject handleTokenRequest(JSONObject request, String clientCN) {
+        JSONObject response = new JSONObject();
+        try {
+            int count = request.getInt("count");
+            
+            if (count <= 0 || count > 10000) {
+                response.put("status", "error");
+                response.put("message", "Invalid token count (must be 1-10000)");
+                return response;
+            }
+
+            System.out.println("\n=== Generating " + count + " payment tokens for " + clientCN + " ===");
+
+            // Generate secret s (32 bytes of cryptographic randomness)
+            SecureRandom secureRandom = new SecureRandom();
+            byte[] secret = new byte[32];
+            secureRandom.nextBytes(secret);
+
+            System.out.println("✓ Generated secret s (" + secret.length + " bytes)");
+
+            // Generate hash chain: H(s), H(H(s)), ..., H^x(s)
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            List<byte[]> tokens = new ArrayList<>();
+            
+            byte[] current = secret;
+            for (int i = 0; i < count; i++) {
+                current = digest.digest(current);
+                tokens.add(current.clone());
+            }
+
+            // The last token is the root H^x(s)
+            byte[] root = tokens.get(tokens.size() - 1);
+            System.out.println("✓ Generated hash chain of length " + count);
+            System.out.println("  Root H^" + count + "(s): " + bytesToHex(root).substring(0, 16) + "...");
+
+            // Sign the root with SP's private key
+            Signature sig = Signature.getInstance("SHA256withRSA");
+            sig.initSign(spKeyPair.getPrivate());
+            sig.update(root);
+            byte[] rootSignature = sig.sign();
+            System.out.println("✓ Signed root with SP private key (" + rootSignature.length + " bytes)");
+
+            // Generate unique chain ID
+            String chainId = UUID.randomUUID().toString();
+
+            // Store chain metadata for future spending verification (Milestone 2)
+            TokenChainMetadata metadata = new TokenChainMetadata(root, count);
+            issuedChains.put(chainId, metadata);
+            System.out.println("✓ Stored chain metadata (ID: " + chainId + ")");
+
+            // Build response
+            response.put("status", "success");
+            response.put("x", count);
+            response.put("chainId", chainId);
+            
+            // Encode tokens as Base64
+            JSONArray tokensArray = new JSONArray();
+            for (byte[] token : tokens) {
+                tokensArray.put(Base64.getEncoder().encodeToString(token));
+            }
+            response.put("tokens", tokensArray);
+            
+            // Root and signature
+            response.put("root", Base64.getEncoder().encodeToString(root));
+            response.put("rootSignature", Base64.getEncoder().encodeToString(rootSignature));
+            response.put("tokenHashAlg", "SHA-256");
+            response.put("signatureAlg", "SHA256withRSA");
+
+            System.out.println("✓ Token batch ready to send to " + clientCN);
+            System.out.println("═".repeat(50));
+
+        } catch (Exception e) {
+            System.err.println("Error generating tokens: " + e.getMessage());
+            e.printStackTrace();
+            response.put("status", "error");
+            response.put("message", "Token generation failed: " + e.getMessage());
+        }
+        return response;
     }
 
     // -------------------------
@@ -454,5 +777,17 @@ public class Main {
         java.util.List<String> out = new java.util.ArrayList<>();
         for (String d : desired) if (sup.contains(d)) out.add(d);
         return out.toArray(new String[0]);
+    }
+
+    /**
+     * Converts byte array to hexadecimal string (for logging session IDs, serials, etc.)
+     * Does NOT log sensitive cryptographic material (keys, passwords, etc.)
+     */
+    private static String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02X", b));
+        }
+        return sb.toString();
     }
 }

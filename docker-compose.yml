@@ -25,7 +25,8 @@ services:
     environment:
       - KEYSTORE_PASSWORD=serverpassword
       - TRUSTSTORE_PASSWORD=trustpassword
-      - SP_KEY_ALIAS=sp
+      - SP_KEY_ALIAS=sp_key
+      - SP_SERVER_PORT=8444
       - CAUTH_HOST=cauth
       - CAUTH_PORT=8443
     depends_on:
@@ -56,11 +57,18 @@ services:
     volumes:
       - ./crypto_do_once/co_truststore.p12:/app/truststore.p12
       - ./crypto_do_once/root_ca.crt:/app/root_ca.crt
-      - co_keystore:/app/co_keystore_data
+      - co_keystore:/app/keystore
+    environment:
+      - KEYSTORE_PASSWORD=serverpassword
+      - TRUSTSTORE_PASSWORD=trustpassword
+      - CO_KEY_ALIAS=co_key
+      - CAUTH_HOST=cauth
+      - CAUTH_PORT=8443
+      - SP_HOST=sp
+      - SP_PORT=8444
     depends_on:
       - cauth
       - sp
-      - ho
     restart: "no"
 networks:
   java-network:

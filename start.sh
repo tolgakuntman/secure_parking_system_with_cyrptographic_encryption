@@ -1,7 +1,7 @@
 #!/bin/bash
 docker compose down -v
 clear
-docker compose up --build -d cauth sp
+docker compose up --build -d cauth sp co
 
 SESSION="fourbuilds"
 

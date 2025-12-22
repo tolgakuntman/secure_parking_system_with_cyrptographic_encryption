@@ -93,6 +93,9 @@ public class Main {
         String rootSignatureB64;
     }
     private static LastSettlement lastSettlement = null;
+    
+    // M3.4: Store last payment receipt for CO forwarding
+    private static volatile JSONObject lastPaymentReceipt = null;
 
     public static void main(String[] args) {
         // Register BC provider (needed for CSR + extensions reliably)
@@ -1064,6 +1067,12 @@ private static String extractCN(X509Certificate cert) {
             response.put("newLastSpentIndex", newLastSpentIndex);
             response.put("timestamp", Instant.now().toString());
 
+            // M3.4: Include payment receipt in response for CO verification
+            if (lastPaymentReceipt != null) {
+                response.put("paymentReceipt", lastPaymentReceipt);
+                System.out.println(logTag + "✓ Payment receipt included in response for CO");
+            }
+
             System.out.println(logTag + "Payment ACCEPTED. newLastSpentIndex=" + newLastSpentIndex);
 
         } catch (SecurityException e) {
@@ -1285,6 +1294,41 @@ private static String extractCN(X509Certificate cert) {
                     System.out.println(logTag + "  tokensConsumed: " + spResponse.optInt("tokensConsumed", y));
                     System.out.println(logTag + "  remainingTokens: " + spResponse.optInt("remainingTokens", -1));
                     System.out.println(logTag + "  timestamp: " + spResponse.optString("timestamp", "unknown"));
+                    
+                    // ═══════════════════════════════════════════════════════════
+                    // M3.4: VERIFY AND PERSIST PAYMENT RECEIPT
+                    // ═══════════════════════════════════════════════════════════
+                    
+                    if (spResponse.has("paymentReceipt")) {
+                        JSONObject receipt = spResponse.getJSONObject("paymentReceipt");
+                        
+                        System.out.println(logTag + "═══════════════════════════════════════════════════");
+                        System.out.println(logTag + "M3.4: Verifying SP Payment Receipt");
+                        System.out.println(logTag + "═══════════════════════════════════════════════════");
+                        
+                        // Verify receipt signature using cached SP public key
+                        if (!verifyPaymentReceipt(receipt)) {
+                            System.err.println(logTag + "❌ CRITICAL: Receipt signature verification FAILED");
+                            System.err.println(logTag + "Settlement accepted but receipt invalid - SECURITY VIOLATION");
+                            return false;
+                        }
+                        
+                        System.out.println(logTag + "✓ Receipt signature verified successfully");
+                        
+                        // Persist receipt as immutable proof of settlement
+                        persistPaymentReceipt(receipt);
+                        
+                        // Store for CO forwarding (M3.4)
+                        lastPaymentReceipt = receipt;
+                        
+                        System.out.println(logTag + "✓✓✓ PAYMENT RECEIPT VERIFIED AND PERSISTED ✓✓✓");
+                        System.out.println(logTag + "  Receipt ID: " + receipt.optString("receiptId", "unknown"));
+                        System.out.println(logTag + "  Payment finality established via SP signature");
+                        System.out.println(logTag + "  Receipt ready for CO forwarding");
+                    } else {
+                        System.err.println(logTag + "⚠️  Warning: No payment receipt in settlement response");
+                    }
+                    
                     return true;
                     
                 } else {
@@ -1356,5 +1400,91 @@ private static String extractCN(X509Certificate cert) {
         return java.util.Arrays.stream(desired)
             .filter(d -> java.util.Arrays.asList(supported).contains(d))
             .toArray(String[]::new);
+    }
+    
+    /**
+     * M3.4: Verify payment receipt signature using SP public key.
+     * Validates that SP digitally signed the canonical receipt representation.
+     */
+    private static boolean verifyPaymentReceipt(JSONObject receipt) {
+        String logTag = "[M3.4-VERIFY] ";
+        try {
+            // Extract receipt fields
+            if (!receipt.has("canonicalReceipt") || !receipt.has("receiptSignature") || !receipt.has("signatureAlg")) {
+                System.err.println(logTag + "❌ Missing required receipt fields");
+                return false;
+            }
+            
+            String canonicalReceipt = receipt.getString("canonicalReceipt");
+            String receiptSignatureB64 = receipt.getString("receiptSignature");
+            String signatureAlg = receipt.getString("signatureAlg");
+            
+            System.out.println(logTag + "Verifying receipt signature...");
+            System.out.println(logTag + "  Canonical receipt: " + canonicalReceipt);
+            System.out.println(logTag + "  Signature algorithm: " + signatureAlg);
+            
+            // Verify SP public key is available (cached from mTLS handshake)
+            if (spPublicKey == null) {
+                System.err.println(logTag + "❌ SP public key not available");
+                return false;
+            }
+            
+            // Verify signature using SP's public key
+            byte[] receiptBytes = canonicalReceipt.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            byte[] signatureBytes = Base64.getDecoder().decode(receiptSignatureB64);
+            
+            Signature sig = Signature.getInstance(signatureAlg);
+            sig.initVerify(spPublicKey);
+            sig.update(receiptBytes);
+            boolean valid = sig.verify(signatureBytes);
+            
+            if (valid) {
+                System.out.println(logTag + "✓ SP signature verified successfully (RSA-2048, SHA256withRSA)");
+                System.out.println(logTag + "✓ Non-repudiation: SP cannot deny issuing this receipt");
+                System.out.println(logTag + "✓ Payment finality established");
+                return true;
+            } else {
+                System.err.println(logTag + "❌ SP signature verification FAILED");
+                System.err.println(logTag + "❌ Receipt may be forged or tampered");
+                return false;
+            }
+            
+        } catch (Exception e) {
+            System.err.println(logTag + "❌ Receipt verification error: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * M3.4: Persist payment receipt as immutable proof of settlement.
+     * Stored locally for audit and dispute resolution.
+     */
+    private static void persistPaymentReceipt(JSONObject receipt) {
+        String logTag = "[M3.4-PERSIST] ";
+        try {
+            String receiptId = receipt.optString("receiptId", "unknown");
+            String receiptDir = "/app/keystore/receipts";
+            java.nio.file.Path dirPath = java.nio.file.Paths.get(receiptDir);
+            
+            // Ensure directory exists
+            if (!java.nio.file.Files.exists(dirPath)) {
+                java.nio.file.Files.createDirectories(dirPath);
+            }
+            
+            // Write receipt to file
+            String filename = receiptDir + "/receipt_" + receiptId + ".json";
+            try (java.io.FileWriter writer = new java.io.FileWriter(filename)) {
+                writer.write(receipt.toString(2));
+            }
+            
+            System.out.println(logTag + "✓ Receipt persisted: " + filename);
+            System.out.println(logTag + "✓ Immutable proof of settlement stored");
+            System.out.println(logTag + "✓ Available for offline third-party verification");
+            
+        } catch (Exception e) {
+            System.err.println(logTag + "⚠️  Warning: Could not persist receipt: " + e.getMessage());
+            // Non-fatal - receipt still verified
+        }
     }
 }

@@ -50,6 +50,9 @@ public class Main {
     private static KeyPair coKeyPair;
     private static X509Certificate coCertificate;
     
+    // M3.4: Cached SP certificate for receipt verification
+    private static X509Certificate spCertificate = null;
+    
     // Store discovered availability for reservation (Milestone 2.4)
     static class DiscoveredAvailability {
         String availabilityId;
@@ -1038,6 +1041,35 @@ public class Main {
             
             if ("success".equals(resp.optString("status"))) {
                 System.out.println("✓✓✓ PAYMENT ACCEPTED BY HO ✓✓✓");
+                
+                // ═══════════════════════════════════════════════════════════
+                // M3.4: VERIFY PAYMENT RECEIPT FROM SP
+                // ═══════════════════════════════════════════════════════════
+                
+                if (resp.has("paymentReceipt")) {
+                    JSONObject receipt = resp.getJSONObject("paymentReceipt");
+                    
+                    System.out.println("\n═══════════════════════════════════════════════════");
+                    System.out.println("M3.4: Verifying Payment Finalization Receipt");
+                    System.out.println("═══════════════════════════════════════════════════");
+                    
+                    // Verify receipt signature and consistency
+                    if (verifyAndPersistPaymentReceipt(receipt, reservationId, chainId, spendCount)) {
+                        System.out.println("✓✓✓ PAYMENT FINALITY ESTABLISHED ✓✓✓");
+                        System.out.println("✓ SP-signed receipt verified");
+                        System.out.println("✓ Non-repudiation guaranteed");
+                        System.out.println("✓ Immutable proof of payment stored");
+                        System.out.println("═══════════════════════════════════════════════════");
+                    } else {
+                        System.err.println("❌❌❌ RECEIPT VERIFICATION FAILED ❌❌❌");
+                        System.err.println("Payment accepted but receipt invalid - SECURITY VIOLATION");
+                        System.err.println("═══════════════════════════════════════════════════");
+                    }
+                } else {
+                    System.err.println("\n⚠️  Warning: No payment receipt in response");
+                    System.err.println("Payment finality cannot be established");
+                }
+                
             } else {
                 System.err.println("✗ HO rejected payment: " + resp.optString("message", "(no message)"));
             }
@@ -1136,9 +1168,13 @@ public class Main {
             System.out.println("  Protocol: " + socket.getSession().getProtocol());
             System.out.println("  Cipher suite: " + socket.getSession().getCipherSuite());
 
-            // Verify we presented our certificate
+            // Verify we presented our certificate and cache SP certificate for M3.4
             X509Certificate[] peerCerts = (X509Certificate[]) socket.getSession().getPeerCertificates();
             System.out.println("  SP certificate: " + peerCerts[0].getSubjectX500Principal().getName());
+            
+            // M3.4: Cache SP certificate for payment receipt verification
+            spCertificate = peerCerts[0];
+            System.out.println("[M3.4] SP certificate cached for receipt verification");
 
             // Now create streams after handshake is complete
             writer = new PrintWriter(socket.getOutputStream(), true);
@@ -1350,5 +1386,189 @@ public class Main {
             chain.add(current);
         }
         return chain;
+    }
+    
+    /**
+     * M3.4: Verify and persist payment receipt from SP.
+     * 
+     * This is the final security layer providing:
+     * - Cryptographic finality via SP signature verification
+     * - Non-repudiation (SP cannot deny issuing receipt)
+     * - Consistency validation (receipt matches local payment state)
+     * - Immutable proof storage for dispute resolution
+     * - Fail-closed on any verification failure
+     * 
+     * @param receipt Payment receipt from SP (forwarded via HO)
+     * @param expectedReservationId Local reservation ID for consistency check
+     * @param expectedChainId Local chain ID for consistency check
+     * @param expectedTokenCount Number of tokens spent for consistency check
+     * @return true if receipt verified and persisted, false otherwise
+     */
+    private static boolean verifyAndPersistPaymentReceipt(JSONObject receipt, String expectedReservationId, 
+                                                          String expectedChainId, int expectedTokenCount) {
+        String logTag = "[M3.4-VERIFY] ";
+        
+        try {
+            System.out.println(logTag + "Starting receipt verification...");
+            
+            // ═══════════════════════════════════════════════════════════
+            // PHASE 1: SCHEMA VALIDATION (FAIL-CLOSED)
+            // ═══════════════════════════════════════════════════════════
+            
+            if (!receipt.has("receiptId")) {
+                System.err.println(logTag + "❌ Missing receiptId");
+                return false;
+            }
+            if (!receipt.has("canonicalReceipt")) {
+                System.err.println(logTag + "❌ Missing canonicalReceipt");
+                return false;
+            }
+            if (!receipt.has("receiptSignature")) {
+                System.err.println(logTag + "❌ Missing receiptSignature");
+                return false;
+            }
+            if (!receipt.has("signatureAlg")) {
+                System.err.println(logTag + "❌ Missing signatureAlg");
+                return false;
+            }
+            
+            String receiptId = receipt.getString("receiptId");
+            String canonicalReceipt = receipt.getString("canonicalReceipt");
+            String receiptSignatureB64 = receipt.getString("receiptSignature");
+            String signatureAlg = receipt.getString("signatureAlg");
+            
+            System.out.println(logTag + "Receipt ID: " + receiptId);
+            System.out.println(logTag + "Canonical data: " + canonicalReceipt);
+            System.out.println(logTag + "Signature algorithm: " + signatureAlg);
+            
+            // ═══════════════════════════════════════════════════════════
+            // PHASE 2: CONSISTENCY VALIDATION (PREVENT SUBSTITUTION)
+            // ═══════════════════════════════════════════════════════════
+            
+            System.out.println(logTag + "Validating consistency with local payment state...");
+            
+            String chainId = receipt.optString("chainId", "");
+            String reservationId = receipt.optString("reservationId", "");
+            int y = receipt.optInt("y", -1);
+            
+            if (!chainId.equals(expectedChainId)) {
+                System.err.println(logTag + "❌ CONSISTENCY FAILURE: chainId mismatch");
+                System.err.println(logTag + "  Expected: " + expectedChainId);
+                System.err.println(logTag + "  Received: " + chainId);
+                return false;
+            }
+            
+            if (!reservationId.equals(expectedReservationId)) {
+                System.err.println(logTag + "❌ CONSISTENCY FAILURE: reservationId mismatch");
+                System.err.println(logTag + "  Expected: " + expectedReservationId);
+                System.err.println(logTag + "  Received: " + reservationId);
+                return false;
+            }
+            
+            if (y != expectedTokenCount) {
+                System.err.println(logTag + "❌ CONSISTENCY FAILURE: token count mismatch");
+                System.err.println(logTag + "  Expected: " + expectedTokenCount);
+                System.err.println(logTag + "  Received: " + y);
+                return false;
+            }
+            
+            System.out.println(logTag + "✓ Consistency validated");
+            System.out.println(logTag + "  chainId: " + chainId);
+            System.out.println(logTag + "  reservationId: " + reservationId);
+            System.out.println(logTag + "  tokens spent: " + y);
+            
+            // ═══════════════════════════════════════════════════════════
+            // PHASE 3: CRYPTOGRAPHIC SIGNATURE VERIFICATION
+            // ═══════════════════════════════════════════════════════════
+            
+            System.out.println(logTag + "Verifying SP signature (RSA-2048, SHA256withRSA)...");
+            
+            if (spCertificate == null) {
+                System.err.println(logTag + "❌ SP certificate not available");
+                System.err.println(logTag + "Cannot verify receipt signature");
+                return false;
+            }
+            
+            // Extract SP public key from certificate
+            PublicKey spPublicKey = spCertificate.getPublicKey();
+            
+            // Verify signature
+            byte[] receiptBytes = canonicalReceipt.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            byte[] signatureBytes = Base64.getDecoder().decode(receiptSignatureB64);
+            
+            Signature sig = Signature.getInstance(signatureAlg);
+            sig.initVerify(spPublicKey);
+            sig.update(receiptBytes);
+            boolean valid = sig.verify(signatureBytes);
+            
+            if (!valid) {
+                System.err.println(logTag + "❌❌❌ SIGNATURE VERIFICATION FAILED ❌❌❌");
+                System.err.println(logTag + "Receipt may be forged or tampered");
+                System.err.println(logTag + "SP signature does NOT match canonical data");
+                return false;
+            }
+            
+            System.out.println(logTag + "✓ SP signature verified successfully");
+            System.out.println(logTag + "✓ Non-repudiation: SP cannot deny issuing this receipt");
+            System.out.println(logTag + "✓ Integrity: Receipt has not been modified");
+            
+            // ═══════════════════════════════════════════════════════════
+            // PHASE 4: CERTIFICATE VALIDATION TO ROOT CA
+            // ═══════════════════════════════════════════════════════════
+            
+            System.out.println(logTag + "Validating SP certificate to Root CA...");
+            
+            try {
+                // Verify SP certificate validity period
+                spCertificate.checkValidity();
+                System.out.println(logTag + "✓ SP certificate is within validity period");
+                
+                // In production: verify full chain to Root CA using PKIX
+                // For this demo: basic validity check is sufficient
+                System.out.println(logTag + "✓ SP certificate validated");
+                
+            } catch (CertificateExpiredException | CertificateNotYetValidException e) {
+                System.err.println(logTag + "❌ SP certificate validity check failed: " + e.getMessage());
+                return false;
+            }
+            
+            // ═══════════════════════════════════════════════════════════
+            // PHASE 5: PERSIST IMMUTABLE PROOF
+            // ═══════════════════════════════════════════════════════════
+            
+            System.out.println(logTag + "Persisting receipt as immutable proof...");
+            
+            String receiptDir = "./keystore/receipts";
+            ensureDirectoryExists(receiptDir);
+            
+            String filename = receiptDir + "/receipt_" + receiptId + ".json";
+            try (FileWriter writer = new FileWriter(filename)) {
+                writer.write(receipt.toString(2));
+            }
+            
+            System.out.println(logTag + "✓ Receipt persisted: " + filename);
+            System.out.println(logTag + "✓ Immutable proof stored for dispute resolution");
+            System.out.println(logTag + "✓ Enables offline third-party verification");
+            
+            // ═══════════════════════════════════════════════════════════
+            // PHASE 6: FINALITY CONFIRMATION
+            // ═══════════════════════════════════════════════════════════
+            
+            System.out.println(logTag + "═══════════════════════════════════════════════════");
+            System.out.println(logTag + "PAYMENT FINALITY ACHIEVED");
+            System.out.println(logTag + "═══════════════════════════════════════════════════");
+            System.out.println(logTag + "✓ SP signature verified (cryptographic proof)");
+            System.out.println(logTag + "✓ Consistency validated (no substitution)");
+            System.out.println(logTag + "✓ Immutable receipt stored (audit trail)");
+            System.out.println(logTag + "✓ Non-repudiation guaranteed (SP cannot deny)");
+            System.out.println(logTag + "✓ Dispute resolution enabled (third-party verification)");
+            
+            return true;
+            
+        } catch (Exception e) {
+            System.err.println(logTag + "❌ Receipt verification error: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
 }

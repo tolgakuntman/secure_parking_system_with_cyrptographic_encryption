@@ -1239,11 +1239,82 @@ public class Main {
             }
 
             // ═══════════════════════════════════════════════════════════
-            // PHASE 6: BUILD AUTHENTICATED SUCCESS RESPONSE
+            // PHASE 6: M3.4 - CRYPTOGRAPHICALLY VERIFIABLE PAYMENT RECEIPT
             // ═══════════════════════════════════════════════════════════
             
             String timestamp = java.time.Instant.now().toString();
+            String receiptId = UUID.randomUUID().toString();
             
+            System.out.println(logTag + "═══════════════════════════════════════════════════");
+            System.out.println(logTag + "M3.4: Generating Cryptographically Verifiable Receipt");
+            System.out.println(logTag + "═══════════════════════════════════════════════════");
+            
+            // Build canonical receipt representation (security-relevant fields only)
+            // Format: field=value|field=value (pipe-delimited, deterministic ordering)
+            String canonicalReceipt = String.format(
+                "receiptId=%s|chainId=%s|reservationId=%s|availabilityId=%s|y=%d|newLastSpentIndex=%d|timestamp=%s|hoIdentity=%s",
+                receiptId, chainId, reservationId, availabilityId, y, newLastSpentIndex, timestamp, clientCN
+            );
+            
+            System.out.println(logTag + "Canonical Receipt Data:");
+            System.out.println(logTag + "  " + canonicalReceipt);
+            
+            // Sign canonical receipt with SP's RSA-2048 private key
+            byte[] receiptSignature = null;
+            String receiptSignatureB64 = null;
+            try {
+                Signature sig = Signature.getInstance("SHA256withRSA");
+                sig.initSign(spKeyPair.getPrivate());
+                sig.update(canonicalReceipt.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                receiptSignature = sig.sign();
+                receiptSignatureB64 = Base64.getEncoder().encodeToString(receiptSignature);
+                
+                System.out.println(logTag + "✓ Receipt signed with SP private key (RSA-2048)");
+                System.out.println(logTag + "  Algorithm: SHA256withRSA");
+                System.out.println(logTag + "  Signature length: " + receiptSignature.length + " bytes");
+                
+            } catch (Exception e) {
+                System.err.println(logTag + "❌ CRITICAL: Failed to sign receipt: " + e.getMessage());
+                e.printStackTrace();
+                throw new RuntimeException("Receipt signing failed", e);
+            }
+            
+            // Compute SP certificate fingerprint (SHA-256) for receipt binding
+            String spCertFingerprint = null;
+            try {
+                MessageDigest md = MessageDigest.getInstance("SHA-256");
+                byte[] certDigest = md.digest(spCertificate.getEncoded());
+                spCertFingerprint = bytesToHex(certDigest);
+                System.out.println(logTag + "✓ SP certificate fingerprint: " + spCertFingerprint.substring(0, 32) + "...");
+            } catch (Exception e) {
+                System.err.println(logTag + "Warning: Could not compute SP cert fingerprint: " + e.getMessage());
+                spCertFingerprint = "unknown";
+            }
+            
+            // Build payment receipt JSON structure
+            JSONObject paymentReceipt = new JSONObject();
+            paymentReceipt.put("receiptId", receiptId);
+            paymentReceipt.put("chainId", chainId);
+            paymentReceipt.put("reservationId", reservationId);
+            paymentReceipt.put("availabilityId", availabilityId);
+            paymentReceipt.put("y", y);
+            paymentReceipt.put("newLastSpentIndex", newLastSpentIndex);
+            paymentReceipt.put("timestamp", timestamp);
+            paymentReceipt.put("hoIdentity", clientCN);
+            paymentReceipt.put("canonicalReceipt", canonicalReceipt);
+            paymentReceipt.put("receiptSignature", receiptSignatureB64);
+            paymentReceipt.put("signatureAlg", "SHA256withRSA");
+            paymentReceipt.put("spCertFingerprint", spCertFingerprint);
+            
+            System.out.println(logTag + "✓✓✓ PAYMENT RECEIPT GENERATED ✓✓✓");
+            System.out.println(logTag + "  Receipt ID: " + receiptId);
+            System.out.println(logTag + "  Non-repudiation: SP signature binds finality to payment");
+            System.out.println(logTag + "  Auditability: Receipt enables offline third-party verification");
+            System.out.println(auditTag + "RECEIPT_GENERATED{receiptId=" + receiptId + 
+                             ", chainId=" + chainId + 
+                             ", reservationId=" + reservationId + "}");
+            
+            // Build success response with embedded receipt
             response.put("status", "success");
             response.put("message", "Settlement accepted");
             response.put("chainId", chainId);
@@ -1252,9 +1323,7 @@ public class Main {
             response.put("tokensConsumed", y);
             response.put("remainingTokens", chainMeta.x - newLastSpentIndex);
             response.put("timestamp", timestamp);
-            
-            // Optional: Include SP signature over settlement for audit trail
-            // (Would require signing canonical data: chainId|reservationId|newLastSpentIndex|timestamp)
+            response.put("paymentReceipt", paymentReceipt); // M3.4: Cryptographically verifiable receipt
 
         } catch (IllegalArgumentException e) {
             System.err.println(logTag + "❌ VALIDATION ERROR: " + e.getMessage());

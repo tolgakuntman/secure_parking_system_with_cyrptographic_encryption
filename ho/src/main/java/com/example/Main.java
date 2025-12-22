@@ -78,6 +78,21 @@ public class Main {
     private static final ConcurrentMap<String, Long> chainSpendTracking = new ConcurrentHashMap<>();
     // Cached SP public key (populated during publishAvailability mTLS handshake)
     private static volatile java.security.PublicKey spPublicKey = null;
+    
+    // M3.3: Double-spend test configuration
+    private static final boolean TEST_DOUBLE_SPEND = "true".equalsIgnoreCase(System.getenv().getOrDefault("TEST_DOUBLE_SPEND", "false"));
+    
+    // Store last settlement for replay test
+    static class LastSettlement {
+        String reservationId;
+        String chainId;
+        int x;
+        int startIndex;
+        org.json.JSONArray tokensToSpend;
+        String rootB64;
+        String rootSignatureB64;
+    }
+    private static LastSettlement lastSettlement = null;
 
     public static void main(String[] args) {
         // Register BC provider (needed for CSR + extensions reliably)
@@ -976,6 +991,50 @@ private static String extractCN(X509Certificate cert) {
                 System.out.println(logTag + "Payment REJECTED: SP settlement failed");
                 return response;
             }
+            
+            // M3.3: DOUBLE-SPEND TEST - Store settlement for replay test
+            if (TEST_DOUBLE_SPEND) {
+                System.out.println(logTag + "⚠️  TEST_DOUBLE_SPEND enabled - storing settlement for replay");
+                lastSettlement = new LastSettlement();
+                lastSettlement.reservationId = reservationId;
+                lastSettlement.chainId = chainId;
+                lastSettlement.x = x;
+                lastSettlement.startIndex = startIndex;
+                lastSettlement.tokensToSpend = tokensArray;
+                lastSettlement.rootB64 = rootB64;
+                lastSettlement.rootSignatureB64 = rootSignatureB64;
+                
+                // Schedule replay attempt in 3 seconds
+                new Thread(() -> {
+                    try {
+                        Thread.sleep(3000);
+                        System.out.println("\n" + logTag + "═══════════════════════════════════════════════════");
+                        System.out.println(logTag + "⚠️  NEGATIVE TEST: Attempting Double-Spend Replay");
+                        System.out.println(logTag + "═══════════════════════════════════════════════════");
+                        
+                        boolean replayResult = settleWithSP(
+                            lastSettlement.reservationId,
+                            lastSettlement.chainId,
+                            lastSettlement.x,
+                            lastSettlement.startIndex,
+                            lastSettlement.tokensToSpend,
+                            lastSettlement.rootB64,
+                            lastSettlement.rootSignatureB64
+                        );
+                        
+                        if (replayResult) {
+                            System.err.println(logTag + "❌❌❌ SECURITY FAILURE: SP ACCEPTED DOUBLE-SPEND ❌❌❌");
+                        } else {
+                            System.out.println(logTag + "✓✓✓ SECURITY SUCCESS: SP REJECTED DOUBLE-SPEND ✓✓✓");
+                            System.out.println(logTag + "Double-spend protection working correctly!");
+                        }
+                        System.out.println(logTag + "═══════════════════════════════════════════════════\n");
+                        
+                    } catch (Exception e) {
+                        System.err.println(logTag + "Replay test error: " + e.getMessage());
+                    }
+                }).start();
+            }
 
             // 5. STORE PAYMENT RECORD (only after successful settlement)
             String callerFingerprint = "unknown";
@@ -1070,27 +1129,75 @@ private static String extractCN(X509Certificate cert) {
      * HO notifies SP of the new spent progress and SP responds with acceptance or rejection.
      * Returns true if settlement succeeds, false otherwise.
      */
+    /**
+     * M3.3: Settlement Protocol - HO → SP with Hardened mTLS
+     * 
+     * Security-focused "token redemption" protocol that finalizes parking payment
+     * and prevents replay/double spending. This function:
+     * - Establishes hardened mTLS connection to SP (TLS 1.3/1.2, AEAD ciphers)
+     * - Explicitly calls startHandshake() before stream creation
+     * - Submits minimal JSON settlement request with cryptographic proof
+     * - Receives authenticated success response from SP
+     * 
+     * @param reservationId The reservation being paid for
+     * @param chainId The token chain identifier
+     * @param x Total chain length
+     * @param startIndex First token index spent in this payment
+     * @param tokensToSpend Array of tokens being spent
+     * @param rootB64 Base64-encoded chain root (for cryptographic verification)
+     * @param rootSignatureB64 Base64-encoded SP signature over root
+     * @return true if SP accepts settlement, false otherwise
+     */
     private static boolean settleWithSP(String reservationId, String chainId, int x, int startIndex, 
                                        org.json.JSONArray tokensToSpend, String rootB64, String rootSignatureB64) {
         String logTag = "[SETTLE] ";
         try {
-            int lastSpentIndex = startIndex + tokensToSpend.length() - 1;
-            String lastTokenSpent = tokensToSpend.getString(tokensToSpend.length() - 1);
+            // Calculate settlement parameters
+            int y = tokensToSpend.length(); // Number of tokens spent
+            // newLastSpentIndex = total tokens spent (SP tracks cumulative spend count)
+            // When spending indices [startIndex, startIndex+y-1], the new count is startIndex+y
+            int newLastSpentIndex = startIndex + y; // Total tokens spent after this payment
+            String lastTokenSpent = tokensToSpend.getString(tokensToSpend.length() - 1); // Cryptographic proof
+            
+            // Optional: include first token as additional proof
+            String firstTokenSpent = tokensToSpend.getString(0);
 
-            // Build settlement request
+            // ═══════════════════════════════════════════════════════════
+            // BUILD MINIMAL SECURITY-CRITICAL SETTLEMENT REQUEST
+            // ═══════════════════════════════════════════════════════════
+            
             JSONObject settleRequest = new JSONObject();
             settleRequest.put("method", "settle");
+            
+            // Required fields (strict schema)
             settleRequest.put("chainId", chainId);
             settleRequest.put("reservationId", reservationId);
-            settleRequest.put("newLastSpentIndex", lastSpentIndex);
-            settleRequest.put("lastTokenSpent", lastTokenSpent);
-            settleRequest.put("x", x);
-            settleRequest.put("root", rootB64);
-            settleRequest.put("rootSignature", rootSignatureB64);
+            settleRequest.put("y", y); // Number of tokens spent
+            settleRequest.put("newLastSpentIndex", newLastSpentIndex);
+            settleRequest.put("lastTokenSpent", lastTokenSpent); // Cryptographic proof
+            
+            // Optional but recommended for audit trail
+            settleRequest.put("availabilityId", publishedAvailabilityId != null ? publishedAvailabilityId : "unknown");
+            settleRequest.put("x", x); // Total chain length
+            settleRequest.put("root", rootB64); // For cryptographic verification
+            settleRequest.put("rootSignature", rootSignatureB64); // For authenticity verification
+            settleRequest.put("firstTokenSpent", firstTokenSpent); // Additional proof
+            settleRequest.put("startIndex", startIndex); // Audit information
 
-            System.out.println(logTag + "sending settle to SP for chainId=" + chainId + " newLastSpentIndex=" + lastSpentIndex);
+            System.out.println(logTag + "═══════════════════════════════════════════════════");
+            System.out.println(logTag + "Preparing Settlement Request to SP");
+            System.out.println(logTag + "  chainId: " + chainId);
+            System.out.println(logTag + "  reservationId: " + reservationId);
+            System.out.println(logTag + "  y (tokens spent): " + y);
+            System.out.println(logTag + "  newLastSpentIndex: " + newLastSpentIndex);
+            System.out.println(logTag + "  x (chain length): " + x);
+            System.out.println(logTag + "═══════════════════════════════════════════════════");
 
-            // Set up mTLS connection to SP (reuse pattern from publishAvailability)
+            // ═══════════════════════════════════════════════════════════
+            // ESTABLISH HARDENED mTLS CONNECTION TO SP
+            // ═══════════════════════════════════════════════════════════
+            
+            // Load HO keystore (client certificate for mTLS)
             KeyStore keyStore = KeyStore.getInstance("PKCS12");
             try (FileInputStream fis = new FileInputStream(HO_KEYSTORE_PATH)) {
                 keyStore.load(fis, KEYSTORE_PASSWORD.toCharArray());
@@ -1098,6 +1205,7 @@ private static String extractCN(X509Certificate cert) {
             KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
             kmf.init(keyStore, KEYSTORE_PASSWORD.toCharArray());
 
+            // Load truststore (to verify SP certificate)
             KeyStore trustStore = KeyStore.getInstance("PKCS12");
             try (FileInputStream fis = new FileInputStream(TRUSTSTORE_PATH)) {
                 trustStore.load(fis, TRUSTSTORE_PASSWORD.toCharArray());
@@ -1105,43 +1213,101 @@ private static String extractCN(X509Certificate cert) {
             TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             tmf.init(trustStore);
 
+            // Create SSLContext with TLS 1.3/1.2 only
             SSLContext sslContext = SSLContext.getInstance("TLSv1.3");
             sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), new java.security.SecureRandom());
 
             SSLSocketFactory factory = sslContext.getSocketFactory();
             try (SSLSocket socket = (SSLSocket) factory.createSocket(SP_HOST, SP_PORT)) {
+                
+                // ═══════════════════════════════════════════════════════════
+                // CONFIGURE HARDENED TLS PARAMETERS
+                // ═══════════════════════════════════════════════════════════
+                
+                // Enforce TLS 1.3 and TLS 1.2 only (modern, secure versions)
                 socket.setEnabledProtocols(new String[]{"TLSv1.3", "TLSv1.2"});
-                socket.setEnabledCipherSuites(new String[]{
-                    "TLS_AES_256_GCM_SHA384",
-                    "TLS_CHACHA20_POLY1305_SHA256",
-                    "TLS_AES_128_GCM_SHA256"
-                });
+                
+                // Enforce AEAD cipher suites only (GCM, ChaCha20-Poly1305)
+                String[] aeadCiphers = new String[]{
+                    "TLS_AES_256_GCM_SHA384",           // TLS 1.3
+                    "TLS_CHACHA20_POLY1305_SHA256",      // TLS 1.3
+                    "TLS_AES_128_GCM_SHA256",            // TLS 1.3
+                    "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",   // TLS 1.2
+                    "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"    // TLS 1.2
+                };
+                socket.setEnabledCipherSuites(aeadCiphers);
 
-                // Send settlement request
+                System.out.println(logTag + "✓ TLS hardening applied (TLS 1.3/1.2, AEAD ciphers only)");
+
+                // ═══════════════════════════════════════════════════════════
+                // EXPLICIT HANDSHAKE (SECURITY REQUIREMENT)
+                // ═══════════════════════════════════════════════════════════
+                
+                System.out.println(logTag + "Initiating explicit TLS handshake...");
+                socket.startHandshake();
+                System.out.println(logTag + "✓ TLS handshake completed successfully");
+                System.out.println(logTag + "  Protocol: " + socket.getSession().getProtocol());
+                System.out.println(logTag + "  Cipher Suite: " + socket.getSession().getCipherSuite());
+
+                // Verify SP certificate
+                X509Certificate[] serverCerts = (X509Certificate[]) socket.getSession().getPeerCertificates();
+                System.out.println(logTag + "✓ SP certificate verified: " + serverCerts[0].getSubjectX500Principal().getName());
+
+                // ═══════════════════════════════════════════════════════════
+                // SEND SETTLEMENT REQUEST (AFTER HANDSHAKE)
+                // ═══════════════════════════════════════════════════════════
+                
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                 out.println(settleRequest.toString());
                 out.flush();
+                
+                System.out.println(logTag + "→ Settlement request sent to SP");
 
-                // Read response
+                // ═══════════════════════════════════════════════════════════
+                // RECEIVE AUTHENTICATED RESPONSE
+                // ═══════════════════════════════════════════════════════════
+                
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 String response = in.readLine();
+                
                 if (response == null) {
-                    System.err.println(logTag + "SP settlement: no response from SP");
+                    System.err.println(logTag + "❌ No response from SP");
                     return false;
                 }
 
                 JSONObject spResponse = new JSONObject(response);
-                if ("success".equals(spResponse.optString("status"))) {
-                    System.out.println(logTag + "SP response: SUCCESS - accepted settlement for chainId=" + chainId);
+                String status = spResponse.optString("status", "unknown");
+                
+                if ("success".equals(status)) {
+                    System.out.println(logTag + "✓✓✓ SP SETTLEMENT ACCEPTED ✓✓✓");
+                    System.out.println(logTag + "  chainId: " + chainId);
+                    System.out.println(logTag + "  acceptedLastSpentIndex: " + spResponse.optInt("acceptedLastSpentIndex", -1));
+                    System.out.println(logTag + "  tokensConsumed: " + spResponse.optInt("tokensConsumed", y));
+                    System.out.println(logTag + "  remainingTokens: " + spResponse.optInt("remainingTokens", -1));
+                    System.out.println(logTag + "  timestamp: " + spResponse.optString("timestamp", "unknown"));
                     return true;
+                    
                 } else {
                     String message = spResponse.optString("message", "unknown error");
-                    System.err.println(logTag + "SP response: REJECT - " + message);
+                    String reason = spResponse.optString("reason", "unspecified");
+                    
+                    System.err.println(logTag + "❌❌❌ SP SETTLEMENT REJECTED ❌❌❌");
+                    System.err.println(logTag + "  Reason: " + reason);
+                    System.err.println(logTag + "  Message: " + message);
+                    
+                    // Check for double-spend detection
+                    if ("double_spend".equals(reason)) {
+                        System.err.println(logTag + "⚠️  DOUBLE_SPEND_DETECTED by SP");
+                        System.err.println(logTag + "  currentLastSpentIndex: " + spResponse.optInt("currentLastSpentIndex", -1));
+                        System.err.println(logTag + "  rejectedNewIndex: " + spResponse.optInt("rejectedNewIndex", -1));
+                    }
+                    
                     return false;
                 }
             }
+            
         } catch (Exception e) {
-            System.err.println(logTag + "settlement error: " + e.getMessage());
+            System.err.println(logTag + "❌ Settlement error: " + e.getMessage());
             e.printStackTrace();
             return false;
         }

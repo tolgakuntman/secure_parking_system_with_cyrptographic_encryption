@@ -59,10 +59,25 @@ public class Main {
     private static String publishedAvailabilityId; // Store for validation
     // In-memory payment attempts storage (keyed by reservationId)
     private static final ConcurrentMap<String, PaymentRecord> payments = new ConcurrentHashMap<>();
-    // Reservation registry: reservationId -> created timestamp (for binding payment to valid reservation)
-    private static final ConcurrentMap<String, Instant> reservationRegistry = new ConcurrentHashMap<>();
+    // Simple struct to hold reservation metadata we will need for M3.2 policy checks
+    static class ReservationInfo {
+        public final Instant createdAt;
+        public final int priceTokens;
+        public final String verdict; // "OK" or "NOT_OK"
+
+        public ReservationInfo(Instant createdAt, int priceTokens, String verdict) {
+            this.createdAt = createdAt;
+            this.priceTokens = priceTokens;
+            this.verdict = verdict;
+        }
+    }
+
+    // Reservation registry: reservationId -> ReservationInfo (for binding payment to valid reservation)
+    private static final ConcurrentMap<String, ReservationInfo> reservationRegistry = new ConcurrentHashMap<>();
     // Double-spend prevention: chainId -> lastSpentIndex (reject if new startIndex <= lastSpentIndex)
     private static final ConcurrentMap<String, Long> chainSpendTracking = new ConcurrentHashMap<>();
+    // Cached SP public key (populated during publishAvailability mTLS handshake)
+    private static volatile java.security.PublicKey spPublicKey = null;
 
     public static void main(String[] args) {
         // Register BC provider (needed for CSR + extensions reliably)
@@ -343,9 +358,15 @@ public class Main {
                 System.out.println("  Protocol: " + socket.getSession().getProtocol());
                 System.out.println("  Cipher suite: " + socket.getSession().getCipherSuite());
 
-                // Verify we're connected to SP
+                // Verify we're connected to SP and cache SP public key for M3.2 signature checks
                 X509Certificate[] peerCerts = (X509Certificate[]) socket.getSession().getPeerCertificates();
                 System.out.println("  SP certificate: " + peerCerts[0].getSubjectX500Principal().getName());
+                try {
+                    spPublicKey = peerCerts[0].getPublicKey();
+                    System.out.println("[M3.2] SP public key cached from mTLS handshake");
+                } catch (Exception e) {
+                    System.err.println("[M3.2] Failed to cache SP public key: " + e.getMessage());
+                }
 
                 // Now create streams after handshake is complete
                 writer = new PrintWriter(socket.getOutputStream(), true);
@@ -779,7 +800,7 @@ private static String extractCN(X509Certificate cert) {
             System.out.println("Generated Reservation ID: " + reservationId);
             
             // Register reservation in-memory (for payment binding validation)
-            reservationRegistry.put(reservationId, Instant.now());
+            reservationRegistry.put(reservationId, new ReservationInfo(Instant.now(), PRICE_TOKENS, verdict));
 
             // Get HO identity
             String hoIdentity = null;
@@ -892,6 +913,9 @@ private static String extractCN(X509Certificate cert) {
 
             int tokenCount = tokensArray.length();
 
+            // Run local M3.2 checks (signature via SP public key, policy checks)
+            validatePaymentLocally(request);
+
             // 1. BINDING TO RESERVATION: verify reservationId exists
             if (!reservationRegistry.containsKey(reservationId)) {
                 throw new SecurityException("Reservation " + reservationId + " not found (invalid or expired)");
@@ -923,7 +947,7 @@ private static String extractCN(X509Certificate cert) {
             // Verify last token hashes to root (accounting for remaining hashes beyond tokenCount)
             byte[] computed = current;
             long lastIndex = startIndex + tokenCount - 1;
-            int hashesToRoot = x - (int) lastIndex;
+            int hashesToRoot = (int) (x - (startIndex + tokenCount));
             if (hashesToRoot < 0) throw new SecurityException("Invalid indices: chain length/x mismatch");
             for (int i = 0; i < hashesToRoot; i++) {
                 computed = sha256(computed);
@@ -1026,6 +1050,44 @@ private static String extractCN(X509Certificate cert) {
         if (parent != null && !Files.exists(parent)) {
             Files.createDirectories(parent);
         }
+    }
+
+    /**
+     * Perform local M3.2 payment validation checks before accepting payment:
+     *  - Verify `rootSignature` over `root` using cached SP public key
+     *  - Policy checks: reservation exists, verdict == "OK", token count matches price
+     * Throws SecurityException on any validation failure.
+     */
+    private static void validatePaymentLocally(org.json.JSONObject request) throws Exception {
+        String logTag = "[M3.2] ";
+
+        if (spPublicKey == null) throw new SecurityException("SP public key not available for signature verification");
+
+        // Signature check: verify rootSignature over root using SP public key
+        if (!request.has("root") || !request.has("rootSignature")) {
+            throw new SecurityException("Missing root/rootSignature for signature verification");
+        }
+        byte[] rootBytes = b64decode(request.getString("root"));
+        byte[] sigBytes = b64decode(request.getString("rootSignature"));
+
+        Signature sig = Signature.getInstance("SHA256withRSA");
+        sig.initVerify(spPublicKey);
+        sig.update(rootBytes);
+        boolean ok = sig.verify(sigBytes);
+        if (!ok) throw new SecurityException("root signature verification failed");
+        System.out.println(logTag + "root signature verified via cached SP public key");
+
+        // Policy checks: reservation exists and verdict OK and token count matches price
+        if (!request.has("reservationId")) throw new SecurityException("Missing reservationId for policy check");
+        String reservationId = request.getString("reservationId");
+        ReservationInfo info = reservationRegistry.get(reservationId);
+        if (info == null) throw new SecurityException("Reservation not found or expired");
+        if (!"OK".equals(info.verdict)) throw new SecurityException("Reservation verdict != OK");
+
+        if (!request.has("tokensToSpend")) throw new SecurityException("Missing tokensToSpend for policy check");
+        org.json.JSONArray tokensArray = request.getJSONArray("tokensToSpend");
+        if (tokensArray.length() != info.priceTokens) throw new SecurityException("Token count does not match priceTokens");
+        System.out.println(logTag + "policy checks passed (reservation verdict OK, token count matches)");
     }
 
     private static String[] intersect(String[] supported, String[] desired) {

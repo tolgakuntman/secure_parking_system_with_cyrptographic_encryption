@@ -962,56 +962,39 @@ public class Main {
      * Generates a REAL hash chain and sends valid tokens that HO will verify.
      */
     private static void sendPaymentToHO(DiscoveredAvailability avail, String reservationId) throws Exception {
-        System.out.println("\n--- Sending payment request to HO (Milestone 3.1 - Real Hash Chain) ---");
+        System.out.println("\n--- Sending payment request to HO (Milestone 3.2 - Using SP tokens) ---");
 
-        // Generate a REAL hash chain using SHA-256
-        String chainId = UUID.randomUUID().toString();
-        int x = 5; // full chain length (H^5(secret))
-        int startIndex = 1; // start spending from token[1]
-        int spendCount = 3; // spend 3 tokens
-        
-        // Generate a random secret
-        byte[] secret = new byte[32];
-        SecureRandom rnd = new SecureRandom();
-        rnd.nextBytes(secret);
-        
-        // Compute full chain: secret -> H(secret) -> H^2(secret) -> ... -> H^5(secret)
-        java.util.List<byte[]> fullChain = computeChain(secret, x);
-        
-        // Extract tokensToSpend: indices [startIndex, startIndex+spendCount)
-        // These are the actual preimages at those positions in the chain
-        java.util.List<byte[]> tokensToSpend = new java.util.ArrayList<>();
-        for (int i = startIndex; i < startIndex + spendCount && i < fullChain.size(); i++) {
-            tokensToSpend.add(fullChain.get(i));
-        }
-        
-        // root = H^x(secret) = fullChain.get(x) = the top of the chain
-        byte[] root = fullChain.get(x);
-        
-        // Convert to Base64 strings
+        // Acquire tokens from SP (use SP-issued rootSignature and tokens)
+        int x = 5; // request chain length
+        int startIndex = 0; // start spending from token[0]
+        int spendCount = avail.priceTokens; // spend exactly the number of tokens for the reservation
+
+        JSONObject tokenResponse = requestTokensFromSP(x);
+        String chainId = tokenResponse.optString("chainId", UUID.randomUUID().toString());
+        String rootB64 = tokenResponse.getString("root");
+        String rootSignatureB64 = tokenResponse.getString("rootSignature");
+        org.json.JSONArray tokensArray = tokenResponse.getJSONArray("tokens");
+
+        // Build tokensToSpend (Base64 strings) from the returned token batch
         java.util.List<String> tokensB64 = new java.util.ArrayList<>();
-        for (byte[] token : tokensToSpend) {
-            tokensB64.add(b64encode(token));
+        for (int i = startIndex; i < startIndex + spendCount && i < tokensArray.length(); i++) {
+            tokensB64.add(tokensArray.getString(i));
         }
-        
-        // Dummy rootSignature (won't be verified in M3.1)
-        byte[] dummyRootSig = new byte[64];
-        rnd.nextBytes(dummyRootSig);
-        
+
         JSONObject pay = new JSONObject();
         pay.put("method", "pay");
         pay.put("reservationId", reservationId);
         pay.put("chainId", chainId);
         pay.put("x", x);
-        pay.put("root", b64encode(root));
-        pay.put("rootSignature", b64encode(dummyRootSig));
+        pay.put("root", rootB64);
+        pay.put("rootSignature", rootSignatureB64);
         pay.put("startIndex", startIndex);
         pay.put("tokensToSpend", new org.json.JSONArray(tokensB64));
 
-        System.out.println("  Generated hash chain of length " + x + " from random secret");
+        System.out.println("  Using SP-issued token batch, chainId=" + chainId);
         System.out.println("  tokensToSpend: indices [" + startIndex + ", " + (startIndex + spendCount) + ")");
-        System.out.println("  chainId: " + chainId);
-        
+        System.out.println("  Total tokens to spend: " + spendCount + " (matching reservation price)");
+
         // Build mTLS connection to HO
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
         try (FileInputStream fis = new FileInputStream(CO_KEYSTORE_PATH)) {
@@ -1110,7 +1093,7 @@ public class Main {
     // Token request from SP
     // -------------------------
 
-    private static void requestTokensFromSP(int tokenCount) throws Exception {
+    private static JSONObject requestTokensFromSP(int tokenCount) throws Exception {
         // Load keystore for client authentication
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
         try (FileInputStream fis = new FileInputStream(CO_KEYSTORE_PATH)) {
@@ -1184,6 +1167,8 @@ public class Main {
 
             // Verify token response
             verifyTokens(response, peerCerts[0]);
+
+            return response;
 
         } finally {
             // Clean up resources

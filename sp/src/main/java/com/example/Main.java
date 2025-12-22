@@ -684,6 +684,9 @@ public class Main {
                             case "getAvailability" -> {
                                 response = handleGetAvailability(cn);
                             }
+                            case "settle" -> {
+                                response = handleSettle(request, cn);
+                            }
                             default -> {
                                 response.put("status", "error");
                                 response.put("message", "Unknown method: " + method);
@@ -988,6 +991,86 @@ public class Main {
             response.put("status", "error");
             response.put("message", "Failed to retrieve availabilities: " + e.getMessage());
         }
+        return response;
+    }
+
+    /**
+     * M3.3: Handle settlement request from HO.
+     * HO notifies SP of a completed payment and provides spend progress.
+     * SP verifies monotonic progress and updates tracking.
+     */
+    private static JSONObject handleSettle(JSONObject request, String clientCN) {
+        JSONObject response = new JSONObject();
+        String logTag = "[SETTLE] ";
+        
+        try {
+            // Only HO clients should be able to settle
+            if (!"HomeOwner".equals(clientCN)) {
+                System.err.println(logTag + "REJECT: only HomeOwner can settle, got: " + clientCN);
+                response.put("status", "error");
+                response.put("message", "Only HomeOwner can initiate settlement");
+                return response;
+            }
+
+            // Validate required fields
+            if (!request.has("chainId")) throw new IllegalArgumentException("Missing chainId");
+            if (!request.has("reservationId")) throw new IllegalArgumentException("Missing reservationId");
+            if (!request.has("newLastSpentIndex")) throw new IllegalArgumentException("Missing newLastSpentIndex");
+
+            String chainId = request.getString("chainId");
+            String reservationId = request.getString("reservationId");
+            int newLastSpentIndex = request.getInt("newLastSpentIndex");
+
+            System.out.println(logTag + "received settle from " + clientCN);
+            System.out.println(logTag + "  chainId=" + chainId);
+            System.out.println(logTag + "  reservationId=" + reservationId);
+            System.out.println(logTag + "  newLastSpentIndex=" + newLastSpentIndex);
+
+            // Get or create chain metadata
+            TokenChainMetadata chainMeta = issuedChains.getOrDefault(chainId, null);
+            if (chainMeta == null) {
+                // Chain not known - this might be first settle or unknown chain
+                System.out.println(logTag + "WARNING: chainId " + chainId + " not found in issuedChains, creating entry");
+                // Create a placeholder entry (SP doesn't know x or root yet)
+                chainMeta = new TokenChainMetadata(new byte[0], -1);
+                issuedChains.put(chainId, chainMeta);
+            }
+
+            // Check for double-spend / rollback
+            long currentLastSpent = chainMeta.lastSpentIndex;
+            if (newLastSpentIndex <= currentLastSpent) {
+                System.err.println(logTag + "REJECT: double-spend/rollback detected");
+                System.err.println(logTag + "  currentLastSpent=" + currentLastSpent + " newLastSpentIndex=" + newLastSpentIndex);
+                response.put("status", "error");
+                response.put("message", "Double-spend or rollback detected: newLastSpentIndex <= currentLastSpent");
+                response.put("chainId", chainId);
+                response.put("reservationId", reservationId);
+                return response;
+            }
+
+            // Accept the settlement - update tracking
+            chainMeta.lastSpentIndex = newLastSpentIndex;
+            System.out.println(logTag + "ACCEPTED: settlement approved, chainId=" + chainId + " newLastSpentIndex=" + newLastSpentIndex);
+
+            // Build success response
+            response.put("status", "success");
+            response.put("message", "Settlement accepted");
+            response.put("chainId", chainId);
+            response.put("reservationId", reservationId);
+            response.put("acceptedLastSpentIndex", newLastSpentIndex);
+            response.put("timestamp", java.time.Instant.now().toString());
+
+        } catch (IllegalArgumentException e) {
+            System.err.println(logTag + "validation error: " + e.getMessage());
+            response.put("status", "error");
+            response.put("message", "Validation failed: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println(logTag + "error: " + e.getMessage());
+            e.printStackTrace();
+            response.put("status", "error");
+            response.put("message", "Settlement processing failed: " + e.getMessage());
+        }
+
         return response;
     }
 

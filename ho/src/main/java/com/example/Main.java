@@ -964,7 +964,20 @@ private static String extractCN(X509Certificate cert) {
             System.out.println(logTag + "  x=" + x);
             System.out.println(logTag + "  Hash-chain verification: SUCCESS");
 
-            // 4. STORE PAYMENT RECORD
+            // 4. M3.3 SETTLEMENT: Notify SP of the spend progress before accepting payment locally
+            String rootSignatureB64 = request.getString("rootSignature");
+            boolean settlementSuccess = settleWithSP(reservationId, chainId, x, startIndex, tokensArray, rootB64, rootSignatureB64);
+            
+            if (!settlementSuccess) {
+                // SP rejected settlement - do NOT store payment locally (atomic behavior)
+                response.put("status", "error");
+                response.put("message", "Settlement with SP failed - payment not accepted");
+                response.put("reason", "settlement_failed");
+                System.out.println(logTag + "Payment REJECTED: SP settlement failed");
+                return response;
+            }
+
+            // 5. STORE PAYMENT RECORD (only after successful settlement)
             String callerFingerprint = "unknown";
             try {
                 MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -978,11 +991,11 @@ private static String extractCN(X509Certificate cert) {
                     Instant.now(), coCN, callerFingerprint);
             payments.put(reservationId, rec);
 
-            // 5. UPDATE DOUBLE-SPEND TRACKING: store the new lastSpentIndex
+            // 6. UPDATE DOUBLE-SPEND TRACKING: store the new lastSpentIndex
             long newLastSpentIndex = (long) (startIndex + tokenCount - 1);
             chainSpendTracking.put(chainId, newLastSpentIndex);
 
-            // 6. BUILD SUCCESS RESPONSE
+            // 7. BUILD SUCCESS RESPONSE
             response.put("status", "success");
             response.put("message", "payment accepted");
             response.put("reservationId", reservationId);
@@ -1053,6 +1066,89 @@ private static String extractCN(X509Certificate cert) {
     }
 
     /**
+     * M3.3: Settle payment with SP to ensure SP enforces double-spend prevention.
+     * HO notifies SP of the new spent progress and SP responds with acceptance or rejection.
+     * Returns true if settlement succeeds, false otherwise.
+     */
+    private static boolean settleWithSP(String reservationId, String chainId, int x, int startIndex, 
+                                       org.json.JSONArray tokensToSpend, String rootB64, String rootSignatureB64) {
+        String logTag = "[SETTLE] ";
+        try {
+            int lastSpentIndex = startIndex + tokensToSpend.length() - 1;
+            String lastTokenSpent = tokensToSpend.getString(tokensToSpend.length() - 1);
+
+            // Build settlement request
+            JSONObject settleRequest = new JSONObject();
+            settleRequest.put("method", "settle");
+            settleRequest.put("chainId", chainId);
+            settleRequest.put("reservationId", reservationId);
+            settleRequest.put("newLastSpentIndex", lastSpentIndex);
+            settleRequest.put("lastTokenSpent", lastTokenSpent);
+            settleRequest.put("x", x);
+            settleRequest.put("root", rootB64);
+            settleRequest.put("rootSignature", rootSignatureB64);
+
+            System.out.println(logTag + "sending settle to SP for chainId=" + chainId + " newLastSpentIndex=" + lastSpentIndex);
+
+            // Set up mTLS connection to SP (reuse pattern from publishAvailability)
+            KeyStore keyStore = KeyStore.getInstance("PKCS12");
+            try (FileInputStream fis = new FileInputStream(HO_KEYSTORE_PATH)) {
+                keyStore.load(fis, KEYSTORE_PASSWORD.toCharArray());
+            }
+            KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            kmf.init(keyStore, KEYSTORE_PASSWORD.toCharArray());
+
+            KeyStore trustStore = KeyStore.getInstance("PKCS12");
+            try (FileInputStream fis = new FileInputStream(TRUSTSTORE_PATH)) {
+                trustStore.load(fis, TRUSTSTORE_PASSWORD.toCharArray());
+            }
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init(trustStore);
+
+            SSLContext sslContext = SSLContext.getInstance("TLSv1.3");
+            sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), new java.security.SecureRandom());
+
+            SSLSocketFactory factory = sslContext.getSocketFactory();
+            try (SSLSocket socket = (SSLSocket) factory.createSocket(SP_HOST, SP_PORT)) {
+                socket.setEnabledProtocols(new String[]{"TLSv1.3", "TLSv1.2"});
+                socket.setEnabledCipherSuites(new String[]{
+                    "TLS_AES_256_GCM_SHA384",
+                    "TLS_CHACHA20_POLY1305_SHA256",
+                    "TLS_AES_128_GCM_SHA256"
+                });
+
+                // Send settlement request
+                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+                out.println(settleRequest.toString());
+                out.flush();
+
+                // Read response
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                String response = in.readLine();
+                if (response == null) {
+                    System.err.println(logTag + "SP settlement: no response from SP");
+                    return false;
+                }
+
+                JSONObject spResponse = new JSONObject(response);
+                if ("success".equals(spResponse.optString("status"))) {
+                    System.out.println(logTag + "SP response: SUCCESS - accepted settlement for chainId=" + chainId);
+                    return true;
+                } else {
+                    String message = spResponse.optString("message", "unknown error");
+                    System.err.println(logTag + "SP response: REJECT - " + message);
+                    return false;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println(logTag + "settlement error: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * M3.2: Local payment verification.
      * Perform local M3.2 payment validation checks before accepting payment:
      *  - Verify `rootSignature` over `root` using cached SP public key
      *  - Policy checks: reservation exists, verdict == "OK", token count matches price

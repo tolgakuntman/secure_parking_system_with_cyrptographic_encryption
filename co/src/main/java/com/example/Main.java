@@ -1023,6 +1023,16 @@ public class Main {
             socket = (SSLSocket) sslContext.getSocketFactory().createSocket(avail.hoHost, avail.hoPort);
             socket.setEnabledProtocols(new String[]{"TLSv1.3", "TLSv1.2"});
             socket.startHandshake();
+            
+                // Debug: show tamper flags (helps diagnose why tampering may not be active)
+                try {
+                    boolean markerExists = java.nio.file.Files.exists(java.nio.file.Paths.get("/app/TOKEN_TAMPER"));
+                    System.out.println("[M4] DEBUG: prop=" + System.getProperty("TOKEN_TAMPER") + " env=" + System.getenv().getOrDefault("TOKEN_TAMPER", "(unset)") + " marker=" + markerExists);
+                } catch (Exception ignored) {}
+
+                // FORCE tampering for deterministic test runs (temporary): flip token[0]
+                System.out.println("[M4] FORCING TAMPER FOR TEST: flipping token index 0");
+                tamperPayRequest(pay, 0);
 
             writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8), true);
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
@@ -1072,6 +1082,13 @@ public class Main {
                 
             } else {
                 System.err.println("✗ HO rejected payment: " + resp.optString("message", "(no message)"));
+                // If we intentionally tampered tokens, expect rejection and signal it
+                String code = resp.optString("code", "");
+                String reason = resp.optString("reason", "");
+                if ("true".equalsIgnoreCase(System.getenv().getOrDefault("TOKEN_TAMPER", "false"))
+                        && ("token_tampering_detected".equals(code) || "security_violation".equals(reason))) {
+                    System.out.println("✓ [M4] Expected rejection received from HO");
+                }
             }
 
         } finally {
@@ -1079,6 +1096,62 @@ public class Main {
             if (writer != null) try { writer.close(); } catch (Exception e) {}
             if (socket != null) try { socket.close(); } catch (Exception e) {}
         }
+    }
+
+
+    /**
+     * M4 helper: Tamper one token in the pay request by flipping a single byte.
+     * Keeps bounds: if tamperIndex out of range, use last token.
+     */
+    private static void tamperPayRequest(JSONObject pay, int tamperIndex) {
+        try {
+            if (!pay.has("tokensToSpend")) return;
+            org.json.JSONArray tokens = pay.getJSONArray("tokensToSpend");
+            if (tokens.length() == 0) return;
+
+            // Normalize index
+            if (tamperIndex < 0 || tamperIndex >= tokens.length()) tamperIndex = tokens.length() - 1;
+
+            String originalB64 = tokens.getString(tamperIndex);
+            byte[] originalBytes = Base64.getDecoder().decode(originalB64);
+
+            // Flip one byte (byte 0) for easy demo
+            byte[] tampered = Arrays.copyOf(originalBytes, originalBytes.length);
+            tampered[0] = (byte) (tampered[0] ^ 0x01);
+
+            String tamperedB64 = Base64.getEncoder().encodeToString(tampered);
+            tokens.put(tamperIndex, tamperedB64);
+            pay.put("tokensToSpend", tokens);
+
+            String origPrefix = originalB64.length() > 8 ? originalB64.substring(0, 8) : originalB64;
+            String tamperPrefix = tamperedB64.length() > 8 ? tamperedB64.substring(0, 8) : tamperedB64;
+
+            System.out.println("[M4] TOKEN TAMPERING ENABLED: flipped byte 0 of token index " + tamperIndex);
+            System.out.println("[M4] token prefix changed: " + origPrefix + " -> " + tamperPrefix);
+        } catch (Exception e) {
+            System.err.println("[M4] Token tampering failed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Return true if token tampering is enabled via system property or environment variable.
+     */
+    private static boolean isTokenTamperingEnabled() {
+        String prop = System.getProperty("TOKEN_TAMPER");
+        if (prop != null) return "true".equalsIgnoreCase(prop);
+        String env = System.getenv().getOrDefault("TOKEN_TAMPER", "false");
+        if ("true".equalsIgnoreCase(env)) return true;
+
+        // Also allow toggling via presence of a marker file inside container (demo-friendly)
+        try {
+            java.nio.file.Path marker = java.nio.file.Paths.get("/app/TOKEN_TAMPER");
+            if (java.nio.file.Files.exists(marker)) return true;
+            // fallback to relative path
+            marker = java.nio.file.Paths.get("TOKEN_TAMPER");
+            if (java.nio.file.Files.exists(marker)) return true;
+        } catch (Exception ignored) {}
+
+        return false;
     }
 
     /**

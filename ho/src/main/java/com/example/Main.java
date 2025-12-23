@@ -957,7 +957,14 @@ private static String extractCN(X509Certificate cert) {
             for (int i = 1; i < tokens.size(); i++) {
                 byte[] nextExpected = sha256(current);
                 if (!java.util.Arrays.equals(nextExpected, tokens.get(i))) {
-                    throw new SecurityException("Hash chain broken: token[" + i + "] does not hash to token[" + (i+1) + "]");
+                    // Adjacency check failed - likely token tampering
+                    System.err.println("[M4] REJECTED: adjacency check failed at i=" + (i-1) + " (possible token tampering)");
+                    JSONObject err = new JSONObject();
+                    err.put("status", "error");
+                    err.put("reason", "security_violation");
+                    err.put("code", "token_tampering_detected");
+                    err.put("message", "adjacency check failed at i=" + (i-1) + " - possible token tampering");
+                    return err;
                 }
                 current = tokens.get(i);
             }
@@ -966,12 +973,26 @@ private static String extractCN(X509Certificate cert) {
             byte[] computed = current;
             long lastIndex = startIndex + tokenCount - 1;
             int hashesToRoot = (int) (x - (startIndex + tokenCount));
-            if (hashesToRoot < 0) throw new SecurityException("Invalid indices: chain length/x mismatch");
+            if (hashesToRoot < 0) {
+                System.err.println("[M4] REJECTED: invalid indices - chain length/x mismatch (possible tampering)");
+                JSONObject err = new JSONObject();
+                err.put("status", "error");
+                err.put("reason", "security_violation");
+                err.put("code", "token_tampering_detected");
+                err.put("message", "invalid indices: chain length/x mismatch - possible token tampering");
+                return err;
+            }
             for (int i = 0; i < hashesToRoot; i++) {
                 computed = sha256(computed);
             }
             if (!java.util.Arrays.equals(computed, rootBytes)) {
-                throw new SecurityException("Hash chain does not reach provided root. Chain verification failed.");
+                System.err.println("[M4] REJECTED: anchor check failed (possible tampering)");
+                JSONObject err = new JSONObject();
+                err.put("status", "error");
+                err.put("reason", "security_violation");
+                err.put("code", "token_tampering_detected");
+                err.put("message", "anchor check failed - provided tokens do not reach signed root (possible token tampering)");
+                return err;
             }
 
             System.out.println(logTag + "received from " + coCN);

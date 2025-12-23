@@ -60,6 +60,7 @@ services:
       - AVAILABILITY_HOURS=8
       - HO_PAY_PORT=8445
       - TEST_DOUBLE_SPEND=true
+      - REPLAY_TEST_MODE=false
     depends_on:
       - cauth
       - sp

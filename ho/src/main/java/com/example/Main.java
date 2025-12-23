@@ -82,6 +82,9 @@ public class Main {
     // M3.3: Double-spend test configuration
     private static final boolean TEST_DOUBLE_SPEND = "true".equalsIgnoreCase(System.getenv().getOrDefault("TEST_DOUBLE_SPEND", "false"));
     
+    // M4.2: Replay test mode - allows HO to accept duplicate payments for testing SP double-spend prevention
+    private static final boolean REPLAY_TEST_MODE = "true".equalsIgnoreCase(System.getenv().getOrDefault("REPLAY_TEST_MODE", "false"));
+    
     // Store last settlement for replay test
     static class LastSettlement {
         String reservationId;
@@ -1061,6 +1064,15 @@ private static String extractCN(X509Certificate cert) {
             }
 
             // 5. STORE PAYMENT RECORD (only after successful settlement)
+            // M4.2: In REPLAY_TEST_MODE, allow duplicate payment for replay testing
+            if (payments.containsKey(reservationId) && !REPLAY_TEST_MODE) {
+                throw new SecurityException("Payment for reservation " + reservationId + " already recorded (duplicate payment)");
+            }
+            
+            if (payments.containsKey(reservationId) && REPLAY_TEST_MODE) {
+                System.out.println(logTag + "[M4.2] REPLAY_TEST_MODE: allowing duplicate payment for reservationId=" + reservationId);
+            }
+            
             String callerFingerprint = "unknown";
             try {
                 MessageDigest md = MessageDigest.getInstance("SHA-256");

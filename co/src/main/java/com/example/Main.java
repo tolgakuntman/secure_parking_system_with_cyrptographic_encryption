@@ -47,8 +47,81 @@ public class Main {
     private static final String CO_TRUSTSTORE_PASSWORD =
             System.getenv().getOrDefault("TRUSTSTORE_PASSWORD", "trustpassword");
 
+    // ═════════════════════════════════════════════════════════════
+    // M4 Negative Scenario Flags (Refactored for M4.1 + M4.2)
+    // ═════════════════════════════════════════════════════════════
+    // NEG_TEST_MODE: selects which scenario to run
+    //   NONE   = normal M3.x flow (default)
+    //   TAMPER = M4.1 token tampering: flip 1 byte of 1 token
+    //   REPLAY = M4.2 replay payment: send same pay twice
+    //
+    // HOW TO TEST EACH SCENARIO:
+    // ═════════════════════════════════════════════════════════════
+    // 
+    // 1) NORMAL M3.x FLOW (happy path):
+    //    docker-compose -f docker-compose.yml up
+    //    (No env vars needed; NEG_TEST_MODE defaults to "NONE")
+    //
+    // 2) M4.1 TOKEN TAMPERING (negative: HO rejects tampered token):
+    //    docker-compose -f docker-compose.yml up -e NEG_TEST_MODE=TAMPER
+    //    Optional: -e TAMPER_TOKEN_INDEX=0 -e TAMPER_BYTE_INDEX=0
+    //    Expected: CO flips byte 0 of token 0
+    //              HO rejects with [M4] REJECTED and code=token_tampering_detected
+    //
+    // 3) M4.2 REPLAY PAYMENT (negative: HO accepts dup locally, SP rejects at settle):
+    //    docker-compose -f docker-compose.yml up -e NEG_TEST_MODE=REPLAY -e HO_REPLAY_TEST_MODE=true
+    //    Optional: -e REPLAY_DELAY_MS=500
+    //    Expected: CO sends /pay twice (same payload)
+    //              HO accepts both (because REPLAY_TEST_MODE=true)
+    //              HO calls SP /settle twice
+    //              SP rejects 2nd settle with code=replay_or_double_spend
+    //              CO logs [M4.2] EXPECTED: SP rejected 2nd settle
+    //
+    // ═════════════════════════════════════════════════════════════
+    private static final String NEG_TEST_MODE = 
+            System.getenv().getOrDefault("NEG_TEST_MODE", "NONE").toUpperCase();
+    
+    // Tamper configuration (used when NEG_TEST_MODE=TAMPER)
+    private static final int TAMPER_TOKEN_INDEX = 
+            Integer.parseInt(System.getenv().getOrDefault("TAMPER_TOKEN_INDEX", "0"));
+    private static final int TAMPER_BYTE_INDEX = 
+            Integer.parseInt(System.getenv().getOrDefault("TAMPER_BYTE_INDEX", "0"));
+    
+    // Replay configuration (used when NEG_TEST_MODE=REPLAY)
+    private static final long REPLAY_DELAY_MS = 
+            Long.parseLong(System.getenv().getOrDefault("REPLAY_DELAY_MS", "500"));
+
     private static KeyPair coKeyPair;
     private static X509Certificate coCertificate;
+    
+    // ═════════════════════════════════════════════════════════════
+    // Helper: Send JSON payload over mTLS and get response
+    // ═════════════════════════════════════════════════════════════
+    private static JSONObject sendPayJson(String payload, String host, int port, SSLContext sslContext) 
+            throws Exception {
+        SSLSocket socket = null;
+        PrintWriter writer = null;
+        BufferedReader reader = null;
+        try {
+            socket = (SSLSocket) sslContext.getSocketFactory().createSocket(host, port);
+            socket.setEnabledProtocols(new String[]{"TLSv1.3", "TLSv1.2"});
+            socket.startHandshake();
+            
+            writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8), true);
+            reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+            
+            writer.println(payload);
+            String respLine = reader.readLine();
+            if (respLine == null) {
+                throw new IOException("No response from HO on pay request");
+            }
+            return new JSONObject(respLine);
+        } finally {
+            if (reader != null) reader.close();
+            if (writer != null) writer.close();
+            if (socket != null) socket.close();
+        }
+    }
     
     // M3.4: Cached SP certificate for receipt verification
     private static X509Certificate spCertificate = null;
@@ -1016,46 +1089,88 @@ public class Main {
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), new SecureRandom());
 
-        SSLSocket socket = null;
-        PrintWriter writer = null;
-        BufferedReader reader = null;
-        try {
-            socket = (SSLSocket) sslContext.getSocketFactory().createSocket(avail.hoHost, avail.hoPort);
-            socket.setEnabledProtocols(new String[]{"TLSv1.3", "TLSv1.2"});
-            socket.startHandshake();
+        System.out.println("\n[M4] Negative Test Mode: " + NEG_TEST_MODE);
+        
+        // Build clean payload first
+        String payloadClean = pay.toString();
+        JSONObject resp = null;
+        
+        if ("TAMPER".equals(NEG_TEST_MODE)) {
+            // ═════════════════════════════════════════════════════════════
+            // M4.1: TOKEN TAMPERING
+            // ═════════════════════════════════════════════════════════════
+            System.out.println("[M4.1] Tampering token[" + TAMPER_TOKEN_INDEX + "] byte[" + TAMPER_BYTE_INDEX + "]");
             
-                // Debug: show tamper flags (helps diagnose why tampering may not be active)
-                try {
-                    boolean markerExists = java.nio.file.Files.exists(java.nio.file.Paths.get("/app/TOKEN_TAMPER"));
-                    System.out.println("[M4] DEBUG: prop=" + System.getProperty("TOKEN_TAMPER") + " env=" + System.getenv().getOrDefault("TOKEN_TAMPER", "(unset)") + " marker=" + markerExists);
-                } catch (Exception ignored) {}
-
-                // FORCE tampering for deterministic test runs (temporary): flip token[0]
-                System.out.println("[M4] FORCING TAMPER FOR TEST: flipping token index 0");
-                tamperPayRequest(pay, 0);
-
-            writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8), true);
-            reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-
-            System.out.println("→ Sending pay request to HO at " + avail.hoHost + ":" + avail.hoPort);
-            writer.println(pay.toString());
-
-            String respLine = reader.readLine();
-            if (respLine == null) {
-                System.err.println("No response from HO on pay request");
-                return;
+            // Deep copy tokens array and tamper the copy
+            JSONArray tokensClean = pay.getJSONArray("tokensToSpend");
+            JSONArray tokensTampered = new JSONArray();
+            for (int i = 0; i < tokensClean.length(); i++) {
+                if (i == TAMPER_TOKEN_INDEX) {
+                    // Tamper this token
+                    String tokenStr = tokensClean.getString(i);
+                    byte[] tokenBytes = Base64.getDecoder().decode(tokenStr);
+                    
+                    // Flip one byte
+                    if (TAMPER_BYTE_INDEX < tokenBytes.length) {
+                        tokenBytes[TAMPER_BYTE_INDEX] ^= 0x01;  // flip one bit
+                        String tamperedToken = Base64.getEncoder().encodeToString(tokenBytes);
+                        tokensTampered.put(tamperedToken);
+                        System.out.println("[M4.1] TOKEN TAMPERING ENABLED: flipped byte " + TAMPER_BYTE_INDEX + " of token index " + TAMPER_TOKEN_INDEX);
+                    } else {
+                        tokensTampered.put(tokenStr);
+                    }
+                } else {
+                    tokensTampered.put(tokensClean.getString(i));
+                }
             }
-            JSONObject resp = new JSONObject(respLine);
-            System.out.println("← HO pay response:");
+            
+            // Rebuild JSONObject with tampered tokens
+            JSONObject payTampered = new JSONObject(pay.toString());
+            payTampered.put("tokensToSpend", tokensTampered);
+            String payloadTampered = payTampered.toString();
+            
+            System.out.println("[M4.1] Expect HO rejection (adjacency/anchor check failure)");
+            System.out.println("→ Sending TAMPERED pay request to HO at " + avail.hoHost + ":" + avail.hoPort);
+            resp = sendPayJson(payloadTampered, avail.hoHost, avail.hoPort, sslContext);
+            
+        } else if ("REPLAY".equals(NEG_TEST_MODE)) {
+            // ═════════════════════════════════════════════════════════════
+            // M4.2: REPLAY PAYMENT
+            // ═════════════════════════════════════════════════════════════
+            System.out.println("[M4.2] Attempting replay: sending same pay twice");
+            System.out.println("[M4.2] Attempt #1: Sending pay request...");
+            System.out.println("→ Sending pay request (attempt #1) to HO at " + avail.hoHost + ":" + avail.hoPort);
+            JSONObject resp1 = sendPayJson(payloadClean, avail.hoHost, avail.hoPort, sslContext);
+            System.out.println("← HO response (attempt #1):");
+            System.out.println(resp1.toString(2));
+            
+            System.out.println("\n[M4.2] Waiting " + REPLAY_DELAY_MS + " ms before replay...");
+            Thread.sleep(REPLAY_DELAY_MS);
+            
+            System.out.println("[M4.2] Attempt #2 REPLAY: Sending same payload again...");
+            System.out.println("→ Sending pay request (attempt #2 REPLAY) to HO at " + avail.hoHost + ":" + avail.hoPort);
+            resp = sendPayJson(payloadClean, avail.hoHost, avail.hoPort, sslContext);
+            System.out.println("← HO response (attempt #2 REPLAY):");
+            System.out.println(resp.toString(2));
+            System.out.println("[M4.2] Expect SP settlement rejection on 2nd settle (reason: replay_or_double_spend)");
+            
+        } else {
+            // ═════════════════════════════════════════════════════════════
+            // NORMAL M3.x FLOW (no negative scenario)
+            // ═════════════════════════════════════════════════════════════
+            System.out.println("[M3] Normal payment flow (no negative scenarios)");
+            System.out.println("→ Sending pay request to HO at " + avail.hoHost + ":" + avail.hoPort);
+            resp = sendPayJson(payloadClean, avail.hoHost, avail.hoPort, sslContext);
+        }
+        
+        System.out.println("← HO pay response:");
+        if (resp != null) {
             System.out.println(resp.toString(2));
             
             if ("success".equals(resp.optString("status"))) {
                 System.out.println("✓✓✓ PAYMENT ACCEPTED BY HO ✓✓✓");
                 
-                // ═══════════════════════════════════════════════════════════
-                // M3.4: VERIFY PAYMENT RECEIPT FROM SP
-                // ═══════════════════════════════════════════════════════════
-                
+                // M3.4 receipt verification
                 if (resp.has("paymentReceipt")) {
                     JSONObject receipt = resp.getJSONObject("paymentReceipt");
                     
@@ -1075,26 +1190,24 @@ public class Main {
                         System.err.println("Payment accepted but receipt invalid - SECURITY VIOLATION");
                         System.err.println("═══════════════════════════════════════════════════");
                     }
-                } else {
-                    System.err.println("\n⚠️  Warning: No payment receipt in response");
-                    System.err.println("Payment finality cannot be established");
                 }
-                
             } else {
-                System.err.println("✗ HO rejected payment: " + resp.optString("message", "(no message)"));
-                // If we intentionally tampered tokens, expect rejection and signal it
                 String code = resp.optString("code", "");
                 String reason = resp.optString("reason", "");
-                if ("true".equalsIgnoreCase(System.getenv().getOrDefault("TOKEN_TAMPER", "false"))
-                        && ("token_tampering_detected".equals(code) || "security_violation".equals(reason))) {
-                    System.out.println("✓ [M4] Expected rejection received from HO");
+                
+                if ("REPLAY".equals(NEG_TEST_MODE) && "replay_or_double_spend".equals(code)) {
+                    // This is expected behavior in M4.2 replay test (2nd attempt rejected at SP settle)
+                    System.out.println("[M4.2] ✓ EXPECTED: SP rejected 2nd settle as double-spend");
+                    System.out.println("✓ Replay detection working correctly");
+                } else if ("TAMPER".equals(NEG_TEST_MODE) && ("token_tampering_detected".equals(code) || "security_violation".equals(reason))) {
+                    // This is expected behavior in M4.1 tampering test
+                    System.out.println("[M4.1] ✓ Expected rejection received from HO: " + reason);
+                } else {
+                    System.err.println("✗ HO rejected payment: " + resp.optString("message", "(no message)"));
                 }
             }
-
-        } finally {
-            if (reader != null) try { reader.close(); } catch (Exception e) {}
-            if (writer != null) try { writer.close(); } catch (Exception e) {}
-            if (socket != null) try { socket.close(); } catch (Exception e) {}
+        } else {
+            System.err.println("No response from HO on pay request");
         }
     }
 

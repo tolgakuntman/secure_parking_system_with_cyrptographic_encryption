@@ -12,6 +12,18 @@ services:
       - ./crypto_do_once/cauth_truststore.p12:/app/truststore.p12
     restart: unless-stopped
 
+  fake-cauth:
+    build: ./fake-cauth
+    container_name: fake-cauth-container
+    networks:
+      java-network:
+        ipv4_address: 172.20.0.14
+    ports:
+      - "8543:8443"
+    restart: unless-stopped
+    # Note: fake-cauth generates its own self-signed CA at runtime
+    # No volumes needed - it intentionally has no trusted root
+
   sp:
     build: ./sp
     container_name: sp-container
@@ -60,7 +72,7 @@ services:
       - AVAILABILITY_HOURS=8
       - HO_PAY_PORT=8445
       - TEST_DOUBLE_SPEND=true
-      - REPLAY_TEST_MODE=false
+      - REPLAY_TEST_MODE=true
     depends_on:
       - cauth
       - sp

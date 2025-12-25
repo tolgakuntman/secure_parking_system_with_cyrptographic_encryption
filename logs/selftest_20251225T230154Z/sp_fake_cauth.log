@@ -1,0 +1,148 @@
+sp-container  | 
+sp-container  | === Inbound Connection ===
+sp-container  | [SP] ✓ Client certificate received and validated:
+sp-container  | [SP]   Subject: CN=HomeOwner,O=Parking System,C=BE
+sp-container  | [SP]   Issuer:  CN=172.20.0.10,O=Private Parking,C=BE
+sp-container  | [SP]   Serial:  684582B0E8773D4DCAF598AC0FE74E80
+sp-container  | [SP]   SHA-256: B229A59688B10B7CABBC6BE54D3EB7B5...
+sp-container  | 
+sp-container  | ║   CLIENT AUTHENTICATED VIA mTLS           ║
+sp-container  | Client CN: HomeOwner
+sp-container  | Client address: /172.20.0.12:57130
+sp-container  | Client certificate subject: CN=HomeOwner,O=Parking System,C=BE
+sp-container  | Client certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+sp-container  | Client certificate serial: 684582B0E8773D4DCAF598AC0FE74E80
+sp-container  | Certificate valid from: Thu Dec 25 23:01:16 UTC 2025
+sp-container  | Certificate valid until: Fri Dec 25 23:02:16 UTC 2026
+sp-container  | 
+sp-container  | TLS Session Details:
+sp-container  |   Protocol: TLSv1.3
+sp-container  |   Cipher suite: TLS_AES_256_GCM_SHA384
+sp-container  |   Session ID: AB48DFA7EDE178D7...
+sp-container  | ═══════════════════════════════════════════
+sp-container  | 
+sp-container  | 
+sp-container  | Received from HomeOwner: {
+sp-container  |   "priceTokens": 5,
+sp-container  |   "metadata": {
+sp-container  |     "spotType": "residential",
+sp-container  |     "autoRenewal": false,
+sp-container  |     "maxDuration": "8h"
+sp-container  |   },
+sp-container  |   "method": "publishAvailability",
+sp-container  |   "spotId": "SPOT-A1",
+sp-container  |   "locationZone": "Downtown-North",
+sp-container  |   "homeOwnerId": "HO-001",
+sp-container  |   "validFrom": "2025-12-25T23:03:33.744354020Z",
+sp-container  |   "validTo": "2025-12-26T07:03:33.744354020Z"
+sp-container  | }
+sp-container  | 
+sp-container  | === Publishing Parking Availability from HomeOwner ===
+sp-container  |   Home Owner: HO-001
+sp-container  |   Spot ID: SPOT-A1
+sp-container  |   Valid: 2025-12-25T23:03:33.744354020Z to 2025-12-26T07:03:33.744354020Z
+sp-container  |   Price: 5 tokens
+sp-container  |   Location: Downtown-North
+sp-container  | ✓ Availability stored with ID: 40cd1f64-9a93-406c-b149-f61a40287933
+sp-container  | ✓ Total availabilities in system: 4
+sp-container  | ══════════════════════════════════════════════════
+sp-container  | Sent response: {
+sp-container  |   "publishedAt": "2025-12-25T23:03:33.772893544Z",
+sp-container  |   "availabilityId": "40cd1f64-9a93-406c-b149-f61a40287933",
+sp-container  |   "spotId": "SPOT-A1",
+sp-container  |   "message": "Parking availability published successfully",
+sp-container  |   "status": "success"
+sp-container  | }
+sp-container  | 
+sp-container  | HomeOwner disconnected
+sp-container  | 
+sp-container  | === Inbound Connection ===
+sp-container  | [SP] ✓ Client certificate received and validated:
+sp-container  | [SP]   Subject: C=BE,O=Parking System,CN=CarOwner
+sp-container  | [SP]   Issuer:  CN=172.20.0.10,O=Private Parking,C=BE
+sp-container  | [SP]   Serial:  362E632A2925EB78FAD22FC30B34187A
+sp-container  | [SP]   SHA-256: 7E5EBCCE3FFA616A8F400F899EDB52C4...
+sp-container  | 
+sp-container  | ║   CLIENT AUTHENTICATED VIA mTLS           ║
+sp-container  | Client CN: CarOwner
+sp-container  | Client address: /172.20.0.13:35394
+sp-container  | Client certificate subject: C=BE,O=Parking System,CN=CarOwner
+sp-container  | Client certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+sp-container  | Client certificate serial: 362E632A2925EB78FAD22FC30B34187A
+sp-container  | Certificate valid from: Thu Dec 25 23:01:22 UTC 2025
+sp-container  | Certificate valid until: Fri Dec 25 23:02:22 UTC 2026
+sp-container  | 
+sp-container  | TLS Session Details:
+sp-container  |   Protocol: TLSv1.3
+sp-container  |   Cipher suite: TLS_AES_256_GCM_SHA384
+sp-container  |   Session ID: 6F9DF3E94E82E5B2...
+sp-container  | ═══════════════════════════════════════════
+sp-container  | 
+sp-container  | 
+sp-container  | Received from CarOwner: {"method": "getAvailability"}
+sp-container  | 
+sp-container  | === Availability Discovery Request from CarOwner ===
+sp-container  |   Total availabilities in system: 4
+sp-container  |   [40cd1f64-9a93-406c-b149-f61a40287933] SPOT-A1 - 5 tokens (HO: HomeOwner)
+sp-container  |   [ebd07e23-aee1-451a-bf79-ab88cf89b2ab] SPOT-A1 - 5 tokens (HO: HomeOwner)
+sp-container  |   [49f048b8-6297-4bbe-bebf-f5f8d9e868e5] SPOT-A1 - 5 tokens (HO: HomeOwner)
+sp-container  |   [340f449d-d405-49ec-b2e4-9606f78a2a69] SPOT-A1 - 5 tokens (HO: HomeOwner)
+sp-container  | ✓ Returned 4 availability record(s) to CarOwner
+sp-container  | ══════════════════════════════════════════════════
+sp-container  | Sent response: {
+sp-container  |   "availabilities": [
+sp-container  |     {
+sp-container  |       "priceTokens": 5,
+sp-container  |       "hoIdentity": "HomeOwner",
+sp-container  |       "hoCertFingerprint": "B229A59688B10B7CABBC6BE54D3EB7B55D4377AC6AD0CA8131AC5E4E1D489A6D",
+sp-container  |       "availabilityId": "40cd1f64-9a93-406c-b149-f61a40287933",
+sp-container  |       "spotId": "SPOT-A1",
+sp-container  |       "locationZone": "Downtown-North",
+sp-container  |       "homeOwnerId": "HO-001",
+sp-container  |       "hoCertificate": "-----BEGIN CERTIFICATE-----\nMIIEgDCCAmigAwIBAgIQaEWCsOh3PU3K9ZisD+dOgDANBgkqhkiG9w0BAQsFADA9\nMQswCQYDVQQGEwJCRTEYMBYGA1UEChMPUHJpdmF0ZSBQYXJraW5nMRQwEgYDVQQD\nEwsxNzIuMjAuMC4xMDAeFw0yNTEyMjUyMzAxMTZaFw0yNjEyMjUyMzAyMTZaMDox\nCzAJBgNVBAYTAkJFMRcwFQYDVQQKDA5QYXJraW5nIFN5c3RlbTESMBAGA1UEAwwJ\nSG9tZU93bmVyMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsa8NWMN3\noYVYGjVISiFEVUISo1njiGJlda8kbT4X2mUXVf1GQ9KC7WDNQvkpLEsxDsLm89U9\nOXxo+eQwCVIPIGdHZPBGG1MDghhFz/V571wg97i7NdirTnpLI9WLGMxyq17RtuHH\nlVOPsd2Nwc9/cHXSbnQniLeMJ/mM8KI/L7W0ocY+qoBE0Bf84Ny/9A7adEvAJ9Em\nNKh2liNRKs5zcchuVDXhAUtgPL/1B9flbUPdp6R5Xhsody5t8D0MO1SW4W2LN7/B\nmY2rOUXmoBHfIfDEcHM6MO7qKFfMN1yvk5MjmB+BtNGpso5udHQGZPRpNkdbDB6B\nDURBO50fEliINQIDAQABo38wfTAMBgNVHRMBAf8EAjAAMA4GA1UdDwEB/wQEAwIF\noDAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwHQYDVR0OBBYEFJfSnj0U\nTiU6axXFdSh/K0TkQdKfMB8GA1UdIwQYMBaAFMkcn65FDxCLoejj3tyrE1Khh6KK\nMA0GCSqGSIb3DQEBCwUAA4ICAQCWjKUyCYOPfaSGgtZmn667v2Sph85dSN+bQVUa\n/7hcjfJF7JqBPWOSsQq6un4fiaJ1gARIDc1Ho3SF8xNpdepS4wfMRoaewDDKFoHm\ndxj8xnt+xFKPLgjE49RnJvilfaO/qCqZ/YohteXshKgXq4shE6nvSvH/RIN1qP2s\nsxL+a8yvIGYgaQtIMPul/Oca9/qcL76k2bnXHpeCBoaP/xlKvBGyntZ1LqAj2WKa\nFPr5h+RD7VjTzVW0DVMej/Kvhrrl6hg+lr/+LlJwuFVkXgwjLOhqrq0mO3Za1kiT\n/rfl7/sqI29wDioRar1thfi4oFuuGP+KJAONpEsKthIYLvAeoyk2Gxfl0aixY6Op\net6byCKj0DKe1HZziqT0HgRzdvlAmT1JHifTkucgLMz4OhdAYJXekxvGQR5wrBYF\n/Dqc//GJNbhMYMrJRKxukuaQHWiPf8YnVQbPD1byjsqS0yHmT4CuK7dWG9qpYXj9\nvYqTC7/Uwc+yYMPIiJ5p+2mBqcPGMOZ6hIM4bnIuq5LuY1meynSXXwjbXhcGISCa\n6xJb2SZuWn6ZtvWX0pTNsR9tUTGpmkJgJXrRMzz8jC7egDojuYev7DlYVRADXgJT\n4v5TBurGvIyNblo1j2LBI8rgyR8+OKm1sOLg9KRkGnS3NIuxfolKjn+M9YkxvcUI\nHfLxEg==\n-----END CERTIFICATE-----\n",
+sp-container  |       "validFrom": "2025-12-25T23:03:33.744354020Z",
+sp-container  |       "validTo": "2025-12-26T07:03:33.744354020Z"
+sp-container  |     },
+sp-container  |     {
+sp-container  |       "priceTokens": 5,
+sp-container  |       "hoIdentity": "HomeOwner",
+sp-container  |       "hoCertFingerprint": "B229A59688B10B7CABBC6BE54D3EB7B55D4377AC6AD0CA8131AC5E4E1D489A6D",
+sp-container  |       "availabilityId": "ebd07e23-aee1-451a-bf79-ab88cf89b2ab",
+sp-container  |       "spotId": "SPOT-A1",
+sp-container  |       "locationZone": "Downtown-North",
+sp-container  |       "homeOwnerId": "HO-001",
+sp-container  |       "hoCertificate": "-----BEGIN CERTIFICATE-----\nMIIEgDCCAmigAwIBAgIQaEWCsOh3PU3K9ZisD+dOgDANBgkqhkiG9w0BAQsFADA9\nMQswCQYDVQQGEwJCRTEYMBYGA1UEChMPUHJpdmF0ZSBQYXJraW5nMRQwEgYDVQQD\nEwsxNzIuMjAuMC4xMDAeFw0yNTEyMjUyMzAxMTZaFw0yNjEyMjUyMzAyMTZaMDox\nCzAJBgNVBAYTAkJFMRcwFQYDVQQKDA5QYXJraW5nIFN5c3RlbTESMBAGA1UEAwwJ\nSG9tZU93bmVyMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsa8NWMN3\noYVYGjVISiFEVUISo1njiGJlda8kbT4X2mUXVf1GQ9KC7WDNQvkpLEsxDsLm89U9\nOXxo+eQwCVIPIGdHZPBGG1MDghhFz/V571wg97i7NdirTnpLI9WLGMxyq17RtuHH\nlVOPsd2Nwc9/cHXSbnQniLeMJ/mM8KI/L7W0ocY+qoBE0Bf84Ny/9A7adEvAJ9Em\nNKh2liNRKs5zcchuVDXhAUtgPL/1B9flbUPdp6R5Xhsody5t8D0MO1SW4W2LN7/B\nmY2rOUXmoBHfIfDEcHM6MO7qKFfMN1yvk5MjmB+BtNGpso5udHQGZPRpNkdbDB6B\nDURBO50fEliINQIDAQABo38wfTAMBgNVHRMBAf8EAjAAMA4GA1UdDwEB/wQEAwIF\noDAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwHQYDVR0OBBYEFJfSnj0U\nTiU6axXFdSh/K0TkQdKfMB8GA1UdIwQYMBaAFMkcn65FDxCLoejj3tyrE1Khh6KK\nMA0GCSqGSIb3DQEBCwUAA4ICAQCWjKUyCYOPfaSGgtZmn667v2Sph85dSN+bQVUa\n/7hcjfJF7JqBPWOSsQq6un4fiaJ1gARIDc1Ho3SF8xNpdepS4wfMRoaewDDKFoHm\ndxj8xnt+xFKPLgjE49RnJvilfaO/qCqZ/YohteXshKgXq4shE6nvSvH/RIN1qP2s\nsxL+a8yvIGYgaQtIMPul/Oca9/qcL76k2bnXHpeCBoaP/xlKvBGyntZ1LqAj2WKa\nFPr5h+RD7VjTzVW0DVMej/Kvhrrl6hg+lr/+LlJwuFVkXgwjLOhqrq0mO3Za1kiT\n/rfl7/sqI29wDioRar1thfi4oFuuGP+KJAONpEsKthIYLvAeoyk2Gxfl0aixY6Op\net6byCKj0DKe1HZziqT0HgRzdvlAmT1JHifTkucgLMz4OhdAYJXekxvGQR5wrBYF\n/Dqc//GJNbhMYMrJRKxukuaQHWiPf8YnVQbPD1byjsqS0yHmT4CuK7dWG9qpYXj9\nvYqTC7/Uwc+yYMPIiJ5p+2mBqcPGMOZ6hIM4bnIuq5LuY1meynSXXwjbXhcGISCa\n6xJb2SZuWn6ZtvWX0pTNsR9tUTGpmkJgJXrRMzz8jC7egDojuYev7DlYVRADXgJT\n4v5TBurGvIyNblo1j2LBI8rgyR8+OKm1sOLg9KRkGnS3NIuxfolKjn+M9YkxvcUI\nHfLxEg==\n-----END CERTIFICATE-----\n",
+sp-container  |       "validFrom": "2025-12-25T23:03:14.580187807Z",
+sp-container  |       "validTo": "2025-12-26T07:03:14.580187807Z"
+sp-container  |     },
+sp-container  |     {
+sp-container  |       "priceTokens": 5,
+sp-container  |       "hoIdentity": "HomeOwner",
+sp-container  |       "hoCertFingerprint": "B229A59688B10B7CABBC6BE54D3EB7B55D4377AC6AD0CA8131AC5E4E1D489A6D",
+sp-container  |       "availabilityId": "49f048b8-6297-4bbe-bebf-f5f8d9e868e5",
+sp-container  |       "spotId": "SPOT-A1",
+sp-container  |       "locationZone": "Downtown-North",
+sp-container  |       "homeOwnerId": "HO-001",
+sp-container  |       "hoCertificate": "-----BEGIN CERTIFICATE-----\nMIIEgDCCAmigAwIBAgIQaEWCsOh3PU3K9ZisD+dOgDANBgkqhkiG9w0BAQsFADA9\nMQswCQYDVQQGEwJCRTEYMBYGA1UEChMPUHJpdmF0ZSBQYXJraW5nMRQwEgYDVQQD\nEwsxNzIuMjAuMC4xMDAeFw0yNTEyMjUyMzAxMTZaFw0yNjEyMjUyMzAyMTZaMDox\nCzAJBgNVBAYTAkJFMRcwFQYDVQQKDA5QYXJraW5nIFN5c3RlbTESMBAGA1UEAwwJ\nSG9tZU93bmVyMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsa8NWMN3\noYVYGjVISiFEVUISo1njiGJlda8kbT4X2mUXVf1GQ9KC7WDNQvkpLEsxDsLm89U9\nOXxo+eQwCVIPIGdHZPBGG1MDghhFz/V571wg97i7NdirTnpLI9WLGMxyq17RtuHH\nlVOPsd2Nwc9/cHXSbnQniLeMJ/mM8KI/L7W0ocY+qoBE0Bf84Ny/9A7adEvAJ9Em\nNKh2liNRKs5zcchuVDXhAUtgPL/1B9flbUPdp6R5Xhsody5t8D0MO1SW4W2LN7/B\nmY2rOUXmoBHfIfDEcHM6MO7qKFfMN1yvk5MjmB+BtNGpso5udHQGZPRpNkdbDB6B\nDURBO50fEliINQIDAQABo38wfTAMBgNVHRMBAf8EAjAAMA4GA1UdDwEB/wQEAwIF\noDAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwHQYDVR0OBBYEFJfSnj0U\nTiU6axXFdSh/K0TkQdKfMB8GA1UdIwQYMBaAFMkcn65FDxCLoejj3tyrE1Khh6KK\nMA0GCSqGSIb3DQEBCwUAA4ICAQCWjKUyCYOPfaSGgtZmn667v2Sph85dSN+bQVUa\n/7hcjfJF7JqBPWOSsQq6un4fiaJ1gARIDc1Ho3SF8xNpdepS4wfMRoaewDDKFoHm\ndxj8xnt+xFKPLgjE49RnJvilfaO/qCqZ/YohteXshKgXq4shE6nvSvH/RIN1qP2s\nsxL+a8yvIGYgaQtIMPul/Oca9/qcL76k2bnXHpeCBoaP/xlKvBGyntZ1LqAj2WKa\nFPr5h+RD7VjTzVW0DVMej/Kvhrrl6hg+lr/+LlJwuFVkXgwjLOhqrq0mO3Za1kiT\n/rfl7/sqI29wDioRar1thfi4oFuuGP+KJAONpEsKthIYLvAeoyk2Gxfl0aixY6Op\net6byCKj0DKe1HZziqT0HgRzdvlAmT1JHifTkucgLMz4OhdAYJXekxvGQR5wrBYF\n/Dqc//GJNbhMYMrJRKxukuaQHWiPf8YnVQbPD1byjsqS0yHmT4CuK7dWG9qpYXj9\nvYqTC7/Uwc+yYMPIiJ5p+2mBqcPGMOZ6hIM4bnIuq5LuY1meynSXXwjbXhcGISCa\n6xJb2SZuWn6ZtvWX0pTNsR9tUTGpmkJgJXrRMzz8jC7egDojuYev7DlYVRADXgJT\n4v5TBurGvIyNblo1j2LBI8rgyR8+OKm1sOLg9KRkGnS3NIuxfolKjn+M9YkxvcUI\nHfLxEg==\n-----END CERTIFICATE-----\n",
+sp-container  |       "validFrom": "2025-12-25T23:02:53.955280335Z",
+sp-container  |       "validTo": "2025-12-26T07:02:53.955280335Z"
+sp-container  |     },
+sp-container  |     {
+sp-container  |       "priceTokens": 5,
+sp-container  |       "hoIdentity": "HomeOwner",
+sp-container  |       "hoCertFingerprint": "B229A59688B10B7CABBC6BE54D3EB7B55D4377AC6AD0CA8131AC5E4E1D489A6D",
+sp-container  |       "availabilityId": "340f449d-d405-49ec-b2e4-9606f78a2a69",
+sp-container  |       "spotId": "SPOT-A1",
+sp-container  |       "locationZone": "Downtown-North",
+sp-container  |       "homeOwnerId": "HO-001",
+sp-container  |       "hoCertificate": "-----BEGIN CERTIFICATE-----\nMIIEgDCCAmigAwIBAgIQaEWCsOh3PU3K9ZisD+dOgDANBgkqhkiG9w0BAQsFADA9\nMQswCQYDVQQGEwJCRTEYMBYGA1UEChMPUHJpdmF0ZSBQYXJraW5nMRQwEgYDVQQD\nEwsxNzIuMjAuMC4xMDAeFw0yNTEyMjUyMzAxMTZaFw0yNjEyMjUyMzAyMTZaMDox\nCzAJBgNVBAYTAkJFMRcwFQYDVQQKDA5QYXJraW5nIFN5c3RlbTESMBAGA1UEAwwJ\nSG9tZU93bmVyMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsa8NWMN3\noYVYGjVISiFEVUISo1njiGJlda8kbT4X2mUXVf1GQ9KC7WDNQvkpLEsxDsLm89U9\nOXxo+eQwCVIPIGdHZPBGG1MDghhFz/V571wg97i7NdirTnpLI9WLGMxyq17RtuHH\nlVOPsd2Nwc9/cHXSbnQniLeMJ/mM8KI/L7W0ocY+qoBE0Bf84Ny/9A7adEvAJ9Em\nNKh2liNRKs5zcchuVDXhAUtgPL/1B9flbUPdp6R5Xhsody5t8D0MO1SW4W2LN7/B\nmY2rOUXmoBHfIfDEcHM6MO7qKFfMN1yvk5MjmB+BtNGpso5udHQGZPRpNkdbDB6B\nDURBO50fEliINQIDAQABo38wfTAMBgNVHRMBAf8EAjAAMA4GA1UdDwEB/wQEAwIF\noDAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwHQYDVR0OBBYEFJfSnj0U\nTiU6axXFdSh/K0TkQdKfMB8GA1UdIwQYMBaAFMkcn65FDxCLoejj3tyrE1Khh6KK\nMA0GCSqGSIb3DQEBCwUAA4ICAQCWjKUyCYOPfaSGgtZmn667v2Sph85dSN+bQVUa\n/7hcjfJF7JqBPWOSsQq6un4fiaJ1gARIDc1Ho3SF8xNpdepS4wfMRoaewDDKFoHm\ndxj8xnt+xFKPLgjE49RnJvilfaO/qCqZ/YohteXshKgXq4shE6nvSvH/RIN1qP2s\nsxL+a8yvIGYgaQtIMPul/Oca9/qcL76k2bnXHpeCBoaP/xlKvBGyntZ1LqAj2WKa\nFPr5h+RD7VjTzVW0DVMej/Kvhrrl6hg+lr/+LlJwuFVkXgwjLOhqrq0mO3Za1kiT\n/rfl7/sqI29wDioRar1thfi4oFuuGP+KJAONpEsKthIYLvAeoyk2Gxfl0aixY6Op\net6byCKj0DKe1HZziqT0HgRzdvlAmT1JHifTkucgLMz4OhdAYJXekxvGQR5wrBYF\n/Dqc//GJNbhMYMrJRKxukuaQHWiPf8YnVQbPD1byjsqS0yHmT4CuK7dWG9qpYXj9\nvYqTC7/Uwc+yYMPIiJ5p+2mBqcPGMOZ6hIM4bnIuq5LuY1meynSXXwjbXhcGISCa\n6xJb2SZuWn6ZtvWX0pTNsR9tUTGpmkJgJXrRMzz8jC7egDojuYev7DlYVRADXgJT\n4v5TBurGvIyNblo1j2LBI8rgyR8+OKm1sOLg9KRkGnS3NIuxfolKjn+M9YkxvcUI\nHfLxEg==\n-----END CERTIFICATE-----\n",
+sp-container  |       "validFrom": "2025-12-25T23:02:17.066938417Z",
+sp-container  |       "validTo": "2025-12-26T07:02:17.066938417Z"
+sp-container  |     }
+sp-container  |   ],
+sp-container  |   "count": 4,
+sp-container  |   "status": "success",
+sp-container  |   "timestamp": "2025-12-25T23:03:43.852921038Z"
+sp-container  | }
+sp-container  | 
+sp-container  | CarOwner disconnected

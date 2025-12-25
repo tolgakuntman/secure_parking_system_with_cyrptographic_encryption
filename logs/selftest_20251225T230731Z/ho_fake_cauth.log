@@ -1,0 +1,55 @@
+ho-container  | 
+ho-container  | === Home Owner (HO) Starting ===
+ho-container  | Found existing certificate, loading from keystore...
+ho-container  | ✓ Certificate validity period verified
+ho-container  | 
+ho-container  | ╔═══════════════════════════════════════════╗
+ho-container  | ║   HO CRYPTOGRAPHIC IDENTITY ESTABLISHED   ║
+ho-container  | ╚═══════════════════════════════════════════╝
+ho-container  | Subject: CN=HomeOwner,O=Parking System,C=BE
+ho-container  | Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+ho-container  | Valid from: Thu Dec 25 23:06:52 UTC 2025
+ho-container  | Valid until: Fri Dec 25 23:07:52 UTC 2026
+ho-container  | 
+ho-container  | === Publishing Parking Availability to SP ===
+ho-container  | ✓ mTLS connection to SP established
+ho-container  |   Protocol: TLSv1.3
+ho-container  |   Cipher suite: TLS_AES_256_GCM_SHA384
+ho-container  |   SP certificate: C=BE,O=Parking System,CN=ServiceProvider
+ho-container  | [M3.2] SP public key cached from mTLS handshake
+ho-container  | 
+ho-container  | → Publishing availability to SP...
+ho-container  |   Spot ID: SPOT-A1
+ho-container  |   Valid from: 2025-12-25T23:09:08.529736990Z
+ho-container  |   Valid to: 2025-12-26T07:09:08.529736990Z
+ho-container  |   Price: 5 tokens
+ho-container  |   Location: Downtown-North
+ho-container  | 
+ho-container  | ← Received response from SP
+ho-container  | 
+ho-container  | ╔═══════════════════════════════════════════╗
+ho-container  | ║   AVAILABILITY PUBLISHED SUCCESSFULLY     ║
+ho-container  | ╚═══════════════════════════════════════════╝
+ho-container  | Availability ID: a8172ded-6ed2-4d78-b2cd-cba842e11278
+ho-container  | Message: Parking availability published successfully
+ho-container  | 
+ho-container  | === Starting HO Reservation & Payment Server ===
+ho-container  | 
+ho-container  | ╔═══════════════════════════════════════════════════════════╗
+ho-container  | ║   HO RESERVATION SERVER CRYPTOGRAPHIC BASELINE           ║
+ho-container  | ╚═══════════════════════════════════════════════════════════╝
+ho-container  | Version: 2025-12-22 (Milestone 2.4 - Reservation Handshake)
+ho-container  | ✓ Enabled TLS protocols: [TLSv1.3, TLSv1.2]
+ho-container  | ✓ Mutual TLS (mTLS) REQUIRED - client certificates enforced
+ho-container  | 
+ho-container  | === HO Reservation Server Configuration ===
+ho-container  | Server listening on port: 8445
+ho-container  | Server certificate subject: CN=HomeOwner,O=Parking System,C=BE
+ho-container  | Server certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+ho-container  | RSA key size: 2048 bits
+ho-container  | Signature algorithm: SHA256withRSA
+ho-container  | mTLS enforcement: ENABLED (CO certificates REQUIRED)
+ho-container  | 
+ho-container  | ✓ HO Reservation Server ready to accept secure connections
+ho-container  | ==========================================
+ho-container  | 

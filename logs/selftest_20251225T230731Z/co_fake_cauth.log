@@ -1,0 +1,170 @@
+ Container cauth-container  Running
+ Container sp-container  Running
+Waiting for CAuth, SP, and HO to start...
+
+=== Car Owner (CO) Starting ===
+Found existing certificate, loading from keystore...
+✓ Certificate validity period verified
+
+╔═══════════════════════════════════════════╗
+║   CO CRYPTOGRAPHIC IDENTITY ESTABLISHED   ║
+╚═══════════════════════════════════════════╝
+Subject: C=BE,O=Parking System,CN=CarOwner
+Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+Valid from: Thu Dec 25 23:06:57 UTC 2025
+Valid until: Fri Dec 25 23:07:57 UTC 2026
+
+═══════════════════════════════════════════════════════════════
+  [CAuth-1] NEGATIVE TEST MODE: FAKE_CAUTH
+═══════════════════════════════════════════════════════════════
+[CAuth-1] Testing rejection of rogue intermediate CA certificate
+[CAuth-1] Enrolled with: fake-cauth:8443
+[CAuth-1] Certificate Details:
+  Subject: C=BE, O=Parking System, CN=CarOwner
+  Issuer:  CN=172.20.0.10, O=Private Parking, C=BE
+  Serial:  142100264802754859692650561895547576319
+[CAuth-1] NOTE: Issuer DN: CN=172.20.0.10,O=Private Parking,C=BE
+
+[CAuth-1] Attempting mTLS connection to SP...
+[CAuth-1] EXPECTED: Connection should FAIL with PKIX validation error
+[CAuth-1] REASON: SP truststore only contains real Root CA, not rogue CA
+
+Establishing hardened mTLS connection to SP for authenticated discovery...
+✓ mTLS connection established to SP
+  Protocol: TLSv1.3
+  Cipher suite: TLS_AES_256_GCM_SHA384
+  SP certificate subject: C=BE,O=Parking System,CN=ServiceProvider
+  SP certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+✓ SP certificate validity verified
+
+→ Requesting parking availabilities from SP...
+← Received availability list from SP
+
+╔═══════════════════════════════════════════════════════════╗
+║   AUTHENTICATED AVAILABILITY DISCOVERY SUCCESSFUL         ║
+╚═══════════════════════════════════════════════════════════╝
+Discovered 4 parking availability record(s)
+
+════════════════════════════════════════════════════════════
+Availability #1
+════════════════════════════════════════════════════════════
+Availability ID: 41e8ca3b-4c8d-432b-8ec8-eee5409f058e
+Spot ID: SPOT-A1
+Price: 5 tokens
+Valid: 2025-12-25T23:08:49.298213861Z to 2025-12-26T07:08:49.298213861Z
+Location: Downtown-North
+Home Owner ID: HO-001
+
+─ HO Certificate Identity Verification ─
+✓ HO certificate is within validity period
+  Valid from: Thu Dec 25 23:06:52 UTC 2025
+  Valid until: Fri Dec 25 23:07:52 UTC 2026
+⚠ Note: Full chain validation not possible (intermediate CA cert not provided)
+  Relying on certificate fingerprint verification for trust anchor
+  In production: SP should include full certificate chain
+✓ HO Identity (CN): HomeOwner
+  Full Subject: CN=HomeOwner,O=Parking System,C=BE
+  Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+✓ Certificate fingerprint verified: 22016D2223C5DF72...
+✓ Identity binding persisted to ./keystore/ho_identity_bindings.txt
+
+✓ HO IDENTITY BINDING ESTABLISHED
+  Spot: SPOT-A1 ⟷ HO: HomeOwner
+  Fingerprint: 22016D2223C5DF720929361A9270F35C...
+
+✓ Stored availability for reservation request
+════════════════════════════════════════════════════════════
+Availability #2
+════════════════════════════════════════════════════════════
+Availability ID: d0c617e5-f301-43e9-8f0c-58181f1f3bf7
+Spot ID: SPOT-A1
+Price: 5 tokens
+Valid: 2025-12-25T23:07:53.013632803Z to 2025-12-26T07:07:53.013632803Z
+Location: Downtown-North
+Home Owner ID: HO-001
+
+─ HO Certificate Identity Verification ─
+✓ HO certificate is within validity period
+  Valid from: Thu Dec 25 23:06:52 UTC 2025
+  Valid until: Fri Dec 25 23:07:52 UTC 2026
+⚠ Note: Full chain validation not possible (intermediate CA cert not provided)
+  Relying on certificate fingerprint verification for trust anchor
+  In production: SP should include full certificate chain
+✓ HO Identity (CN): HomeOwner
+  Full Subject: CN=HomeOwner,O=Parking System,C=BE
+  Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+✓ Certificate fingerprint verified: 22016D2223C5DF72...
+✓ Identity binding persisted to ./keystore/ho_identity_bindings.txt
+
+✓ HO IDENTITY BINDING ESTABLISHED
+  Spot: SPOT-A1 ⟷ HO: HomeOwner
+  Fingerprint: 22016D2223C5DF720929361A9270F35C...
+
+════════════════════════════════════════════════════════════
+Availability #3
+════════════════════════════════════════════════════════════
+Availability ID: a0180d03-a923-48e8-b208-af4b8fb29c75
+Spot ID: SPOT-A1
+Price: 5 tokens
+Valid: 2025-12-25T23:08:29.057654995Z to 2025-12-26T07:08:29.057654995Z
+Location: Downtown-North
+Home Owner ID: HO-001
+
+─ HO Certificate Identity Verification ─
+✓ HO certificate is within validity period
+  Valid from: Thu Dec 25 23:06:52 UTC 2025
+  Valid until: Fri Dec 25 23:07:52 UTC 2026
+⚠ Note: Full chain validation not possible (intermediate CA cert not provided)
+  Relying on certificate fingerprint verification for trust anchor
+  In production: SP should include full certificate chain
+✓ HO Identity (CN): HomeOwner
+  Full Subject: CN=HomeOwner,O=Parking System,C=BE
+  Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+✓ Certificate fingerprint verified: 22016D2223C5DF72...
+✓ Identity binding persisted to ./keystore/ho_identity_bindings.txt
+
+✓ HO IDENTITY BINDING ESTABLISHED
+  Spot: SPOT-A1 ⟷ HO: HomeOwner
+  Fingerprint: 22016D2223C5DF720929361A9270F35C...
+
+════════════════════════════════════════════════════════════
+Availability #4
+════════════════════════════════════════════════════════════
+Availability ID: a8172ded-6ed2-4d78-b2cd-cba842e11278
+Spot ID: SPOT-A1
+Price: 5 tokens
+Valid: 2025-12-25T23:09:08.529736990Z to 2025-12-26T07:09:08.529736990Z
+Location: Downtown-North
+Home Owner ID: HO-001
+
+─ HO Certificate Identity Verification ─
+✓ HO certificate is within validity period
+  Valid from: Thu Dec 25 23:06:52 UTC 2025
+  Valid until: Fri Dec 25 23:07:52 UTC 2026
+⚠ Note: Full chain validation not possible (intermediate CA cert not provided)
+  Relying on certificate fingerprint verification for trust anchor
+  In production: SP should include full certificate chain
+✓ HO Identity (CN): HomeOwner
+  Full Subject: CN=HomeOwner,O=Parking System,C=BE
+  Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+✓ Certificate fingerprint verified: 22016D2223C5DF72...
+✓ Identity binding persisted to ./keystore/ho_identity_bindings.txt
+
+✓ HO IDENTITY BINDING ESTABLISHED
+  Spot: SPOT-A1 ⟷ HO: HomeOwner
+  Fingerprint: 22016D2223C5DF720929361A9270F35C...
+
+════════════════════════════════════════════════════════════
+✓✓✓ AVAILABILITY DISCOVERY COMPLETE ✓✓✓
+════════════════════════════════════════════════════════════
+All HO identities verified and bound to availabilities
+Identity bindings persisted for future interaction verification
+
+╔═══════════════════════════════════════════════════════════════╗
+║ [CAuth-1] ✗ TEST FAILED: SP ACCEPTED UNTRUSTED CERTIFICATE!  ║
+╚═══════════════════════════════════════════════════════════════╝
+[CAuth-1] CRITICAL SECURITY FAILURE:
+[CAuth-1] SP should have rejected the rogue CA certificate!
+[CAuth-1] The certificate chain does NOT terminate at Root CA.
+[CAuth-1] This indicates a trust validation bypass vulnerability!
+

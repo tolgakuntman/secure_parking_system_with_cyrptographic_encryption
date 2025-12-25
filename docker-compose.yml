@@ -30,6 +30,8 @@ services:
     networks:
       java-network:
         ipv4_address: 172.20.0.11
+    ports:
+      - "8444:8444"   # publish SP to host so start.sh can check localhost:8444
     volumes:
       - ./crypto_do_once/sp_truststore.p12:/app/truststore.p12
       - ./crypto_do_once/root_ca.crt:/app/root_ca.crt

@@ -1,0 +1,312 @@
+[INFO] Self-test mode enabled. Logs: /c/Users/User/OneDrive/security-project/2526-tolga-kuntman-r0917093/logs/selftest_20251225T230731Z
+
+==== Sanity checks ====
+[INFO] Sanity checks passed
+[INFO] Fresh start: docker compose down -v --remove-orphans
+ Container fake-cauth-container  Stopping
+ Container ho-container  Stopping
+ Container fake-cauth-container  Stopped
+ Container fake-cauth-container  Removing
+ Container fake-cauth-container  Removed
+ Container ho-container  Stopped
+ Container ho-container  Removing
+ Container ho-container  Removed
+ Container sp-container  Stopping
+ Container sp-container  Stopped
+ Container sp-container  Removing
+ Container sp-container  Removed
+ Container cauth-container  Stopping
+ Container cauth-container  Stopped
+ Container cauth-container  Removing
+ Container cauth-container  Removed
+ Volume 2526-tolga-kuntman-r0917093_sp_keystore  Removing
+ Volume 2526-tolga-kuntman-r0917093_ho_keystore  Removing
+ Volume 2526-tolga-kuntman-r0917093_co_keystore  Removing
+ Network 2526-tolga-kuntman-r0917093_java-network  Removing
+ Volume 2526-tolga-kuntman-r0917093_sp_keystore  Removed
+ Volume 2526-tolga-kuntman-r0917093_co_keystore  Removed
+ Volume 2526-tolga-kuntman-r0917093_ho_keystore  Removed
+ Network 2526-tolga-kuntman-r0917093_java-network  Removed
+[INFO] Starting core services: cauth, sp, ho
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [cauth internal] load build definition from Dockerfile
+#1 transferring dockerfile: 784B done
+#1 DONE 0.0s
+
+#2 [cauth internal] load metadata for docker.io/library/eclipse-temurin:17-jdk
+#2 DONE 1.5s
+
+#3 [cauth internal] load .dockerignore
+#3 transferring context: 97B done
+#3 DONE 0.0s
+
+#4 [cauth 1/5] FROM docker.io/library/eclipse-temurin:17-jdk@sha256:7995efb7f9276fc16433aa8e2856a06082cd09f7f6603579db2534937ccc6778
+#4 resolve docker.io/library/eclipse-temurin:17-jdk@sha256:7995efb7f9276fc16433aa8e2856a06082cd09f7f6603579db2534937ccc6778 0.0s done
+#4 DONE 0.1s
+
+#5 [cauth internal] load build context
+#5 transferring context: 474B done
+#5 DONE 0.0s
+
+#6 [cauth 2/5] RUN apt-get update &&     apt-get install -y maven &&     rm -rf /var/lib/apt/lists/*
+#6 CACHED
+
+#7 [cauth 3/5] WORKDIR /app
+#7 CACHED
+
+#8 [cauth 4/5] COPY . .
+#8 CACHED
+
+#9 [cauth 5/5] RUN mvn clean package -DskipTests
+#9 CACHED
+
+#10 [cauth] exporting to image
+#10 exporting layers done
+#10 exporting manifest sha256:2da3a53f6967b56dfd78a3846f293185e2b20293ff280ab5a18e32e7e247fc38 done
+#10 exporting config sha256:74e627f7174d1fd07fa0050af2fac145a04877ee9b6dfac3758cb4c85a3592bb done
+#10 exporting attestation manifest sha256:375d6a605787821ebe64d0a5155618c44f2b5fb7642399ff593a1c8cfb427831 0.1s done
+#10 exporting manifest list sha256:15de5c32d1b826e306620da0fb1b1e03a3f9dcdba93b9250fee2c9b12a6cefdf
+#10 exporting manifest list sha256:15de5c32d1b826e306620da0fb1b1e03a3f9dcdba93b9250fee2c9b12a6cefdf 0.0s done
+#10 naming to docker.io/library/2526-tolga-kuntman-r0917093-cauth:latest done
+#10 unpacking to docker.io/library/2526-tolga-kuntman-r0917093-cauth:latest 0.0s done
+#10 DONE 0.2s
+
+#11 [cauth] resolving provenance for metadata file
+#11 DONE 0.0s
+
+#12 [sp internal] load build definition from Dockerfile
+#12 DONE 0.0s
+
+#12 [sp internal] load build definition from Dockerfile
+#12 transferring dockerfile: 678B done
+#12 DONE 0.0s
+
+#2 [sp internal] load metadata for docker.io/library/eclipse-temurin:17-jdk
+#2 DONE 1.9s
+
+#13 [sp internal] load .dockerignore
+#13 transferring context: 97B done
+#13 DONE 0.0s
+
+#4 [sp 1/5] FROM docker.io/library/eclipse-temurin:17-jdk@sha256:7995efb7f9276fc16433aa8e2856a06082cd09f7f6603579db2534937ccc6778
+#4 resolve docker.io/library/eclipse-temurin:17-jdk@sha256:7995efb7f9276fc16433aa8e2856a06082cd09f7f6603579db2534937ccc6778 0.0s done
+#4 DONE 0.1s
+
+#14 [sp internal] load build context
+#14 transferring context: 474B done
+#14 DONE 0.0s
+
+#6 [sp 2/5] RUN apt-get update &&     apt-get install -y maven &&     rm -rf /var/lib/apt/lists/*
+#6 CACHED
+
+#7 [sp 3/5] WORKDIR /app
+#7 CACHED
+
+#15 [sp 4/5] COPY . .
+#15 CACHED
+
+#16 [sp 5/5] RUN mvn clean package -DskipTests
+#16 CACHED
+
+#17 [sp] exporting to image
+#17 exporting layers done
+#17 exporting manifest sha256:70466b6c8da4984c4585dcd419395538237f4d2211f461c67b8a3a5892a80f46 done
+#17 exporting config sha256:ad2184b2d13fdb134e157dad81a14be79531b5c843c668813cd8c7c10b1c22c6 done
+#17 exporting attestation manifest sha256:8f2db1ca3dd291d7fa6415393d3129ffe3700002235c4adb6be5c560d6277f76 0.1s done
+#17 exporting manifest list sha256:9514d065ffcb77e9edbaa24dfd0a5c092ae52f48d9de2d1e4bf96ea6802eb4a2
+#17 exporting manifest list sha256:9514d065ffcb77e9edbaa24dfd0a5c092ae52f48d9de2d1e4bf96ea6802eb4a2 0.0s done
+#17 naming to docker.io/library/2526-tolga-kuntman-r0917093-sp:latest done
+#17 unpacking to docker.io/library/2526-tolga-kuntman-r0917093-sp:latest 0.0s done
+#17 DONE 0.2s
+
+#18 [sp] resolving provenance for metadata file
+#18 DONE 0.0s
+
+#19 [ho internal] load build definition from Dockerfile
+#19 transferring dockerfile: 357B done
+#19 DONE 0.0s
+
+#20 [ho internal] load metadata for docker.io/library/eclipse-temurin:17-jre
+#20 DONE 0.1s
+
+#21 [ho internal] load metadata for docker.io/library/maven:3.9-eclipse-temurin-17
+#21 DONE 2.8s
+
+#22 [ho internal] load .dockerignore
+#22 transferring context: 2B done
+#22 DONE 0.0s
+
+#23 [ho internal] load build context
+#23 DONE 0.0s
+
+#24 [ho stage-1 1/3] FROM docker.io/library/eclipse-temurin:17-jre@sha256:fc0c46c43f873754d8651948b94da946449aee0c0262420a86c4d18e84bc3c49
+#24 resolve docker.io/library/eclipse-temurin:17-jre@sha256:fc0c46c43f873754d8651948b94da946449aee0c0262420a86c4d18e84bc3c49 0.1s done
+#24 DONE 0.1s
+
+#25 [ho build 1/5] FROM docker.io/library/maven:3.9-eclipse-temurin-17@sha256:f7ae6cafd12a38da76a1a105744522387b32caacba5e23674a652133607d007c
+#25 resolve docker.io/library/maven:3.9-eclipse-temurin-17@sha256:f7ae6cafd12a38da76a1a105744522387b32caacba5e23674a652133607d007c 0.1s done
+#25 DONE 0.1s
+
+#23 [ho internal] load build context
+#23 transferring context: 251B done
+#23 DONE 0.0s
+
+#26 [ho build 3/5] COPY pom.xml .
+#26 CACHED
+
+#27 [ho build 4/5] COPY src ./src
+#27 CACHED
+
+#28 [ho build 5/5] RUN mvn clean package -DskipTests
+#28 CACHED
+
+#29 [ho stage-1 2/3] WORKDIR /app
+#29 CACHED
+
+#30 [ho build 2/5] WORKDIR /app
+#30 CACHED
+
+#31 [ho stage-1 3/3] COPY --from=build /app/target/ho-1.0-SNAPSHOT.jar app.jar
+#31 CACHED
+
+#32 [ho] exporting to image
+#32 exporting layers done
+#32 exporting manifest sha256:6070994507cc909bb0908fd86a54136d891630354767e44525b5bb84b52a1f54 done
+#32 exporting config sha256:fd2e3a61ba55cf8341ca77c97b7807ea6852247aad58162a401fac29d13d4a80 done
+#32 exporting attestation manifest sha256:a2b53ee0eaf9ba1509f97c4754ecfff826fcf625d5c8f897eb09b833a4729f71 0.1s done
+#32 exporting manifest list sha256:a0570aa971b0256c3c06fc708fccb894b805e423dda0a71593e05c49d31b4b7a
+#32 exporting manifest list sha256:a0570aa971b0256c3c06fc708fccb894b805e423dda0a71593e05c49d31b4b7a 0.0s done
+#32 naming to docker.io/library/2526-tolga-kuntman-r0917093-ho:latest done
+#32 unpacking to docker.io/library/2526-tolga-kuntman-r0917093-ho:latest 0.0s done
+#32 DONE 0.2s
+
+#33 [ho] resolving provenance for metadata file
+#33 DONE 0.0s
+ Network 2526-tolga-kuntman-r0917093_java-network  Creating
+ Network 2526-tolga-kuntman-r0917093_java-network  Created
+ Volume "2526-tolga-kuntman-r0917093_sp_keystore"  Creating
+ Volume "2526-tolga-kuntman-r0917093_sp_keystore"  Created
+ Volume "2526-tolga-kuntman-r0917093_ho_keystore"  Creating
+ Volume "2526-tolga-kuntman-r0917093_ho_keystore"  Created
+ Container cauth-container  Creating
+ Container cauth-container  Created
+ Container sp-container  Creating
+ Container sp-container  Created
+ Container ho-container  Creating
+ Container ho-container  Created
+ Container cauth-container  Starting
+ Container cauth-container  Started
+ Container sp-container  Starting
+ Container sp-container  Started
+ Container ho-container  Starting
+ Container ho-container  Started
+[INFO] Waiting for services to become reachable on published host ports...
+[INFO] Waiting for localhost:8443
+[INFO] Waiting for localhost:8444
+[INFO] Waiting for localhost:8445
+[INFO] Core services reachable
+[INFO] --no-tmux specified; skipping tmux UI setup
+
+==== P1_HONEST: Baseline Normal Flow ====
+[INFO] Command: docker compose run --rm co
+[INFO] Running CO (scenario=normal) envs: NONE
+[INFO] Executing: docker compose run --rm co -> /c/Users/User/OneDrive/security-project/2526-tolga-kuntman-r0917093/logs/selftest_20251225T230731Z/co_normal.log
+[INFO] [RESULT] normal: PASS (exit=0)
+
+==== M4.1 TOKEN_TAMPER ====
+[INFO] Command: docker compose run --rm -e NEG_TEST_MODE=TAMPER -e TAMPER_TOKEN_INDEX=0 -e TAMPER_BYTE_INDEX=0 co
+[INFO] Running CO (scenario=token_tamper) envs: NEG_TEST_MODE=TAMPER TAMPER_TOKEN_INDEX=0 TAMPER_BYTE_INDEX=0
+[INFO] Executing: docker compose run --rm -e NEG_TEST_MODE=TAMPER -e TAMPER_TOKEN_INDEX=0 -e TAMPER_BYTE_INDEX=0 co -> /c/Users/User/OneDrive/security-project/2526-tolga-kuntman-r0917093/logs/selftest_20251225T230731Z/co_token_tamper.log
+[INFO] [RESULT] token_tamper: PASS (exit=0)
+
+==== M4.2 REPLAY (Production): HO rejects locally ====
+[INFO] Recreating HO with REPLAY_TEST_MODE=false
+ Container ho-container  Recreate
+ Container ho-container  Recreated
+ Container ho-container  Starting
+ Container ho-container  Started
+[WARN] Could not verify HO env via docker inspect (may still be correct depending on compose env wiring)
+[INFO] Command: docker compose run --rm -e NEG_TEST_MODE=REPLAY -e REPLAY_DELAY_MS=1000 co
+[INFO] Running CO (scenario=replay_local_reject) envs: NEG_TEST_MODE=REPLAY REPLAY_DELAY_MS=1000
+[INFO] Executing: docker compose run --rm -e NEG_TEST_MODE=REPLAY -e REPLAY_DELAY_MS=1000 co -> /c/Users/User/OneDrive/security-project/2526-tolga-kuntman-r0917093/logs/selftest_20251225T230731Z/co_replay_local_reject.log
+[INFO] [RESULT] replay_local_reject: PASS (exit=0)
+
+==== M4.2 REPLAY (Test): HO forwards, SP rejects ====
+[INFO] Recreating HO with REPLAY_TEST_MODE=true
+ Container ho-container  Recreate
+ Container ho-container  Recreated
+ Container ho-container  Starting
+ Container ho-container  Started
+[INFO] HO env verified: REPLAY_TEST_MODE=true
+[INFO] Command: docker compose run --rm -e NEG_TEST_MODE=REPLAY -e REPLAY_DELAY_MS=1000 co
+[INFO] Running CO (scenario=replay_sp_reject) envs: NEG_TEST_MODE=REPLAY REPLAY_DELAY_MS=1000
+[INFO] Executing: docker compose run --rm -e NEG_TEST_MODE=REPLAY -e REPLAY_DELAY_MS=1000 co -> /c/Users/User/OneDrive/security-project/2526-tolga-kuntman-r0917093/logs/selftest_20251225T230731Z/co_replay_sp_reject.log
+[INFO] Recreating HO with REPLAY_TEST_MODE=false
+ Container ho-container  Recreate
+ Container ho-container  Recreated
+ Container ho-container  Starting
+ Container ho-container  Started
+[WARN] Could not verify HO env via docker inspect (may still be correct depending on compose env wiring)
+[INFO] [RESULT] replay_sp_reject: PASS (exit=0)
+
+==== CAuth-1 FAKE_CAUTH: Rogue Intermediate ====
+[INFO] Starting fake-cauth service
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [fake-cauth internal] load build definition from Dockerfile
+#1 transferring dockerfile: 543B 0.0s done
+#1 DONE 0.1s
+
+#2 [fake-cauth internal] load metadata for docker.io/library/eclipse-temurin:17-jdk
+#2 DONE 0.9s
+
+#3 [fake-cauth internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [fake-cauth internal] load build context
+#4 DONE 0.0s
+
+#5 [fake-cauth 1/5] FROM docker.io/library/eclipse-temurin:17-jdk@sha256:7995efb7f9276fc16433aa8e2856a06082cd09f7f6603579db2534937ccc6778
+#5 resolve docker.io/library/eclipse-temurin:17-jdk@sha256:7995efb7f9276fc16433aa8e2856a06082cd09f7f6603579db2534937ccc6778 0.1s done
+#5 DONE 0.1s
+
+#4 [fake-cauth internal] load build context
+#4 transferring context: 281B done
+#4 DONE 0.0s
+
+#6 [fake-cauth 4/5] COPY . .
+#6 CACHED
+
+#7 [fake-cauth 2/5] RUN apt-get update &&     apt-get install -y maven &&     rm -rf /var/lib/apt/lists/*
+#7 CACHED
+
+#8 [fake-cauth 3/5] WORKDIR /app
+#8 CACHED
+
+#9 [fake-cauth 5/5] RUN mvn clean package -DskipTests
+#9 CACHED
+
+#10 [fake-cauth] exporting to image
+#10 exporting layers done
+#10 exporting manifest sha256:19bfc050dc6dfd42c9f08b0f670d45d6c7cfbe9c93e43ee73530c099fbfae2da 0.0s done
+#10 exporting config sha256:f4d80c191570291985f05e9109f84de77d7d0661da878c676ebcf97452cf69a4
+#10 exporting config sha256:f4d80c191570291985f05e9109f84de77d7d0661da878c676ebcf97452cf69a4 done
+#10 exporting attestation manifest sha256:ec2e6d3302af01a2ca7a64bd215084e9f754ec55537232a95e3183e6f375522f 0.1s done
+#10 exporting manifest list sha256:2b473c62e449e80aa0fd67ac0888cff93c3b022beb8b882d8a7bc65be3dfa291
+#10 exporting manifest list sha256:2b473c62e449e80aa0fd67ac0888cff93c3b022beb8b882d8a7bc65be3dfa291 0.0s done
+#10 naming to docker.io/library/2526-tolga-kuntman-r0917093-fake-cauth:latest 0.0s done
+#10 unpacking to docker.io/library/2526-tolga-kuntman-r0917093-fake-cauth:latest 0.0s done
+#10 DONE 0.3s
+
+#11 [fake-cauth] resolving provenance for metadata file
+#11 DONE 0.0s
+ Container fake-cauth-container  Creating
+ Container fake-cauth-container  Created
+ Container fake-cauth-container  Starting
+ Container fake-cauth-container  Started
+[INFO] fake-cauth published port for 8443 is localhost:8543
+[INFO] Command: docker compose run --rm -e NEG_TEST_MODE=FAKE_CAUTH -e CAUTH_HOST=fake-cauth co
+[INFO] Running CO (scenario=fake_cauth) envs: NEG_TEST_MODE=FAKE_CAUTH CAUTH_HOST=fake-cauth
+[INFO] Executing: docker compose run --rm -e NEG_TEST_MODE=FAKE_CAUTH -e CAUTH_HOST=fake-cauth co -> /c/Users/User/OneDrive/security-project/2526-tolga-kuntman-r0917093/logs/selftest_20251225T230731Z/co_fake_cauth.log

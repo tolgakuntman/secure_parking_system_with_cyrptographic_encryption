@@ -1,0 +1,306 @@
+ho-container  | Waiting for CAuth and SP to start...
+ho-container  | 
+ho-container  | === Home Owner (HO) Starting ===
+ho-container  | Found existing certificate, loading from keystore...
+ho-container  | ✓ Certificate validity period verified
+ho-container  | 
+ho-container  | ╔═══════════════════════════════════════════╗
+ho-container  | ║   HO CRYPTOGRAPHIC IDENTITY ESTABLISHED   ║
+ho-container  | ╚═══════════════════════════════════════════╝
+ho-container  | Subject: CN=HomeOwner,O=Parking System,C=BE
+ho-container  | Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+ho-container  | Valid from: Thu Dec 25 23:01:16 UTC 2025
+ho-container  | Valid until: Fri Dec 25 23:02:16 UTC 2026
+ho-container  | 
+ho-container  | === Publishing Parking Availability to SP ===
+ho-container  | ✓ mTLS connection to SP established
+ho-container  |   Protocol: TLSv1.3
+ho-container  |   Cipher suite: TLS_AES_256_GCM_SHA384
+ho-container  |   SP certificate: C=BE,O=Parking System,CN=ServiceProvider
+ho-container  | [M3.2] SP public key cached from mTLS handshake
+ho-container  | 
+ho-container  | → Publishing availability to SP...
+ho-container  |   Spot ID: SPOT-A1
+ho-container  |   Valid from: 2025-12-25T23:03:14.580187807Z
+ho-container  |   Valid to: 2025-12-26T07:03:14.580187807Z
+ho-container  |   Price: 5 tokens
+ho-container  |   Location: Downtown-North
+ho-container  | 
+ho-container  | ← Received response from SP
+ho-container  | 
+ho-container  | ╔═══════════════════════════════════════════╗
+ho-container  | ║   AVAILABILITY PUBLISHED SUCCESSFULLY     ║
+ho-container  | ╚═══════════════════════════════════════════╝
+ho-container  | Availability ID: ebd07e23-aee1-451a-bf79-ab88cf89b2ab
+ho-container  | Message: Parking availability published successfully
+ho-container  | 
+ho-container  | === Starting HO Reservation & Payment Server ===
+ho-container  | 
+ho-container  | ╔═══════════════════════════════════════════════════════════╗
+ho-container  | ║   HO RESERVATION SERVER CRYPTOGRAPHIC BASELINE           ║
+ho-container  | ╚═══════════════════════════════════════════════════════════╝
+ho-container  | Version: 2025-12-22 (Milestone 2.4 - Reservation Handshake)
+ho-container  | ✓ Enabled TLS protocols: [TLSv1.3, TLSv1.2]
+ho-container  | ✓ Mutual TLS (mTLS) REQUIRED - client certificates enforced
+ho-container  | 
+ho-container  | === HO Reservation Server Configuration ===
+ho-container  | Server listening on port: 8445
+ho-container  | Server certificate subject: CN=HomeOwner,O=Parking System,C=BE
+ho-container  | Server certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+ho-container  | RSA key size: 2048 bits
+ho-container  | Signature algorithm: SHA256withRSA
+ho-container  | mTLS enforcement: ENABLED (CO certificates REQUIRED)
+ho-container  | 
+ho-container  | ✓ HO Reservation Server ready to accept secure connections
+ho-container  | ==========================================
+ho-container  | 
+ho-container  | 
+ho-container  | === Inbound Reservation Request ===
+ho-container  | 
+ho-container  | ║   CO AUTHENTICATED VIA mTLS               ║
+ho-container  | CO CN: CarOwner
+ho-container  | CO address: /172.20.0.13:36372
+ho-container  | CO certificate subject: C=BE,O=Parking System,CN=CarOwner
+ho-container  | CO certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+ho-container  | CO certificate serial: 362E632A2925EB78FAD22FC30B34187A
+ho-container  | 
+ho-container  | TLS Session Details:
+ho-container  |   Protocol: TLSv1.3
+ho-container  |   Cipher suite: TLS_AES_256_GCM_SHA384
+ho-container  | ═══════════════════════════════════════════
+ho-container  | 
+ho-container  | Received request from CarOwner:
+ho-container  | {
+ho-container  |   "priceTokens": 5,
+ho-container  |   "method": "requestReservation",
+ho-container  |   "availabilityId": "ebd07e23-aee1-451a-bf79-ab88cf89b2ab",
+ho-container  |   "spotId": "SPOT-A1",
+ho-container  |   "validFrom": "2025-12-25T23:03:14.580187807Z",
+ho-container  |   "validTo": "2025-12-26T07:03:14.580187807Z",
+ho-container  |   "coIdentity": "CarOwner"
+ho-container  | }
+ho-container  | 
+ho-container  | === Processing Reservation Request (Milestone 2.4) ===
+ho-container  |   Availability ID: ebd07e23-aee1-451a-bf79-ab88cf89b2ab
+ho-container  |   Spot ID: SPOT-A1
+ho-container  |   Valid: 2025-12-25T23:03:14.580187807Z to 2025-12-26T07:03:14.580187807Z
+ho-container  |   Price: 5 tokens
+ho-container  |   Requested CO Identity: CarOwner
+ho-container  | ✓ CO identity verified: CarOwner
+ho-container  | ✓ Availability ID matches published availability
+ho-container  | Generated Reservation ID: 987e2e81-886a-4a32-af8d-41286b1e64ac
+ho-container  | 
+ho-container  | ─ Generating Cryptographic Signature ─
+ho-container  | Canonical data to sign:
+ho-container  |   reservationId=987e2e81-886a-4a32-af8d-41286b1e64ac|verdict=OK|availabilityId=ebd07e23-aee1-451a-bf79-ab88cf89b2ab|spotId=SPOT-A1|validFrom=2025-12-25T23:03:14.580187807Z|validTo=2025-12-26T07:03:14.580187807Z|priceTokens=5|coIdentity=CarOwner
+ho-container  | ✓ Signature generated with HO private key
+ho-container  |   Algorithm: SHA256withRSA
+ho-container  |   Signature length: 256 bytes
+ho-container  |   Signature (Base64): azhaNN+tdMHEmMEFFdrlH2CXfuv+LxSq...
+ho-container  | 
+ho-container  | ╔═══════════════════════════════════════════════════════════╗
+ho-container  | ║   RESERVATION DECISION: OK
+ho-container  | ╚═══════════════════════════════════════════════════════════╝
+ho-container  | Reservation ID: 987e2e81-886a-4a32-af8d-41286b1e64ac
+ho-container  | CO Identity: CarOwner
+ho-container  | ✓ Cryptographic signature binds HO to this decision
+ho-container  | ✓ Non-repudiable authorization established
+ho-container  | 
+ho-container  | Sent signed reservation response:
+ho-container  | {
+ho-container  |   "hoIdentity": "HomeOwner",
+ho-container  |   "reservationId": "987e2e81-886a-4a32-af8d-41286b1e64ac",
+ho-container  |   "signatureAlg": "SHA256withRSA",
+ho-container  |   "signature": "azhaNN+tdMHEmMEFFdrlH2CXfuv+LxSqCVPTbcH7B8jI8kAw05k/TvPBLSn7Bs/aqceuBS6B6t96dHQKNqDDBjXyHQr/lr3Z1XWCnH2FYHG+GWc8SrrtdPUQFMHPP0knf5hrGwTSgyzxNGfL2cJBTNcfcrFxR54VvAUiuMVwlw4RBf27xgp8VvK0AroRPOME223vwYqy1F+PyNo/1op+Js+2gQliu0bUQg+cJ/duK6vrBfeUf37rKWAE1MVLEZghB3Ol7Cpc90CQfPFgasGiFhp/+XbRlvyU70ErPPsu2zU96m2ia9oLejeeHCCXAaU11hKt11SbWsrwAE9kW5Z77g==",
+ho-container  |   "signedData": "reservationId=987e2e81-886a-4a32-af8d-41286b1e64ac|verdict=OK|availabilityId=ebd07e23-aee1-451a-bf79-ab88cf89b2ab|spotId=SPOT-A1|validFrom=2025-12-25T23:03:14.580187807Z|validTo=2025-12-26T07:03:14.580187807Z|priceTokens=5|coIdentity=CarOwner",
+ho-container  |   "verdict": "OK",
+ho-container  |   "status": "success"
+ho-container  | }
+ho-container  | 
+ho-container  | CarOwner disconnected
+ho-container  | 
+ho-container  | 
+ho-container  | === Inbound Reservation Request ===
+ho-container  | 
+ho-container  | ║   CO AUTHENTICATED VIA mTLS               ║
+ho-container  | CO CN: CarOwner
+ho-container  | CO address: /172.20.0.13:36376
+ho-container  | CO certificate subject: C=BE,O=Parking System,CN=CarOwner
+ho-container  | CO certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+ho-container  | CO certificate serial: 362E632A2925EB78FAD22FC30B34187A
+ho-container  | 
+ho-container  | TLS Session Details:
+ho-container  |   Protocol: TLSv1.3
+ho-container  |   Cipher suite: TLS_AES_256_GCM_SHA384
+ho-container  | ═══════════════════════════════════════════
+ho-container  | 
+ho-container  | Received request from CarOwner:
+ho-container  | {
+ho-container  |   "startIndex": 0,
+ho-container  |   "method": "pay",
+ho-container  |   "reservationId": "987e2e81-886a-4a32-af8d-41286b1e64ac",
+ho-container  |   "chainId": "3419e9c1-77ed-4056-83d6-30fabdfa44b0",
+ho-container  |   "rootSignature": "dbQcbfxjlRcdLW9zJ6cltY3+aWAUtmyeYrwZid6+RyvAbPcwn9gMk1DMpohS/Vstwyb2fMHmbzHzo+pQka7BBX9m0vU+x49urfpidOyaQP5ucdItk+FitRprqOXh/q7e2Snxfs4Bmd/HcYK5BKjBJTYLn5Ht3cinEf1pSUCAFA7bjj6Y8fQqVL5ks3GiVHEChfp7jlmuibxb/WjbYOoyuWNkhyH4p/CZhzI8lGLtGeWxx5vjLZK5JN5WNwpBZS1cGSD4xHyNMQV9NCqzIAPpyafRE695Iht6rLhO28rq8Do7oY+gMEBIg+GWXbvVOc3kdC/EhQoDBRHSA6mleJ0Xyg==",
+ho-container  |   "root": "LatLD/uwIT6iRceBHhwqm9QQwEuQDCkyPaRpuVg/5GA=",
+ho-container  |   "x": 5,
+ho-container  |   "tokensToSpend": [
+ho-container  |     "l9vNJlutsj7zrBZbIqJc+Co1gwtqmoGuzm0A9pKTAso=",
+ho-container  |     "OYuuyjWqDN0FeTwd1o/Mln90tieyMKBVoMq6RvYkHow=",
+ho-container  |     "oaiEkN7uU+8PjRNK3Xlft/0b+7/lZ1q4eq5cEuWAhSU=",
+ho-container  |     "i3ypIfdals3dSAz4pmX57dB3xwfZPQPJXd7dVUI62pI=",
+ho-container  |     "LatLD/uwIT6iRceBHhwqm9QQwEuQDCkyPaRpuVg/5GA="
+ho-container  |   ]
+ho-container  | }
+ho-container  | [M3.2] root signature verified via cached SP public key
+ho-container  | [M3.2] policy checks passed (reservation verdict OK, token count matches)
+ho-container  | [PAY] received from CarOwner
+ho-container  | [PAY]   reservationId=987e2e81-886a-4a32-af8d-41286b1e64ac
+ho-container  | [PAY]   chainId=3419e9c1-77ed-4056-83d6-30fabdfa44b0
+ho-container  | [PAY]   tokenCount=5
+ho-container  | [PAY]   startIndex=0
+ho-container  | [PAY]   x=5
+ho-container  | [PAY]   Hash-chain verification: SUCCESS
+ho-container  | [SETTLE] ═══════════════════════════════════════════════════
+ho-container  | [SETTLE] Preparing Settlement Request to SP
+ho-container  | [SETTLE]   chainId: 3419e9c1-77ed-4056-83d6-30fabdfa44b0
+ho-container  | [SETTLE]   reservationId: 987e2e81-886a-4a32-af8d-41286b1e64ac
+ho-container  | [SETTLE]   y (tokens spent): 5
+ho-container  | [SETTLE]   newLastSpentIndex: 5
+ho-container  | [SETTLE]   x (chain length): 5
+ho-container  | [SETTLE] ═══════════════════════════════════════════════════
+ho-container  | [SETTLE] ✓ TLS hardening applied (TLS 1.3/1.2, AEAD ciphers only)
+ho-container  | [SETTLE] Initiating explicit TLS handshake...
+ho-container  | [SETTLE] ✓ TLS handshake completed successfully
+ho-container  | [SETTLE]   Protocol: TLSv1.3
+ho-container  | [SETTLE]   Cipher Suite: TLS_AES_256_GCM_SHA384
+ho-container  | [SETTLE] ✓ SP certificate verified: C=BE,O=Parking System,CN=ServiceProvider
+ho-container  | [SETTLE] → Settlement request sent to SP
+ho-container  | [SETTLE] ✓✓✓ SP SETTLEMENT ACCEPTED ✓✓✓
+ho-container  | [SETTLE]   chainId: 3419e9c1-77ed-4056-83d6-30fabdfa44b0
+ho-container  | [SETTLE]   acceptedLastSpentIndex: 5
+ho-container  | [SETTLE]   tokensConsumed: 5
+ho-container  | [SETTLE]   remainingTokens: 0
+ho-container  | [SETTLE]   timestamp: 2025-12-25T23:03:20.646787475Z
+ho-container  | [SETTLE] ═══════════════════════════════════════════════════
+ho-container  | [SETTLE] M3.4: Verifying SP Payment Receipt
+ho-container  | [SETTLE] ═══════════════════════════════════════════════════
+ho-container  | [M3.4-VERIFY] Verifying receipt signature...
+ho-container  | [M3.4-VERIFY]   Canonical receipt: receiptId=399f4116-9786-4fb7-8c1e-d3767c65c406|chainId=3419e9c1-77ed-4056-83d6-30fabdfa44b0|reservationId=987e2e81-886a-4a32-af8d-41286b1e64ac|availabilityId=ebd07e23-aee1-451a-bf79-ab88cf89b2ab|y=5|newLastSpentIndex=5|timestamp=2025-12-25T23:03:20.646787475Z|hoIdentity=HomeOwner
+ho-container  | [M3.4-VERIFY]   Signature algorithm: SHA256withRSA
+ho-container  | [M3.4-VERIFY] ✓ SP signature verified successfully (RSA-2048, SHA256withRSA)
+ho-container  | [M3.4-VERIFY] ✓ Non-repudiation: SP cannot deny issuing this receipt
+ho-container  | [M3.4-VERIFY] ✓ Payment finality established
+ho-container  | [SETTLE] ✓ Receipt signature verified successfully
+ho-container  | [M3.4-PERSIST] ✓ Receipt persisted: /app/keystore/receipts/receipt_399f4116-9786-4fb7-8c1e-d3767c65c406.json
+ho-container  | [M3.4-PERSIST] ✓ Immutable proof of settlement stored
+ho-container  | [M3.4-PERSIST] ✓ Available for offline third-party verification
+ho-container  | [SETTLE] ✓✓✓ PAYMENT RECEIPT VERIFIED AND PERSISTED ✓✓✓
+ho-container  | [SETTLE]   Receipt ID: 399f4116-9786-4fb7-8c1e-d3767c65c406
+ho-container  | [SETTLE]   Payment finality established via SP signature
+ho-container  | [SETTLE]   Receipt ready for CO forwarding
+ho-container  | [PAY] ⚠️  TEST_DOUBLE_SPEND enabled - storing settlement for replay
+ho-container  | [PAY] ✓ Payment receipt included in response for CO
+ho-container  | [PAY] Payment ACCEPTED. newLastSpentIndex=4
+ho-container  | 
+ho-container  | Sent pay response:
+ho-container  | {
+ho-container  |   "startIndex": 0,
+ho-container  |   "reservationId": "987e2e81-886a-4a32-af8d-41286b1e64ac",
+ho-container  |   "chainId": "3419e9c1-77ed-4056-83d6-30fabdfa44b0",
+ho-container  |   "spentCount": 5,
+ho-container  |   "newLastSpentIndex": 4,
+ho-container  |   "paymentReceipt": {
+ho-container  |     "hoIdentity": "HomeOwner",
+ho-container  |     "reservationId": "987e2e81-886a-4a32-af8d-41286b1e64ac",
+ho-container  |     "signatureAlg": "SHA256withRSA",
+ho-container  |     "chainId": "3419e9c1-77ed-4056-83d6-30fabdfa44b0",
+ho-container  |     "availabilityId": "ebd07e23-aee1-451a-bf79-ab88cf89b2ab",
+ho-container  |     "newLastSpentIndex": 5,
+ho-container  |     "spCertFingerprint": "964EF3CA95A091FFFAB1632C031D6F1FDD957539DBAFCF361A7B265A2B2D4961",
+ho-container  |     "y": 5,
+ho-container  |     "receiptId": "399f4116-9786-4fb7-8c1e-d3767c65c406",
+ho-container  |     "canonicalReceipt": "receiptId=399f4116-9786-4fb7-8c1e-d3767c65c406|chainId=3419e9c1-77ed-4056-83d6-30fabdfa44b0|reservationId=987e2e81-886a-4a32-af8d-41286b1e64ac|availabilityId=ebd07e23-aee1-451a-bf79-ab88cf89b2ab|y=5|newLastSpentIndex=5|timestamp=2025-12-25T23:03:20.646787475Z|hoIdentity=HomeOwner",
+ho-container  |     "receiptSignature": "bboxRKx2g+uuigRSrTe9YgmUV3I3j7JoB2S0LHFiho88qobnBiIT145ulqNYV/dLXJgfOg0ab6ksEzFpOJnUgCRBiTR3+MzMbJtzARVfn1SGmpe1MIAVF0Z8BoMh1fy2lpKVX7Tnreq4iw80dhDh7KKZpVaeaVsgqMVWjAaiFDJ+SpPEsD2pWASb2nfDXO3h2LCTIpA5UmrwrDNI/ew+OtM2UHeYasyiEEsx0Xkl1Ylj9j6egGj6dJV2mdRexZHpWOd69e7dCoMFlpmBlIgDDJGQ702G2gcUdQDFq7uwe+uLUH4gYixY8FrZF5ycVWnIP3uDzr/nDwf2MgxPX/Rj3Q==",
+ho-container  |     "timestamp": "2025-12-25T23:03:20.646787475Z"
+ho-container  |   },
+ho-container  |   "message": "payment accepted",
+ho-container  |   "status": "success",
+ho-container  |   "timestamp": "2025-12-25T23:03:20.663337191Z"
+ho-container  | }
+ho-container  | 
+ho-container  | CarOwner disconnected
+ho-container  | 
+ho-container  | 
+ho-container  | === Inbound Reservation Request ===
+ho-container  | 
+ho-container  | ║   CO AUTHENTICATED VIA mTLS               ║
+ho-container  | CO CN: CarOwner
+ho-container  | CO address: /172.20.0.13:36384
+ho-container  | CO certificate subject: C=BE,O=Parking System,CN=CarOwner
+ho-container  | CO certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+ho-container  | CO certificate serial: 362E632A2925EB78FAD22FC30B34187A
+ho-container  | 
+ho-container  | TLS Session Details:
+ho-container  |   Protocol: TLSv1.3
+ho-container  |   Cipher suite: TLS_AES_256_GCM_SHA384
+ho-container  | ═══════════════════════════════════════════
+ho-container  | 
+ho-container  | Received request from CarOwner:
+ho-container  | {
+ho-container  |   "startIndex": 0,
+ho-container  |   "method": "pay",
+ho-container  |   "reservationId": "987e2e81-886a-4a32-af8d-41286b1e64ac",
+ho-container  |   "chainId": "3419e9c1-77ed-4056-83d6-30fabdfa44b0",
+ho-container  |   "rootSignature": "dbQcbfxjlRcdLW9zJ6cltY3+aWAUtmyeYrwZid6+RyvAbPcwn9gMk1DMpohS/Vstwyb2fMHmbzHzo+pQka7BBX9m0vU+x49urfpidOyaQP5ucdItk+FitRprqOXh/q7e2Snxfs4Bmd/HcYK5BKjBJTYLn5Ht3cinEf1pSUCAFA7bjj6Y8fQqVL5ks3GiVHEChfp7jlmuibxb/WjbYOoyuWNkhyH4p/CZhzI8lGLtGeWxx5vjLZK5JN5WNwpBZS1cGSD4xHyNMQV9NCqzIAPpyafRE695Iht6rLhO28rq8Do7oY+gMEBIg+GWXbvVOc3kdC/EhQoDBRHSA6mleJ0Xyg==",
+ho-container  |   "root": "LatLD/uwIT6iRceBHhwqm9QQwEuQDCkyPaRpuVg/5GA=",
+ho-container  |   "x": 5,
+ho-container  |   "tokensToSpend": [
+ho-container  |     "l9vNJlutsj7zrBZbIqJc+Co1gwtqmoGuzm0A9pKTAso=",
+ho-container  |     "OYuuyjWqDN0FeTwd1o/Mln90tieyMKBVoMq6RvYkHow=",
+ho-container  |     "oaiEkN7uU+8PjRNK3Xlft/0b+7/lZ1q4eq5cEuWAhSU=",
+ho-container  |     "i3ypIfdals3dSAz4pmX57dB3xwfZPQPJXd7dVUI62pI=",
+ho-container  |     "LatLD/uwIT6iRceBHhwqm9QQwEuQDCkyPaRpuVg/5GA="
+ho-container  |   ]
+ho-container  | }
+ho-container  | [M3.2] root signature verified via cached SP public key
+ho-container  | [M3.2] policy checks passed (reservation verdict OK, token count matches)
+ho-container  | [PAY] [M4.2] REPLAY_TEST_MODE: allowing duplicate chain spend (startIndex=0, lastSpentIndex=4)
+ho-container  | [PAY] received from CarOwner
+ho-container  | [PAY]   reservationId=987e2e81-886a-4a32-af8d-41286b1e64ac
+ho-container  | [PAY]   chainId=3419e9c1-77ed-4056-83d6-30fabdfa44b0
+ho-container  | [PAY]   tokenCount=5
+ho-container  | [PAY]   startIndex=0
+ho-container  | [PAY]   x=5
+ho-container  | [PAY]   Hash-chain verification: SUCCESS
+ho-container  | [SETTLE] ═══════════════════════════════════════════════════
+ho-container  | [SETTLE] Preparing Settlement Request to SP
+ho-container  | [SETTLE]   chainId: 3419e9c1-77ed-4056-83d6-30fabdfa44b0
+ho-container  | [SETTLE]   reservationId: 987e2e81-886a-4a32-af8d-41286b1e64ac
+ho-container  | [SETTLE]   y (tokens spent): 5
+ho-container  | [SETTLE]   newLastSpentIndex: 5
+ho-container  | [SETTLE]   x (chain length): 5
+ho-container  | [SETTLE] ═══════════════════════════════════════════════════
+ho-container  | [SETTLE] ✓ TLS hardening applied (TLS 1.3/1.2, AEAD ciphers only)
+ho-container  | [SETTLE] Initiating explicit TLS handshake...
+ho-container  | [SETTLE] ✓ TLS handshake completed successfully
+ho-container  | [SETTLE]   Protocol: TLSv1.3
+ho-container  | [SETTLE]   Cipher Suite: TLS_AES_256_GCM_SHA384
+ho-container  | [SETTLE] ✓ SP certificate verified: C=BE,O=Parking System,CN=ServiceProvider
+ho-container  | [SETTLE] → Settlement request sent to SP
+ho-container  | [SETTLE] ❌❌❌ SP SETTLEMENT REJECTED ❌❌❌
+ho-container  | [SETTLE]   Reason: double_spend
+ho-container  | [SETTLE]   Message: DOUBLE_SPEND_DETECTED: attempting to reuse already-spent tokens
+ho-container  | [SETTLE] ⚠️  DOUBLE_SPEND_DETECTED by SP
+ho-container  | [SETTLE]   currentLastSpentIndex: 5
+ho-container  | [SETTLE]   rejectedNewIndex: 5
+ho-container  | [PAY] Payment REJECTED: SP settlement failed
+ho-container  | 
+ho-container  | Sent pay response:
+ho-container  | {
+ho-container  |   "reason": "settlement_failed",
+ho-container  |   "message": "Settlement with SP failed - payment not accepted",
+ho-container  |   "status": "error"
+ho-container  | }
+ho-container  | 
+ho-container  | CarOwner disconnected
+ho-container  | 

@@ -1,0 +1,265 @@
+ Volume "2526-tolga-kuntman-r0917093_co_keystore"  Creating
+ Volume "2526-tolga-kuntman-r0917093_co_keystore"  Created
+ Container cauth-container  Running
+ Container sp-container  Running
+Waiting for CAuth, SP, and HO to start...
+
+=== Car Owner (CO) Starting ===
+No existing certificate found, enrolling with CAuth...
+Step 1: Generating RSA key pair...
+✓ RSA-2048 key pair generated successfully
+
+Step 2: Creating Certificate Signing Request (CSR)...
+✓ CSR created with subject: CN=CarOwner, O=Parking System, C=BE
+
+Step 3: Connecting to CAuth server over TLS...
+✓ TLS connection established to CAuth
+  Protocol: TLSv1.3
+  Cipher suite: TLS_AES_256_GCM_SHA384
+
+→ Sending CSR to CAuth for signing...
+Received CA certificate from CAuth.
+Received Root CA certificate from CAuth.
+Certificate signed by CAuth!
+✓ Certificate received from CAuth
+
+Step 4: Storing certificate and private key securely...
+✓ Credentials stored in ./keystore/co_keystore.p12
+
+╔═══════════════════════════════════════════╗
+║   CO CRYPTOGRAPHIC IDENTITY ESTABLISHED   ║
+╚═══════════════════════════════════════════╝
+Subject: C=BE,O=Parking System,CN=CarOwner
+Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+Valid from: Thu Dec 25 23:06:57 UTC 2025
+Valid until: Fri Dec 25 23:07:57 UTC 2026
+
+=== Discovering Parking Availabilities from SP ===
+Establishing hardened mTLS connection to SP for authenticated discovery...
+✓ mTLS connection established to SP
+  Protocol: TLSv1.3
+  Cipher suite: TLS_AES_256_GCM_SHA384
+  SP certificate subject: C=BE,O=Parking System,CN=ServiceProvider
+  SP certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+✓ SP certificate validity verified
+
+→ Requesting parking availabilities from SP...
+← Received availability list from SP
+
+╔═══════════════════════════════════════════════════════════╗
+║   AUTHENTICATED AVAILABILITY DISCOVERY SUCCESSFUL         ║
+╚═══════════════════════════════════════════════════════════╝
+Discovered 1 parking availability record(s)
+
+════════════════════════════════════════════════════════════
+Availability #1
+════════════════════════════════════════════════════════════
+Availability ID: d0c617e5-f301-43e9-8f0c-58181f1f3bf7
+Spot ID: SPOT-A1
+Price: 5 tokens
+Valid: 2025-12-25T23:07:53.013632803Z to 2025-12-26T07:07:53.013632803Z
+Location: Downtown-North
+Home Owner ID: HO-001
+
+─ HO Certificate Identity Verification ─
+✓ HO certificate is within validity period
+  Valid from: Thu Dec 25 23:06:52 UTC 2025
+  Valid until: Fri Dec 25 23:07:52 UTC 2026
+⚠ Note: Full chain validation not possible (intermediate CA cert not provided)
+  Relying on certificate fingerprint verification for trust anchor
+  In production: SP should include full certificate chain
+✓ HO Identity (CN): HomeOwner
+  Full Subject: CN=HomeOwner,O=Parking System,C=BE
+  Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+✓ Certificate fingerprint verified: 22016D2223C5DF72...
+✓ Identity binding persisted to ./keystore/ho_identity_bindings.txt
+
+✓ HO IDENTITY BINDING ESTABLISHED
+  Spot: SPOT-A1 ⟷ HO: HomeOwner
+  Fingerprint: 22016D2223C5DF720929361A9270F35C...
+
+✓ Stored availability for reservation request
+════════════════════════════════════════════════════════════
+✓✓✓ AVAILABILITY DISCOVERY COMPLETE ✓✓✓
+════════════════════════════════════════════════════════════
+All HO identities verified and bound to availabilities
+Identity bindings persisted for future interaction verification
+
+=== Requesting Reservation from HO (Milestone 2.4) ===
+
+═══════════════════════════════════════════════════════════
+   MILESTONE 2.4: RESERVATION HANDSHAKE WITH HO
+═══════════════════════════════════════════════════════════
+✓ CO Identity: CarOwner
+✓ Target HO: HomeOwner (ho:8445)
+✓ Availability ID: d0c617e5-f301-43e9-8f0c-58181f1f3bf7
+
+--- Loading CO keystore and truststore for mTLS ---
+✓ CO keystore loaded
+✓ CO truststore loaded (contains Root CA)
+
+--- Establishing mTLS connection to HO ---
+✓ TLS hardened: TLS 1.3/1.2, AEAD cipher suites only
+✓ mTLS handshake complete
+  Protocol: TLSv1.3
+  Cipher Suite: TLS_AES_256_GCM_SHA384
+
+--- Verifying HO certificate binding ---
+  Expected fingerprint: 22016D2223C5DF720929361A9270F35C6A32B5C20A4B8E20E58EE729FA2E6AAB
+  Received fingerprint: 22016D2223C5DF720929361A9270F35C6A32B5C20A4B8E20E58EE729FA2E6AAB
+✓ HO certificate fingerprint verified (matches persisted binding)
+✓ HO peer identity verified: HomeOwner
+
+--- Building reservation request ---
+  Request fields:
+    availabilityId: d0c617e5-f301-43e9-8f0c-58181f1f3bf7
+    spotId: SPOT-A1
+    validFrom: 2025-12-25T23:07:53.013632803Z
+    validTo: 2025-12-26T07:07:53.013632803Z
+    priceTokens: 5
+    coIdentity: CarOwner
+✓ Reservation request sent to HO
+
+--- Received reservation response ---
+  Status: success
+  Reservation ID: 6bc2b777-ad95-4c36-a69e-9944c5831c01
+  Verdict: OK
+  HO Identity: HomeOwner
+  Signature Algorithm: SHA256withRSA
+
+--- Verifying HO signature (RSA-2048) ---
+✓ Signature decoded (256 bytes)
+✓ Reconstructed canonical data:
+  reservationId=6bc2b777-ad95-4c36-a69e-9944c5831c01|verdict=OK|availabilityId=d0c617e5-f301-43e9-8f0c-58181f1f3bf7|spotId=SPOT-A1|validFrom=2025-12-25T23:07:53.013632803Z|validTo=2025-12-26T07:07:53.013632803Z|priceTokens=5|coIdentity=CarOwner
+✓ Signed data from HO:
+  reservationId=6bc2b777-ad95-4c36-a69e-9944c5831c01|verdict=OK|availabilityId=d0c617e5-f301-43e9-8f0c-58181f1f3bf7|spotId=SPOT-A1|validFrom=2025-12-25T23:07:53.013632803Z|validTo=2025-12-26T07:07:53.013632803Z|priceTokens=5|coIdentity=CarOwner
+✓ Signed data matches reconstructed canonical format
+✓ HO signature verified successfully (RSA-2048, SHA256withRSA)
+✓ HO identity confirmed: HomeOwner
+✓ All signature validation checks passed
+✓ Non-repudiable proof: HO cannot deny issuing this reservation
+✓ Cryptographic proof stored: ./keystore/reservations/6bc2b777-ad95-4c36-a69e-9944c5831c01.json
+
+--- Sending payment request to HO (Milestone 3.2 - Using SP tokens) ---
+✓ mTLS connection to SP established
+  Protocol: TLSv1.3
+  Cipher suite: TLS_AES_256_GCM_SHA384
+  SP certificate: C=BE,O=Parking System,CN=ServiceProvider
+[M3.4] SP certificate cached for receipt verification
+
+→ Requesting 5 payment tokens from SP...
+
+← Received response from SP
+{
+  "tokenHashAlg": "SHA-256",
+  "signatureAlg": "SHA256withRSA",
+  "chainId": "085bcc71-ceb2-46d3-82b6-4e734bd74d82",
+  "rootSignature": "XyiQGoiPIv8GoR6oIN6hiPXh/bV7xGODplkIso5ir8qlwzHZMyGlUwBVxQTn78nRklPMxaO227jIXXRO1AHuQoPAUH+Vdrj0GzBmJl4fYyXg+Ymtwq0L+xSs0eSBYEuM9VwSx9lyTsaYF4w0oEsMF5+ABi0k3WA3pn3cQjiydy6FGagborkkKdSSKlRYwSH5kKjncYDhIvtCsidcQA5kaDYiR0ph49cAHVC7srtoekHLdF3KOior7nXJZmK9V52eWJw1SIDx3+WaghGLBrxy+kSu6qebHd0LHso9g8DeIVQmv4FXDdHrwj8XdXhoRSEonsu9MlnVm9Hwh5hwUA0cgQ==",
+  "root": "xqydu9ZKYqnd6y56T6pPcSISYHiCkkEwYJhwY7l6B3w=",
+  "x": 5,
+  "tokens": [
+    "5+/zd7dz1nQuy8GeQYypwezHVolbP7sxjQByPd+kL30=",
+    "6p3cyV+gZQEcN1UrtIPNxr53rMC5fC9e05gh3KO0wNc=",
+    "J0Gaqunr28KXB/U/j7j4Iim6bRrToSWx9zPMEkFstEw=",
+    "bS1Udkqm7rE16vaPyRzhgLY913+r3yi2TQbr62a91oY=",
+    "xqydu9ZKYqnd6y56T6pPcSISYHiCkkEwYJhwY7l6B3w="
+  ],
+  "status": "success"
+}
+
+=== Verifying Token Batch ===
+Chain ID: 085bcc71-ceb2-46d3-82b6-4e734bd74d82
+Token count: 5
+Tokens received: 5
+✓ All tokens are distinct
+Root hash: C6AC9DBBD64A62A9DDEB2E7A4FAA4F71221260788292413060987063B97A077C
+✓ Root signature verified with SP's public key
+
+Verifying hash chain:
+  Starting with token[0]: E7EFF377B773D674...
+  Chain verified: 5 hashes lead to signed root
+✓ Hash chain verification successful
+
+═════════════════════════════════════════════
+✓✓✓ TOKEN BATCH VERIFIED SUCCESSFULLY ✓✓✓
+═════════════════════════════════════════════
+Received 5 valid payment tokens from SP
+Chain ID: 085bcc71-ceb2-46d3-82b6-4e734bd74d82
+  Using SP-issued token batch, chainId=085bcc71-ceb2-46d3-82b6-4e734bd74d82
+  tokensToSpend: indices [0, 5)
+  Total tokens to spend: 5 (matching reservation price)
+
+[M4] Negative Test Mode: NONE
+[M3] Normal payment flow (no negative scenarios)
+→ Sending pay request to HO at ho:8445
+← HO pay response:
+{
+  "startIndex": 0,
+  "reservationId": "6bc2b777-ad95-4c36-a69e-9944c5831c01",
+  "chainId": "085bcc71-ceb2-46d3-82b6-4e734bd74d82",
+  "spentCount": 5,
+  "newLastSpentIndex": 4,
+  "paymentReceipt": {
+    "hoIdentity": "HomeOwner",
+    "reservationId": "6bc2b777-ad95-4c36-a69e-9944c5831c01",
+    "signatureAlg": "SHA256withRSA",
+    "chainId": "085bcc71-ceb2-46d3-82b6-4e734bd74d82",
+    "availabilityId": "d0c617e5-f301-43e9-8f0c-58181f1f3bf7",
+    "newLastSpentIndex": 5,
+    "spCertFingerprint": "BEDC8C1EF9331B374782D1AE5D11D40EF1079CC3038644E72E33CCF2B1AB7AF4",
+    "y": 5,
+    "receiptId": "beec5e6b-4399-4f83-b139-dbebc2a1dab1",
+    "canonicalReceipt": "receiptId=beec5e6b-4399-4f83-b139-dbebc2a1dab1|chainId=085bcc71-ceb2-46d3-82b6-4e734bd74d82|reservationId=6bc2b777-ad95-4c36-a69e-9944c5831c01|availabilityId=d0c617e5-f301-43e9-8f0c-58181f1f3bf7|y=5|newLastSpentIndex=5|timestamp=2025-12-25T23:07:58.435047136Z|hoIdentity=HomeOwner",
+    "receiptSignature": "GV5l+M3u9wcJUQQz/Ar7ort3ZG/1iixxNDv1KRz4anmKhYCQw+4j5ZlQfE9CaGCW9EY8yp1rvZqdBSjSQH3BfJ3aNGPiWUL6WExcMrj+SJZ/1y9q/mrHLn4EelWEta/qkn4gmmvJ02NeNHzacxARIuX2zwDYcOaHfnmPtestV6iqtcp/vkxD58w3KvlbbTFNXb1ZSx0lVEHJCGKn30bFK6b+jJObBONW+yxZPZRkTAD5/yr/S9K8zjKBmqCeKVvHqiNJc0uky7CUEEzYrgq6RrV8Ej0rn5vwjoVPVj8bM72H4WdZstHFlXIwvL0zbbzAv0j3vMiYKIGu7bkLFGDfbA==",
+    "timestamp": "2025-12-25T23:07:58.435047136Z"
+  },
+  "message": "payment accepted",
+  "status": "success",
+  "timestamp": "2025-12-25T23:07:58.455561098Z"
+}
+✓✓✓ PAYMENT ACCEPTED BY HO ✓✓✓
+
+═══════════════════════════════════════════════════
+M3.4: Verifying Payment Finalization Receipt
+═══════════════════════════════════════════════════
+[M3.4-VERIFY] Starting receipt verification...
+[M3.4-VERIFY] Receipt ID: beec5e6b-4399-4f83-b139-dbebc2a1dab1
+[M3.4-VERIFY] Canonical data: receiptId=beec5e6b-4399-4f83-b139-dbebc2a1dab1|chainId=085bcc71-ceb2-46d3-82b6-4e734bd74d82|reservationId=6bc2b777-ad95-4c36-a69e-9944c5831c01|availabilityId=d0c617e5-f301-43e9-8f0c-58181f1f3bf7|y=5|newLastSpentIndex=5|timestamp=2025-12-25T23:07:58.435047136Z|hoIdentity=HomeOwner
+[M3.4-VERIFY] Signature algorithm: SHA256withRSA
+[M3.4-VERIFY] Validating consistency with local payment state...
+[M3.4-VERIFY] ✓ Consistency validated
+[M3.4-VERIFY]   chainId: 085bcc71-ceb2-46d3-82b6-4e734bd74d82
+[M3.4-VERIFY]   reservationId: 6bc2b777-ad95-4c36-a69e-9944c5831c01
+[M3.4-VERIFY]   tokens spent: 5
+[M3.4-VERIFY] Verifying SP signature (RSA-2048, SHA256withRSA)...
+[M3.4-VERIFY] ✓ SP signature verified successfully
+[M3.4-VERIFY] ✓ Non-repudiation: SP cannot deny issuing this receipt
+[M3.4-VERIFY] ✓ Integrity: Receipt has not been modified
+[M3.4-VERIFY] Validating SP certificate to Root CA...
+[M3.4-VERIFY] ✓ SP certificate is within validity period
+[M3.4-VERIFY] ✓ SP certificate validated
+[M3.4-VERIFY] Persisting receipt as immutable proof...
+[M3.4-VERIFY] ✓ Receipt persisted: ./keystore/receipts/receipt_beec5e6b-4399-4f83-b139-dbebc2a1dab1.json
+[M3.4-VERIFY] ✓ Immutable proof stored for dispute resolution
+[M3.4-VERIFY] ✓ Enables offline third-party verification
+[M3.4-VERIFY] ═══════════════════════════════════════════════════
+[M3.4-VERIFY] PAYMENT FINALITY ACHIEVED
+[M3.4-VERIFY] ═══════════════════════════════════════════════════
+[M3.4-VERIFY] ✓ SP signature verified (cryptographic proof)
+[M3.4-VERIFY] ✓ Consistency validated (no substitution)
+[M3.4-VERIFY] ✓ Immutable receipt stored (audit trail)
+[M3.4-VERIFY] ✓ Non-repudiation guaranteed (SP cannot deny)
+[M3.4-VERIFY] ✓ Dispute resolution enabled (third-party verification)
+✓✓✓ PAYMENT FINALITY ESTABLISHED ✓✓✓
+✓ SP-signed receipt verified
+✓ Non-repudiation guaranteed
+✓ Immutable proof of payment stored
+═══════════════════════════════════════════════════
+
+═══════════════════════════════════════════════════════════
+   RESERVATION HANDSHAKE COMPLETE
+   Verdict: OK
+   Non-repudiable proof stored: 6bc2b777-ad95-4c36-a69e-9944c5831c01
+═══════════════════════════════════════════════════════════
+
+✓✓✓ CO SERVICE COMPLETED SUCCESSFULLY ✓✓✓

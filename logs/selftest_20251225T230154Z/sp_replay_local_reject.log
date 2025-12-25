@@ -1,0 +1,338 @@
+sp-container  | 
+sp-container  | === Inbound Connection ===
+sp-container  | [SP] ✓ Client certificate received and validated:
+sp-container  | [SP]   Subject: CN=HomeOwner,O=Parking System,C=BE
+sp-container  | [SP]   Issuer:  CN=172.20.0.10,O=Private Parking,C=BE
+sp-container  | [SP]   Serial:  684582B0E8773D4DCAF598AC0FE74E80
+sp-container  | [SP]   SHA-256: B229A59688B10B7CABBC6BE54D3EB7B5...
+sp-container  | 
+sp-container  | ║   CLIENT AUTHENTICATED VIA mTLS           ║
+sp-container  | Client CN: HomeOwner
+sp-container  | Client address: /172.20.0.12:39424
+sp-container  | Client certificate subject: CN=HomeOwner,O=Parking System,C=BE
+sp-container  | Client certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+sp-container  | Client certificate serial: 684582B0E8773D4DCAF598AC0FE74E80
+sp-container  | Certificate valid from: Thu Dec 25 23:01:16 UTC 2025
+sp-container  | Certificate valid until: Fri Dec 25 23:02:16 UTC 2026
+sp-container  | 
+sp-container  | TLS Session Details:
+sp-container  |   Protocol: TLSv1.3
+sp-container  |   Cipher suite: TLS_AES_256_GCM_SHA384
+sp-container  |   Session ID: 198407ACFFBBE9BA...
+sp-container  | ═══════════════════════════════════════════
+sp-container  | 
+sp-container  | 
+sp-container  | Received from HomeOwner: {
+sp-container  |   "priceTokens": 5,
+sp-container  |   "metadata": {
+sp-container  |     "spotType": "residential",
+sp-container  |     "autoRenewal": false,
+sp-container  |     "maxDuration": "8h"
+sp-container  |   },
+sp-container  |   "method": "publishAvailability",
+sp-container  |   "spotId": "SPOT-A1",
+sp-container  |   "locationZone": "Downtown-North",
+sp-container  |   "homeOwnerId": "HO-001",
+sp-container  |   "validFrom": "2025-12-25T23:02:53.955280335Z",
+sp-container  |   "validTo": "2025-12-26T07:02:53.955280335Z"
+sp-container  | }
+sp-container  | 
+sp-container  | === Publishing Parking Availability from HomeOwner ===
+sp-container  |   Home Owner: HO-001
+sp-container  |   Spot ID: SPOT-A1
+sp-container  |   Valid: 2025-12-25T23:02:53.955280335Z to 2025-12-26T07:02:53.955280335Z
+sp-container  |   Price: 5 tokens
+sp-container  |   Location: Downtown-North
+sp-container  | ✓ Availability stored with ID: 49f048b8-6297-4bbe-bebf-f5f8d9e868e5
+sp-container  | ✓ Total availabilities in system: 2
+sp-container  | ══════════════════════════════════════════════════
+sp-container  | Sent response: {
+sp-container  |   "publishedAt": "2025-12-25T23:02:53.984815545Z",
+sp-container  |   "availabilityId": "49f048b8-6297-4bbe-bebf-f5f8d9e868e5",
+sp-container  |   "spotId": "SPOT-A1",
+sp-container  |   "message": "Parking availability published successfully",
+sp-container  |   "status": "success"
+sp-container  | }
+sp-container  | 
+sp-container  | HomeOwner disconnected
+sp-container  | 
+sp-container  | === Inbound Connection ===
+sp-container  | [SP] ✓ Client certificate received and validated:
+sp-container  | [SP]   Subject: C=BE,O=Parking System,CN=CarOwner
+sp-container  | [SP]   Issuer:  CN=172.20.0.10,O=Private Parking,C=BE
+sp-container  | [SP]   Serial:  362E632A2925EB78FAD22FC30B34187A
+sp-container  | [SP]   SHA-256: 7E5EBCCE3FFA616A8F400F899EDB52C4...
+sp-container  | 
+sp-container  | ║   CLIENT AUTHENTICATED VIA mTLS           ║
+sp-container  | Client CN: CarOwner
+sp-container  | Client address: /172.20.0.13:37970
+sp-container  | Client certificate subject: C=BE,O=Parking System,CN=CarOwner
+sp-container  | Client certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+sp-container  | Client certificate serial: 362E632A2925EB78FAD22FC30B34187A
+sp-container  | Certificate valid from: Thu Dec 25 23:01:22 UTC 2025
+sp-container  | Certificate valid until: Fri Dec 25 23:02:22 UTC 2026
+sp-container  | 
+sp-container  | TLS Session Details:
+sp-container  |   Protocol: TLSv1.3
+sp-container  |   Cipher suite: TLS_AES_256_GCM_SHA384
+sp-container  |   Session ID: F7A0B1D38B6878BE...
+sp-container  | ═══════════════════════════════════════════
+sp-container  | 
+sp-container  | 
+sp-container  | Received from CarOwner: {"method": "getAvailability"}
+sp-container  | 
+sp-container  | === Availability Discovery Request from CarOwner ===
+sp-container  |   Total availabilities in system: 2
+sp-container  |   [49f048b8-6297-4bbe-bebf-f5f8d9e868e5] SPOT-A1 - 5 tokens (HO: HomeOwner)
+sp-container  |   [340f449d-d405-49ec-b2e4-9606f78a2a69] SPOT-A1 - 5 tokens (HO: HomeOwner)
+sp-container  | ✓ Returned 2 availability record(s) to CarOwner
+sp-container  | ══════════════════════════════════════════════════
+sp-container  | Sent response: {
+sp-container  |   "availabilities": [
+sp-container  |     {
+sp-container  |       "priceTokens": 5,
+sp-container  |       "hoIdentity": "HomeOwner",
+sp-container  |       "hoCertFingerprint": "B229A59688B10B7CABBC6BE54D3EB7B55D4377AC6AD0CA8131AC5E4E1D489A6D",
+sp-container  |       "availabilityId": "49f048b8-6297-4bbe-bebf-f5f8d9e868e5",
+sp-container  |       "spotId": "SPOT-A1",
+sp-container  |       "locationZone": "Downtown-North",
+sp-container  |       "homeOwnerId": "HO-001",
+sp-container  |       "hoCertificate": "-----BEGIN CERTIFICATE-----\nMIIEgDCCAmigAwIBAgIQaEWCsOh3PU3K9ZisD+dOgDANBgkqhkiG9w0BAQsFADA9\nMQswCQYDVQQGEwJCRTEYMBYGA1UEChMPUHJpdmF0ZSBQYXJraW5nMRQwEgYDVQQD\nEwsxNzIuMjAuMC4xMDAeFw0yNTEyMjUyMzAxMTZaFw0yNjEyMjUyMzAyMTZaMDox\nCzAJBgNVBAYTAkJFMRcwFQYDVQQKDA5QYXJraW5nIFN5c3RlbTESMBAGA1UEAwwJ\nSG9tZU93bmVyMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsa8NWMN3\noYVYGjVISiFEVUISo1njiGJlda8kbT4X2mUXVf1GQ9KC7WDNQvkpLEsxDsLm89U9\nOXxo+eQwCVIPIGdHZPBGG1MDghhFz/V571wg97i7NdirTnpLI9WLGMxyq17RtuHH\nlVOPsd2Nwc9/cHXSbnQniLeMJ/mM8KI/L7W0ocY+qoBE0Bf84Ny/9A7adEvAJ9Em\nNKh2liNRKs5zcchuVDXhAUtgPL/1B9flbUPdp6R5Xhsody5t8D0MO1SW4W2LN7/B\nmY2rOUXmoBHfIfDEcHM6MO7qKFfMN1yvk5MjmB+BtNGpso5udHQGZPRpNkdbDB6B\nDURBO50fEliINQIDAQABo38wfTAMBgNVHRMBAf8EAjAAMA4GA1UdDwEB/wQEAwIF\noDAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwHQYDVR0OBBYEFJfSnj0U\nTiU6axXFdSh/K0TkQdKfMB8GA1UdIwQYMBaAFMkcn65FDxCLoejj3tyrE1Khh6KK\nMA0GCSqGSIb3DQEBCwUAA4ICAQCWjKUyCYOPfaSGgtZmn667v2Sph85dSN+bQVUa\n/7hcjfJF7JqBPWOSsQq6un4fiaJ1gARIDc1Ho3SF8xNpdepS4wfMRoaewDDKFoHm\ndxj8xnt+xFKPLgjE49RnJvilfaO/qCqZ/YohteXshKgXq4shE6nvSvH/RIN1qP2s\nsxL+a8yvIGYgaQtIMPul/Oca9/qcL76k2bnXHpeCBoaP/xlKvBGyntZ1LqAj2WKa\nFPr5h+RD7VjTzVW0DVMej/Kvhrrl6hg+lr/+LlJwuFVkXgwjLOhqrq0mO3Za1kiT\n/rfl7/sqI29wDioRar1thfi4oFuuGP+KJAONpEsKthIYLvAeoyk2Gxfl0aixY6Op\net6byCKj0DKe1HZziqT0HgRzdvlAmT1JHifTkucgLMz4OhdAYJXekxvGQR5wrBYF\n/Dqc//GJNbhMYMrJRKxukuaQHWiPf8YnVQbPD1byjsqS0yHmT4CuK7dWG9qpYXj9\nvYqTC7/Uwc+yYMPIiJ5p+2mBqcPGMOZ6hIM4bnIuq5LuY1meynSXXwjbXhcGISCa\n6xJb2SZuWn6ZtvWX0pTNsR9tUTGpmkJgJXrRMzz8jC7egDojuYev7DlYVRADXgJT\n4v5TBurGvIyNblo1j2LBI8rgyR8+OKm1sOLg9KRkGnS3NIuxfolKjn+M9YkxvcUI\nHfLxEg==\n-----END CERTIFICATE-----\n",
+sp-container  |       "validFrom": "2025-12-25T23:02:53.955280335Z",
+sp-container  |       "validTo": "2025-12-26T07:02:53.955280335Z"
+sp-container  |     },
+sp-container  |     {
+sp-container  |       "priceTokens": 5,
+sp-container  |       "hoIdentity": "HomeOwner",
+sp-container  |       "hoCertFingerprint": "B229A59688B10B7CABBC6BE54D3EB7B55D4377AC6AD0CA8131AC5E4E1D489A6D",
+sp-container  |       "availabilityId": "340f449d-d405-49ec-b2e4-9606f78a2a69",
+sp-container  |       "spotId": "SPOT-A1",
+sp-container  |       "locationZone": "Downtown-North",
+sp-container  |       "homeOwnerId": "HO-001",
+sp-container  |       "hoCertificate": "-----BEGIN CERTIFICATE-----\nMIIEgDCCAmigAwIBAgIQaEWCsOh3PU3K9ZisD+dOgDANBgkqhkiG9w0BAQsFADA9\nMQswCQYDVQQGEwJCRTEYMBYGA1UEChMPUHJpdmF0ZSBQYXJraW5nMRQwEgYDVQQD\nEwsxNzIuMjAuMC4xMDAeFw0yNTEyMjUyMzAxMTZaFw0yNjEyMjUyMzAyMTZaMDox\nCzAJBgNVBAYTAkJFMRcwFQYDVQQKDA5QYXJraW5nIFN5c3RlbTESMBAGA1UEAwwJ\nSG9tZU93bmVyMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsa8NWMN3\noYVYGjVISiFEVUISo1njiGJlda8kbT4X2mUXVf1GQ9KC7WDNQvkpLEsxDsLm89U9\nOXxo+eQwCVIPIGdHZPBGG1MDghhFz/V571wg97i7NdirTnpLI9WLGMxyq17RtuHH\nlVOPsd2Nwc9/cHXSbnQniLeMJ/mM8KI/L7W0ocY+qoBE0Bf84Ny/9A7adEvAJ9Em\nNKh2liNRKs5zcchuVDXhAUtgPL/1B9flbUPdp6R5Xhsody5t8D0MO1SW4W2LN7/B\nmY2rOUXmoBHfIfDEcHM6MO7qKFfMN1yvk5MjmB+BtNGpso5udHQGZPRpNkdbDB6B\nDURBO50fEliINQIDAQABo38wfTAMBgNVHRMBAf8EAjAAMA4GA1UdDwEB/wQEAwIF\noDAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwHQYDVR0OBBYEFJfSnj0U\nTiU6axXFdSh/K0TkQdKfMB8GA1UdIwQYMBaAFMkcn65FDxCLoejj3tyrE1Khh6KK\nMA0GCSqGSIb3DQEBCwUAA4ICAQCWjKUyCYOPfaSGgtZmn667v2Sph85dSN+bQVUa\n/7hcjfJF7JqBPWOSsQq6un4fiaJ1gARIDc1Ho3SF8xNpdepS4wfMRoaewDDKFoHm\ndxj8xnt+xFKPLgjE49RnJvilfaO/qCqZ/YohteXshKgXq4shE6nvSvH/RIN1qP2s\nsxL+a8yvIGYgaQtIMPul/Oca9/qcL76k2bnXHpeCBoaP/xlKvBGyntZ1LqAj2WKa\nFPr5h+RD7VjTzVW0DVMej/Kvhrrl6hg+lr/+LlJwuFVkXgwjLOhqrq0mO3Za1kiT\n/rfl7/sqI29wDioRar1thfi4oFuuGP+KJAONpEsKthIYLvAeoyk2Gxfl0aixY6Op\net6byCKj0DKe1HZziqT0HgRzdvlAmT1JHifTkucgLMz4OhdAYJXekxvGQR5wrBYF\n/Dqc//GJNbhMYMrJRKxukuaQHWiPf8YnVQbPD1byjsqS0yHmT4CuK7dWG9qpYXj9\nvYqTC7/Uwc+yYMPIiJ5p+2mBqcPGMOZ6hIM4bnIuq5LuY1meynSXXwjbXhcGISCa\n6xJb2SZuWn6ZtvWX0pTNsR9tUTGpmkJgJXrRMzz8jC7egDojuYev7DlYVRADXgJT\n4v5TBurGvIyNblo1j2LBI8rgyR8+OKm1sOLg9KRkGnS3NIuxfolKjn+M9YkxvcUI\nHfLxEg==\n-----END CERTIFICATE-----\n",
+sp-container  |       "validFrom": "2025-12-25T23:02:17.066938417Z",
+sp-container  |       "validTo": "2025-12-26T07:02:17.066938417Z"
+sp-container  |     }
+sp-container  |   ],
+sp-container  |   "count": 2,
+sp-container  |   "status": "success",
+sp-container  |   "timestamp": "2025-12-25T23:02:59.144165551Z"
+sp-container  | }
+sp-container  | 
+sp-container  | CarOwner disconnected
+sp-container  | 
+sp-container  | === Inbound Connection ===
+sp-container  | [SP] ✓ Client certificate received and validated:
+sp-container  | [SP]   Subject: C=BE,O=Parking System,CN=CarOwner
+sp-container  | [SP]   Issuer:  CN=172.20.0.10,O=Private Parking,C=BE
+sp-container  | [SP]   Serial:  362E632A2925EB78FAD22FC30B34187A
+sp-container  | [SP]   SHA-256: 7E5EBCCE3FFA616A8F400F899EDB52C4...
+sp-container  | 
+sp-container  | ║   CLIENT AUTHENTICATED VIA mTLS           ║
+sp-container  | Client CN: CarOwner
+sp-container  | Client address: /172.20.0.13:37974
+sp-container  | Client certificate subject: C=BE,O=Parking System,CN=CarOwner
+sp-container  | Client certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+sp-container  | Client certificate serial: 362E632A2925EB78FAD22FC30B34187A
+sp-container  | Certificate valid from: Thu Dec 25 23:01:22 UTC 2025
+sp-container  | Certificate valid until: Fri Dec 25 23:02:22 UTC 2026
+sp-container  | 
+sp-container  | TLS Session Details:
+sp-container  |   Protocol: TLSv1.3
+sp-container  |   Cipher suite: TLS_AES_256_GCM_SHA384
+sp-container  |   Session ID: 7009C7E300A79EF8...
+sp-container  | ═══════════════════════════════════════════
+sp-container  | 
+sp-container  | 
+sp-container  | Received from CarOwner: {
+sp-container  |   "method": "requestTokens",
+sp-container  |   "count": 5
+sp-container  | }
+sp-container  | 
+sp-container  | === Generating 5 payment tokens for CarOwner ===
+sp-container  | ✓ Generated secret s (32 bytes)
+sp-container  | ✓ Generated hash chain of length 5
+sp-container  |   Root H^5(s): 776F18593A9B01B3...
+sp-container  | ✓ Signed root with SP private key (256 bytes)
+sp-container  | ✓ Stored chain metadata (ID: 31670153-d76b-4708-8643-0d00f42fa568)
+sp-container  | ✓ Token batch ready to send to CarOwner
+sp-container  | ══════════════════════════════════════════════════
+sp-container  | Sent response: {
+sp-container  |   "tokenHashAlg": "SHA-256",
+sp-container  |   "signatureAlg": "SHA256withRSA",
+sp-container  |   "chainId": "31670153-d76b-4708-8643-0d00f42fa568",
+sp-container  |   "rootSignature": "ONR3VbVhGb8G/ZgFgddqsoqazdPz/ON6yUK3evrSuIGCHvV4Rur5ahQlQSZvSigvQCFOa84HKAJHPfCccUOHBh5CO9kn7vQjMuAEHCzjU+vCKi359bD8zvUGlYWG6HH/Y/UZnwoANuVYUTn6ZQ6dE/iIrmmjyzhSgCjW+eh8f+oTJFshA8dn2eKoMS29sJ9754sHGcFTa29jKkt015Vw/auiirqvLzv2R5GbOdo2zRrtkzofa4nWsUhiwgQebQj98oCD09CiHcd0+4iIhxHHD/GEa+J1AN8a7Yl8t6+R2GwVHfvKB+Wi4HKW5BjOSy7uKjHvL5rK6OwBG55CHQ7D/A==",
+sp-container  |   "root": "d28YWTqbAbP+PqstyxJQcpoIjEBfrpaUrs6WmZFc98A=",
+sp-container  |   "x": 5,
+sp-container  |   "tokens": [
+sp-container  |     "uZcq9i0nwxvjvttLz6VOmMAfnFKv3Bn5jPtc3ge4ZZk=",
+sp-container  |     "+aLuMOykraPpgXnryKxvW/j25SdNXwKNPHkAK9f8gxY=",
+sp-container  |     "o8kB9+wYujgsPAK95t2FpqvhHcU48C/odbJlZsCYgV0=",
+sp-container  |     "9aMse8mlcdAVYdJRxT6YwXgA0B2awK7w9VjSVtFQsHI=",
+sp-container  |     "d28YWTqbAbP+PqstyxJQcpoIjEBfrpaUrs6WmZFc98A="
+sp-container  |   ],
+sp-container  |   "status": "success"
+sp-container  | }
+sp-container  | 
+sp-container  | CarOwner disconnected
+sp-container  | 
+sp-container  | === Inbound Connection ===
+sp-container  | [SP] ✓ Client certificate received and validated:
+sp-container  | [SP]   Subject: CN=HomeOwner,O=Parking System,C=BE
+sp-container  | [SP]   Issuer:  CN=172.20.0.10,O=Private Parking,C=BE
+sp-container  | [SP]   Serial:  684582B0E8773D4DCAF598AC0FE74E80
+sp-container  | [SP]   SHA-256: B229A59688B10B7CABBC6BE54D3EB7B5...
+sp-container  | 
+sp-container  | ║   CLIENT AUTHENTICATED VIA mTLS           ║
+sp-container  | Client CN: HomeOwner
+sp-container  | Client address: /172.20.0.12:39438
+sp-container  | Client certificate subject: CN=HomeOwner,O=Parking System,C=BE
+sp-container  | Client certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+sp-container  | Client certificate serial: 684582B0E8773D4DCAF598AC0FE74E80
+sp-container  | Certificate valid from: Thu Dec 25 23:01:16 UTC 2025
+sp-container  | Certificate valid until: Fri Dec 25 23:02:16 UTC 2026
+sp-container  | 
+sp-container  | TLS Session Details:
+sp-container  |   Protocol: TLSv1.3
+sp-container  |   Cipher suite: TLS_AES_256_GCM_SHA384
+sp-container  |   Session ID: B1EA62000B353C67...
+sp-container  | ═══════════════════════════════════════════
+sp-container  | 
+sp-container  | 
+sp-container  | Received from HomeOwner: {
+sp-container  |   "startIndex": 0,
+sp-container  |   "lastTokenSpent": "d28YWTqbAbP+PqstyxJQcpoIjEBfrpaUrs6WmZFc98A=",
+sp-container  |   "method": "settle",
+sp-container  |   "reservationId": "dc5f1760-91cd-4f45-befb-ccc7dd4eef30",
+sp-container  |   "chainId": "31670153-d76b-4708-8643-0d00f42fa568",
+sp-container  |   "availabilityId": "49f048b8-6297-4bbe-bebf-f5f8d9e868e5",
+sp-container  |   "rootSignature": "ONR3VbVhGb8G/ZgFgddqsoqazdPz/ON6yUK3evrSuIGCHvV4Rur5ahQlQSZvSigvQCFOa84HKAJHPfCccUOHBh5CO9kn7vQjMuAEHCzjU+vCKi359bD8zvUGlYWG6HH/Y/UZnwoANuVYUTn6ZQ6dE/iIrmmjyzhSgCjW+eh8f+oTJFshA8dn2eKoMS29sJ9754sHGcFTa29jKkt015Vw/auiirqvLzv2R5GbOdo2zRrtkzofa4nWsUhiwgQebQj98oCD09CiHcd0+4iIhxHHD/GEa+J1AN8a7Yl8t6+R2GwVHfvKB+Wi4HKW5BjOSy7uKjHvL5rK6OwBG55CHQ7D/A==",
+sp-container  |   "root": "d28YWTqbAbP+PqstyxJQcpoIjEBfrpaUrs6WmZFc98A=",
+sp-container  |   "newLastSpentIndex": 5,
+sp-container  |   "x": 5,
+sp-container  |   "y": 5,
+sp-container  |   "firstTokenSpent": "uZcq9i0nwxvjvttLz6VOmMAfnFKv3Bn5jPtc3ge4ZZk="
+sp-container  | }
+sp-container  | [SETTLE] ═══════════════════════════════════════════════════
+sp-container  | [SETTLE] Settlement Request Received from HomeOwner
+sp-container  | [SETTLE]   chainId: 31670153-d76b-4708-8643-0d00f42fa568
+sp-container  | [SETTLE]   reservationId: dc5f1760-91cd-4f45-befb-ccc7dd4eef30
+sp-container  | [SETTLE]   availabilityId: 49f048b8-6297-4bbe-bebf-f5f8d9e868e5
+sp-container  | [SETTLE]   y (tokens spent): 5
+sp-container  | [SETTLE]   newLastSpentIndex: 5
+sp-container  | [SETTLE]   x (chain length): 5
+sp-container  | [SETTLE] ═══════════════════════════════════════════════════
+sp-container  | [SETTLE] ✓ Cryptographic proof verified: token hashes to root
+sp-container  | [SETTLE]   (hashed 0 times from last spent token to reach root)
+sp-container  | [SETTLE] ✓✓✓ SETTLEMENT ACCEPTED ✓✓✓
+sp-container  | [SETTLE]   chainId: 31670153-d76b-4708-8643-0d00f42fa568
+sp-container  | [SETTLE]   reservationId: dc5f1760-91cd-4f45-befb-ccc7dd4eef30
+sp-container  | [SETTLE]   Previous lastSpentIndex: 0
+sp-container  | [SETTLE]   Updated lastSpentIndex: 5
+sp-container  | [SETTLE]   Tokens consumed: 5
+sp-container  | [SETTLE]   Remaining tokens: 0
+sp-container  | [AUDIT] SETTLEMENT_ACCEPTED{chainId=31670153-d76b-4708-8643-0d00f42fa568, oldIndex=0, newIndex=5, tokensSpent=5, reservationId=dc5f1760-91cd-4f45-befb-ccc7dd4eef30}
+sp-container  | [SETTLE] ═══════════════════════════════════════════════════
+sp-container  | [SETTLE] M3.4: Generating Cryptographically Verifiable Receipt
+sp-container  | [SETTLE] ═══════════════════════════════════════════════════
+sp-container  | [SETTLE] Canonical Receipt Data:
+sp-container  | [SETTLE]   receiptId=a2a59cd0-88b1-4369-bcec-b3acec4fda8b|chainId=31670153-d76b-4708-8643-0d00f42fa568|reservationId=dc5f1760-91cd-4f45-befb-ccc7dd4eef30|availabilityId=49f048b8-6297-4bbe-bebf-f5f8d9e868e5|y=5|newLastSpentIndex=5|timestamp=2025-12-25T23:02:59.913971688Z|hoIdentity=HomeOwner
+sp-container  | [SETTLE] ✓ Receipt signed with SP private key (RSA-2048)
+sp-container  | [SETTLE]   Algorithm: SHA256withRSA
+sp-container  | [SETTLE]   Signature length: 256 bytes
+sp-container  | [SETTLE] ✓ SP certificate fingerprint: 964EF3CA95A091FFFAB1632C031D6F1F...
+sp-container  | [SETTLE] ✓✓✓ PAYMENT RECEIPT GENERATED ✓✓✓
+sp-container  | [SETTLE]   Receipt ID: a2a59cd0-88b1-4369-bcec-b3acec4fda8b
+sp-container  | [SETTLE]   Non-repudiation: SP signature binds finality to payment
+sp-container  | [SETTLE]   Auditability: Receipt enables offline third-party verification
+sp-container  | [AUDIT] RECEIPT_GENERATED{receiptId=a2a59cd0-88b1-4369-bcec-b3acec4fda8b, chainId=31670153-d76b-4708-8643-0d00f42fa568, reservationId=dc5f1760-91cd-4f45-befb-ccc7dd4eef30}
+sp-container  | Sent response: {
+sp-container  |   "reservationId": "dc5f1760-91cd-4f45-befb-ccc7dd4eef30",
+sp-container  |   "chainId": "31670153-d76b-4708-8643-0d00f42fa568",
+sp-container  |   "remainingTokens": 0,
+sp-container  |   "acceptedLastSpentIndex": 5,
+sp-container  |   "tokensConsumed": 5,
+sp-container  |   "paymentReceipt": {
+sp-container  |     "hoIdentity": "HomeOwner",
+sp-container  |     "reservationId": "dc5f1760-91cd-4f45-befb-ccc7dd4eef30",
+sp-container  |     "signatureAlg": "SHA256withRSA",
+sp-container  |     "chainId": "31670153-d76b-4708-8643-0d00f42fa568",
+sp-container  |     "availabilityId": "49f048b8-6297-4bbe-bebf-f5f8d9e868e5",
+sp-container  |     "newLastSpentIndex": 5,
+sp-container  |     "spCertFingerprint": "964EF3CA95A091FFFAB1632C031D6F1FDD957539DBAFCF361A7B265A2B2D4961",
+sp-container  |     "y": 5,
+sp-container  |     "receiptId": "a2a59cd0-88b1-4369-bcec-b3acec4fda8b",
+sp-container  |     "canonicalReceipt": "receiptId=a2a59cd0-88b1-4369-bcec-b3acec4fda8b|chainId=31670153-d76b-4708-8643-0d00f42fa568|reservationId=dc5f1760-91cd-4f45-befb-ccc7dd4eef30|availabilityId=49f048b8-6297-4bbe-bebf-f5f8d9e868e5|y=5|newLastSpentIndex=5|timestamp=2025-12-25T23:02:59.913971688Z|hoIdentity=HomeOwner",
+sp-container  |     "receiptSignature": "ihXJcq2BgmdpJciAe+Ow9zAfaYNHSTsfHIYooIMZkAdtDQv9prG5GeVe+WDafpImNOZ2TqXiim5PlTPb91MBlz7oWHR4d+QDvlxoYEb49KkVuz1gxXVwYaeOF3HYQ5Skg1XCv7uuftC0od1/p6Vjwui4DGbTdke3GlFhx6aBG+HR/qSU8uED8anvtU8M32fScTmAnG1NOsj61EJMDaXy+MouNrJ6rlgByXOYYhdX+eaHpRGk6YyLOiMD09ZJeG/v7q5zyhwM/cxX7mEIr0FVSGkkdc2DquYsVkz0OMvlj8f6Hr3E/RJAgufaUKQ+2dswJe89gLl01gxbFlaj/hohpg==",
+sp-container  |     "timestamp": "2025-12-25T23:02:59.913971688Z"
+sp-container  |   },
+sp-container  |   "message": "Settlement accepted",
+sp-container  |   "status": "success",
+sp-container  |   "timestamp": "2025-12-25T23:02:59.913971688Z"
+sp-container  | }
+sp-container  | 
+sp-container  | HomeOwner disconnected
+sp-container  | 
+sp-container  | === Inbound Connection ===
+sp-container  | [SP] ✓ Client certificate received and validated:
+sp-container  | [SP]   Subject: CN=HomeOwner,O=Parking System,C=BE
+sp-container  | [SP]   Issuer:  CN=172.20.0.10,O=Private Parking,C=BE
+sp-container  | [SP]   Serial:  684582B0E8773D4DCAF598AC0FE74E80
+sp-container  | [SP]   SHA-256: B229A59688B10B7CABBC6BE54D3EB7B5...
+sp-container  | 
+sp-container  | ║   CLIENT AUTHENTICATED VIA mTLS           ║
+sp-container  | Client CN: HomeOwner
+sp-container  | Client address: /172.20.0.12:39444
+sp-container  | Client certificate subject: CN=HomeOwner,O=Parking System,C=BE
+sp-container  | Client certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+sp-container  | Client certificate serial: 684582B0E8773D4DCAF598AC0FE74E80
+sp-container  | Certificate valid from: Thu Dec 25 23:01:16 UTC 2025
+sp-container  | Certificate valid until: Fri Dec 25 23:02:16 UTC 2026
+sp-container  | 
+sp-container  | TLS Session Details:
+sp-container  |   Protocol: TLSv1.3
+sp-container  |   Cipher suite: TLS_AES_256_GCM_SHA384
+sp-container  |   Session ID: 22380819D2DDD7AF...
+sp-container  | ═══════════════════════════════════════════
+sp-container  | 
+sp-container  | 
+sp-container  | Received from HomeOwner: {
+sp-container  |   "startIndex": 0,
+sp-container  |   "lastTokenSpent": "d28YWTqbAbP+PqstyxJQcpoIjEBfrpaUrs6WmZFc98A=",
+sp-container  |   "method": "settle",
+sp-container  |   "reservationId": "dc5f1760-91cd-4f45-befb-ccc7dd4eef30",
+sp-container  |   "chainId": "31670153-d76b-4708-8643-0d00f42fa568",
+sp-container  |   "availabilityId": "49f048b8-6297-4bbe-bebf-f5f8d9e868e5",
+sp-container  |   "rootSignature": "ONR3VbVhGb8G/ZgFgddqsoqazdPz/ON6yUK3evrSuIGCHvV4Rur5ahQlQSZvSigvQCFOa84HKAJHPfCccUOHBh5CO9kn7vQjMuAEHCzjU+vCKi359bD8zvUGlYWG6HH/Y/UZnwoANuVYUTn6ZQ6dE/iIrmmjyzhSgCjW+eh8f+oTJFshA8dn2eKoMS29sJ9754sHGcFTa29jKkt015Vw/auiirqvLzv2R5GbOdo2zRrtkzofa4nWsUhiwgQebQj98oCD09CiHcd0+4iIhxHHD/GEa+J1AN8a7Yl8t6+R2GwVHfvKB+Wi4HKW5BjOSy7uKjHvL5rK6OwBG55CHQ7D/A==",
+sp-container  |   "root": "d28YWTqbAbP+PqstyxJQcpoIjEBfrpaUrs6WmZFc98A=",
+sp-container  |   "newLastSpentIndex": 5,
+sp-container  |   "x": 5,
+sp-container  |   "y": 5,
+sp-container  |   "firstTokenSpent": "uZcq9i0nwxvjvttLz6VOmMAfnFKv3Bn5jPtc3ge4ZZk="
+sp-container  | }
+sp-container  | [SETTLE] ═══════════════════════════════════════════════════
+sp-container  | [SETTLE] Settlement Request Received from HomeOwner
+sp-container  | [SETTLE]   chainId: 31670153-d76b-4708-8643-0d00f42fa568
+sp-container  | [SETTLE]   reservationId: dc5f1760-91cd-4f45-befb-ccc7dd4eef30
+sp-container  | [SETTLE]   availabilityId: 49f048b8-6297-4bbe-bebf-f5f8d9e868e5
+sp-container  | [SETTLE]   y (tokens spent): 5
+sp-container  | [SETTLE]   newLastSpentIndex: 5
+sp-container  | [SETTLE]   x (chain length): 5
+sp-container  | [SETTLE] ═══════════════════════════════════════════════════
+sp-container  | [SETTLE] ❌❌❌ DOUBLE_SPEND_DETECTED ❌❌❌
+sp-container  | [SETTLE]   chainId: 31670153-d76b-4708-8643-0d00f42fa568
+sp-container  | [SETTLE]   currentLastSpentIndex: 5
+sp-container  | [SETTLE]   attemptedNewIndex: 5
+sp-container  | [SETTLE]   reservationId: dc5f1760-91cd-4f45-befb-ccc7dd4eef30
+sp-container  | [AUDIT] DOUBLE_SPEND_DETECTED{chainId=31670153-d76b-4708-8643-0d00f42fa568, oldIndex=5, newIndex=5, reservationId=dc5f1760-91cd-4f45-befb-ccc7dd4eef30}
+sp-container  | Sent response: {
+sp-container  |   "reason": "double_spend",
+sp-container  |   "reservationId": "dc5f1760-91cd-4f45-befb-ccc7dd4eef30",
+sp-container  |   "chainId": "31670153-d76b-4708-8643-0d00f42fa568",
+sp-container  |   "message": "DOUBLE_SPEND_DETECTED: attempting to reuse already-spent tokens",
+sp-container  |   "status": "error",
+sp-container  |   "currentLastSpentIndex": 5,
+sp-container  |   "rejectedNewIndex": 5
+sp-container  | }
+sp-container  | 
+sp-container  | HomeOwner disconnected

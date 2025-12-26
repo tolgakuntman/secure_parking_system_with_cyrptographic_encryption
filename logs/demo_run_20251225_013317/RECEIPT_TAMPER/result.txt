@@ -1,4 +1,0 @@
-Scenario: RECEIPT_TAMPER
-Description: CO detects tampered receipt
-Exit Code: 1
-Result: ✗ FAIL (exit: 1)

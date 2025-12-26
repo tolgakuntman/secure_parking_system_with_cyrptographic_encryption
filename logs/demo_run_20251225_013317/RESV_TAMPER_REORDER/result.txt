@@ -1,4 +1,0 @@
-Scenario: RESV_TAMPER_REORDER
-Description: HO detects field reordering
-Exit Code: 1
-Result: ✗ FAIL (exit: 1)

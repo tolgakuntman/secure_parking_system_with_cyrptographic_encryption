@@ -1,5 +1,0 @@
-Scenario: P1_HONEST
-Description: Honest end-to-end flow
-Exit Code: 0
-Result: PASS
-Timestamp: Thu Dec 25 01:14:02 AM +03 2025

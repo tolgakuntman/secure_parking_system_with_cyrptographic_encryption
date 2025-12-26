@@ -1,5 +1,0 @@
-fake-cauth-container  | 23:51:26 [FAKE-CAUTH][INFO] FAKE-CAUTH: Rogue Intermediate CA (CAuth-1 Security Test)
-fake-cauth-container  | 23:51:26 [FAKE-CAUTH][WARN] This is a ROGUE CA - certificates issued WILL be rejected
-fake-cauth-container  | 23:51:26 [FAKE-CAUTH][AUDIT] Rogue CA generated: C=XX,O=Fake Authority,CN=ROGUE-CA-DO-NOT-TRUST
-fake-cauth-container  | 23:51:26 [FAKE-CAUTH][INFO] FAKE-CAUTH listening on port 8443 - ready to issue UNTRUSTED certs
-fake-cauth-container  | 23:51:43 [FAKE-CAUTH][WARN] Client handler error: certificate_unknown

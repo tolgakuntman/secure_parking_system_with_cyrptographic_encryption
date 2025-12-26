@@ -1,4 +1,0 @@
-Scenario: RESV_TAMPER_FIELD_EDIT
-Description: HO detects field modification
-Exit Code: 1
-Result: ✗ FAIL (exit: 1)

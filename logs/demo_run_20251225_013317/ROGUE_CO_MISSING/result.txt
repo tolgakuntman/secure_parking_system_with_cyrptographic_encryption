@@ -1,4 +1,0 @@
-Scenario: ROGUE_CO_MISSING
-Description: CO without certificate rejected
-Exit Code: 0
-Result: ✓ PASS

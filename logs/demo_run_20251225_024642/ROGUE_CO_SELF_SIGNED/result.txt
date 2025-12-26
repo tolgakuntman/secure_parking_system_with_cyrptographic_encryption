@@ -1,0 +1,7 @@
+Scenario: ROGUE_CO_SELF_SIGNED
+Description: SP rejects self-signed cert
+Status: PASS
+Exit Code: 137
+Expected Exit: 0
+Reason: [SEC_OK] ROGUE_CO/SELF_SIGNED: mTLS rejected: SocketExceptio
+Timestamp: 2025-12-24T23:54:35Z

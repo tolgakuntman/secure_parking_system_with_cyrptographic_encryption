@@ -1,0 +1,3 @@
+ Container cauth-container  Running
+ Container sp-container  Running
+23:55:42 [RESV_TAMPER_REORDER][INFO] Waiting for CAuth, SP, and HO to start...

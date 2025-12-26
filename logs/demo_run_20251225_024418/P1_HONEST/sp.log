@@ -1,0 +1,12 @@
+sp-container  | 23:44:48 [SP][AUDIT] mTLS peer CN=CarOwner fp=3BA9B41E213CEA31 tls=TLSv1.3 suite=TLS_AES_256_GCM_SHA384
+sp-container  | 23:44:48 [SP][INFO] Returned 1 availability records to CarOwner
+sp-container  | 23:44:48 [SP][AUDIT] mTLS peer CN=CarOwner fp=3BA9B41E213CEA31 tls=TLSv1.3 suite=TLS_AES_256_GCM_SHA384
+sp-container  | 23:44:48 [SP][INFO] Generating 5 tokens for CarOwner
+sp-container  | 23:44:48 [SP][AUDIT] Token batch issued: chainId=9891d571... count=5 to=CarOwner
+sp-container  | 23:44:49 [SP][AUDIT] mTLS peer CN=HomeOwner fp=4C0E1B7537EA014F tls=TLSv1.3 suite=TLS_AES_256_GCM_SHA384
+sp-container  | 23:44:49 [SP][INFO] Settlement: chain=9891d571... resv=f07dc14e... y=5
+sp-container  | 23:44:49 [SP][AUDIT] SETTLEMENT chain=9891d571... y=5 idx=0->5 remaining=0
+sp-container  | 23:44:49 [SP][AUDIT] RECEIPT receiptId=9a30732c... resv=f07dc14e...
+sp-container  | 23:44:52 [SP][AUDIT] mTLS peer CN=HomeOwner fp=4C0E1B7537EA014F tls=TLSv1.3 suite=TLS_AES_256_GCM_SHA384
+sp-container  | 23:44:52 [SP][INFO] Settlement: chain=9891d571... resv=f07dc14e... y=5
+sp-container  | 23:44:52 [SP][SEC_ERR] DOUBLE_SPEND chain=9891d571... old=5 new=5

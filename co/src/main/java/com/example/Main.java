@@ -576,7 +576,25 @@ public class Main {
         tmf.init(trustStore);
 
         SSLContext enrollCtx = SSLContext.getInstance("TLS");
-        enrollCtx.init(null, tmf.getTrustManagers(), new SecureRandom());
+        
+        // SECURITY TEST: For fake-cauth test, skip server certificate validation
+        // This allows CO to enroll with fake-cauth to get a rogue certificate
+        // The actual security test happens when CO tries to use that certificate with SP/HO
+        if ("fake-cauth".equals(CAUTH_HOST)) {
+            System.out.println("[CAuth-1] TEST MODE: Connecting to fake-cauth (skipping server cert validation)");
+            System.out.println("[CAuth-1] NOTE: This is for testing only - allows enrollment with rogue CA");
+            // Trust all certificates for enrollment with fake-cauth
+            javax.net.ssl.TrustManager[] trustAllCerts = new javax.net.ssl.TrustManager[]{
+                new javax.net.ssl.X509TrustManager() {
+                    public java.security.cert.X509Certificate[] getAcceptedIssuers() { return null; }
+                    public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) {}
+                    public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) {}
+                }
+            };
+            enrollCtx.init(null, trustAllCerts, new SecureRandom());
+        } else {
+            enrollCtx.init(null, tmf.getTrustManagers(), new SecureRandom());
+        }
 
         try (SSLSocket socket = (SSLSocket) enrollCtx.getSocketFactory().createSocket(CAUTH_HOST, CAUTH_PORT);
              PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);

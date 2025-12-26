@@ -1,0 +1,5 @@
+ Volume secure_software_assignment_co_keystore  Creating
+ Volume secure_software_assignment_co_keystore  Created
+ Container cauth-container  Running
+ Container sp-container  Running
+Error response from daemon: invalid mount config for type "volume": invalid mount path: 'DEBUG=false' mount path must be absolute

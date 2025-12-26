@@ -1,0 +1,180 @@
+
+==== Sanity checks ====
+[INFO] Sanity checks passed
+[INFO] Fresh start: docker compose down -v --remove-orphans
+ Container ho-container  Stopping
+ Container ho-container  Stopped
+ Container ho-container  Removing
+ Container ho-container  Removed
+ Container sp-container  Stopping
+ Container sp-container  Stopped
+ Container sp-container  Removing
+ Container sp-container  Removed
+ Container cauth-container  Stopping
+ Container cauth-container  Stopped
+ Container cauth-container  Removing
+ Container cauth-container  Removed
+ Volume secure_software_assignment_co_keystore  Removing
+ Network secure_software_assignment_java-network  Removing
+ Volume secure_software_assignment_co_keystore  Removed
+ Volume secure_software_assignment_sp_keystore  Removing
+ Volume secure_software_assignment_ho_keystore  Removing
+ Volume secure_software_assignment_sp_keystore  Removed
+ Volume secure_software_assignment_ho_keystore  Removed
+ Network secure_software_assignment_java-network  Removed
+[INFO] Starting core services: cauth, sp, ho
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.59kB done
+#1 DONE 0.0s
+
+#2 [ho internal] load build definition from Dockerfile
+#2 transferring dockerfile: 346B done
+#2 DONE 0.0s
+
+#3 [sp internal] load build definition from Dockerfile
+#3 transferring dockerfile: 652B done
+#3 DONE 0.0s
+
+#4 [cauth internal] load build definition from Dockerfile
+#4 transferring dockerfile: 756B done
+#4 DONE 0.0s
+
+#5 [cauth internal] load metadata for docker.io/library/eclipse-temurin:17-jdk
+#5 DONE 0.3s
+
+#6 [ho internal] load metadata for docker.io/library/maven:3.9-eclipse-temurin-17
+#6 DONE 0.3s
+
+#7 [ho internal] load metadata for docker.io/library/eclipse-temurin:17-jre
+#7 DONE 0.3s
+
+#8 [sp internal] load .dockerignore
+#8 transferring context: 91B done
+#8 DONE 0.0s
+
+#9 [cauth internal] load .dockerignore
+#9 transferring context: 91B done
+#9 DONE 0.0s
+
+#10 [ho internal] load .dockerignore
+#10 transferring context: 2B done
+#10 DONE 0.0s
+
+#11 [ho build 1/5] FROM docker.io/library/maven:3.9-eclipse-temurin-17@sha256:f7ae6cafd12a38da76a1a105744522387b32caacba5e23674a652133607d007c
+#11 DONE 0.0s
+
+#12 [ho stage-1 1/3] FROM docker.io/library/eclipse-temurin:17-jre@sha256:fc0c46c43f873754d8651948b94da946449aee0c0262420a86c4d18e84bc3c49
+#12 DONE 0.0s
+
+#13 [cauth 1/5] FROM docker.io/library/eclipse-temurin:17-jdk@sha256:7995efb7f9276fc16433aa8e2856a06082cd09f7f6603579db2534937ccc6778
+#13 resolve docker.io/library/eclipse-temurin:17-jdk@sha256:7995efb7f9276fc16433aa8e2856a06082cd09f7f6603579db2534937ccc6778 done
+#13 DONE 0.0s
+
+#14 [sp internal] load build context
+#14 transferring context: 528B done
+#14 DONE 0.0s
+
+#15 [cauth internal] load build context
+#15 transferring context: 527B done
+#15 DONE 0.0s
+
+#16 [ho internal] load build context
+#16 transferring context: 305B done
+#16 DONE 0.0s
+
+#17 [sp 4/5] COPY . .
+#17 CACHED
+
+#18 [sp 5/5] RUN mvn clean package -DskipTests
+#18 CACHED
+
+#19 [ho build 5/5] RUN mvn clean package -DskipTests
+#19 CACHED
+
+#20 [ho build 3/5] COPY pom.xml .
+#20 CACHED
+
+#21 [ho stage-1 2/3] WORKDIR /app
+#21 CACHED
+
+#22 [ho build 4/5] COPY src ./src
+#22 CACHED
+
+#23 [ho build 2/5] WORKDIR /app
+#23 CACHED
+
+#24 [ho stage-1 3/3] COPY --from=build /app/target/ho-1.0-SNAPSHOT.jar app.jar
+#24 CACHED
+
+#25 [cauth 4/5] COPY . .
+#25 CACHED
+
+#26 [sp 2/5] RUN apt-get update &&     apt-get install -y maven &&     rm -rf /var/lib/apt/lists/*
+#26 CACHED
+
+#27 [sp 3/5] WORKDIR /app
+#27 CACHED
+
+#28 [cauth 5/5] RUN mvn clean package -DskipTests
+#28 CACHED
+
+#29 [sp] exporting to image
+#29 exporting layers done
+#29 writing image sha256:da148129397fab7448ed0def9cea982834fa0a5e8d0b71dbc0e3f98275b90389 done
+#29 naming to docker.io/library/secure_software_assignment-sp done
+#29 DONE 0.0s
+
+#30 [cauth] exporting to image
+#30 exporting layers done
+#30 writing image sha256:97d9242be68c94e75c7f151a50c4d68f39529016a440fe97fc2e03ef7f00b490 done
+#30 naming to docker.io/library/secure_software_assignment-cauth done
+#30 DONE 0.0s
+
+#31 [ho] exporting to image
+#31 exporting layers done
+#31 writing image sha256:ed5f3a88e0a7fed794f4ba86d37c6efd51f25ed3d7371530996d710a7e2d1e8b done
+#31 naming to docker.io/library/secure_software_assignment-ho done
+#31 DONE 0.0s
+
+#32 [sp] resolving provenance for metadata file
+#32 DONE 0.0s
+
+#33 [cauth] resolving provenance for metadata file
+#33 DONE 0.0s
+
+#34 [ho] resolving provenance for metadata file
+#34 DONE 0.0s
+ secure_software_assignment-cauth  Built
+ secure_software_assignment-sp  Built
+ secure_software_assignment-ho  Built
+ Network secure_software_assignment_java-network  Creating
+ Network secure_software_assignment_java-network  Created
+ Volume secure_software_assignment_sp_keystore  Creating
+ Volume secure_software_assignment_sp_keystore  Created
+ Volume secure_software_assignment_ho_keystore  Creating
+ Volume secure_software_assignment_ho_keystore  Created
+ Container cauth-container  Creating
+ Container cauth-container  Created
+ Container sp-container  Creating
+ Container sp-container  Created
+ Container ho-container  Creating
+ Container ho-container  Created
+ Container cauth-container  Starting
+ Container cauth-container  Started
+ Container sp-container  Starting
+ Container sp-container  Started
+ Container ho-container  Starting
+ Container ho-container  Started
+[INFO] Waiting for services to become reachable on published host ports...
+[INFO] Waiting for localhost:8443
+[INFO] Waiting for localhost:8444
+[INFO] Waiting for localhost:8445
+[INFO] Core services reachable
+[INFO] tmux session created: m4-demo
+[INFO] Run 'tmux attach -t m4-demo' in another terminal to watch logs
+[INFO] Tests will run automatically in the background
+
+==== P1_HONEST: Baseline Normal Flow ====
+[INFO] Command: docker compose run --rm co
+[INFO] Running CO (scenario=normal) envs: NONE
+[WARN] Failed to parse CO exit code, defaulting to 1

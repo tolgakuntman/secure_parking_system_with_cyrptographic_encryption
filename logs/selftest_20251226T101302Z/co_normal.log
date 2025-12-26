@@ -1,0 +1,35 @@
+ Volume secure_software_assignment_co_keystore  Creating
+ Volume secure_software_assignment_co_keystore  Created
+ Container cauth-container  Running
+ Container sp-container  Running
+10:13:06 [CO][INFO] Waiting for CAuth, SP, and HO to start...
+10:13:18 [CO][INFO] Car Owner (CO) starting
+10:13:18 [CO][INFO] No existing certificate, enrolling with CAuth
+10:13:19 [CO][INFO] Connecting to CAuth server at cauth:8443
+10:13:19 [CO][INFO] Certificate signed by CAuth
+10:13:19 [CO][INFO] Certificate received from CAuth
+10:13:19 [CO][AUDIT] CO IDENTITY subj=CarOwner issuer=CN=172.20.0.10,O=Private Parking,C=BE
+10:13:19 [CO][INFO] Discovering parking availabilities from SP
+10:13:19 [CO][INFO] Establishing mTLS connection to SP for discovery...
+10:13:19 [CO][AUDIT] mTLS to SP: TLSv1.3 TLS_AES_256_GCM_SHA384
+10:13:19 [CO][AUDIT] SP peer CN=ServiceProvider fp=2CD1D4B77C5262DB
+10:13:19 [CO][INFO] Discovery success: 1 availability record(s)
+10:13:19 [CO][AUDIT] HO identity: CN=HomeOwner issuer=172.20.0.10
+10:13:19 [CO][INFO] HO identity bound: spot=SPOT-A1 CN=HomeOwner
+10:13:19 [CO][INFO] Availability discovery complete: all HO identities verified
+10:13:19 [CO][INFO] Requesting reservation from HO
+10:13:19 [CO][INFO] M2.4: Reservation handshake with HO
+10:13:19 [CO][AUDIT] mTLS to HO: TLSv1.3 TLS_AES_256_GCM_SHA384
+10:13:19 [CO][AUDIT] HO peer CN=HomeOwner fp=7AAF33BEAD7E3C11
+10:13:19 [CO][INFO] Signature verified: RSA-2048/SHA256withRSA, HO=HomeOwner
+10:13:19 [CO][INFO] M3.2: Sending payment request to HO (using SP tokens)
+10:13:19 [CO][AUDIT] mTLS to SP: TLSv1.3 TLS_AES_256_GCM_SHA384
+10:13:19 [CO][AUDIT] SP peer CN=ServiceProvider fp=2CD1D4B77C5262DB
+10:13:19 [CO][INFO] Token batch verified: 5 tokens, chainId=71c6a792-9607-4d5d-a726-0c0a08a3a059
+10:13:19 [CO][INFO] Sending payment to HO
+10:13:20 [CO][AUDIT] PAYMENT ACCEPTED by HO
+10:13:20 [CO][INFO] Verifying payment finalization receipt
+10:13:20 [CO][INFO] Receipt verified & persisted: 3f3709e0-a0af-4698-83d4-3fb3386b21e1 tokens=5
+10:13:20 [CO][AUDIT] PAYMENT FINALITY established - SP-signed receipt verified
+10:13:20 [CO][INFO] Reservation complete: verdict=OK proof=61ce8026-f34f-48df-92ac-b922a98a4d0e
+10:13:20 [CO][INFO] CO completed successfully

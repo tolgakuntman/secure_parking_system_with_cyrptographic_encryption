@@ -1,0 +1,1499 @@
+
+==== Sanity checks ====
+[INFO] Sanity checks passed
+[INFO] Fresh start: docker compose down -v --remove-orphans
+ Volume secure_software_assignment_ho_keystore  Removing
+ Volume secure_software_assignment_co_keystore  Removing
+ Volume secure_software_assignment_sp_keystore  Removing
+ Volume secure_software_assignment_ho_keystore  Removed
+ Volume secure_software_assignment_sp_keystore  Removed
+ Volume secure_software_assignment_co_keystore  Removed
+[INFO] Starting core services: cauth, sp, ho
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.59kB done
+#1 DONE 0.0s
+
+#2 [ho internal] load build definition from Dockerfile
+#2 transferring dockerfile: 346B done
+#2 DONE 0.0s
+
+#3 [sp internal] load build definition from Dockerfile
+#3 transferring dockerfile: 652B done
+#3 DONE 0.0s
+
+#4 [cauth internal] load build definition from Dockerfile
+#4 transferring dockerfile: 756B done
+#4 DONE 0.0s
+
+#5 [sp internal] load metadata for docker.io/library/eclipse-temurin:17-jdk
+#5 ...
+
+#6 [ho internal] load metadata for docker.io/library/maven:3.9-eclipse-temurin-17
+#6 DONE 0.8s
+
+#7 [ho internal] load metadata for docker.io/library/eclipse-temurin:17-jre
+#7 DONE 0.8s
+
+#8 [ho internal] load .dockerignore
+#8 transferring context: 2B done
+#8 DONE 0.0s
+
+#9 [ho stage-1 1/3] FROM docker.io/library/eclipse-temurin:17-jre@sha256:fc0c46c43f873754d8651948b94da946449aee0c0262420a86c4d18e84bc3c49
+#9 DONE 0.0s
+
+#10 [ho build 1/5] FROM docker.io/library/maven:3.9-eclipse-temurin-17@sha256:f7ae6cafd12a38da76a1a105744522387b32caacba5e23674a652133607d007c
+#10 DONE 0.0s
+
+#11 [ho internal] load build context
+#11 transferring context: 305B done
+#11 DONE 0.0s
+
+#12 [ho build 2/5] WORKDIR /app
+#12 CACHED
+
+#13 [ho build 4/5] COPY src ./src
+#13 CACHED
+
+#14 [ho stage-1 2/3] WORKDIR /app
+#14 CACHED
+
+#15 [ho build 3/5] COPY pom.xml .
+#15 CACHED
+
+#16 [ho build 5/5] RUN mvn clean package -DskipTests
+#16 CACHED
+
+#17 [ho stage-1 3/3] COPY --from=build /app/target/ho-1.0-SNAPSHOT.jar app.jar
+#17 CACHED
+
+#18 [ho] exporting to image
+#18 exporting layers done
+#18 writing image sha256:ed5f3a88e0a7fed794f4ba86d37c6efd51f25ed3d7371530996d710a7e2d1e8b done
+#18 naming to docker.io/library/secure_software_assignment-ho done
+#18 DONE 0.0s
+
+#19 [ho] resolving provenance for metadata file
+#19 DONE 0.0s
+
+#5 [cauth internal] load metadata for docker.io/library/eclipse-temurin:17-jdk
+#5 DONE 0.9s
+
+#20 [cauth internal] load .dockerignore
+#20 transferring context: 91B done
+#20 DONE 0.0s
+
+#21 [sp internal] load .dockerignore
+#21 transferring context: 91B done
+#21 DONE 0.0s
+
+#22 [cauth 1/5] FROM docker.io/library/eclipse-temurin:17-jdk@sha256:7995efb7f9276fc16433aa8e2856a06082cd09f7f6603579db2534937ccc6778
+#22 resolve docker.io/library/eclipse-temurin:17-jdk@sha256:7995efb7f9276fc16433aa8e2856a06082cd09f7f6603579db2534937ccc6778 done
+#22 DONE 0.0s
+
+#23 [sp internal] load build context
+#23 transferring context: 528B done
+#23 DONE 0.0s
+
+#24 [sp 4/5] COPY . .
+#24 CACHED
+
+#25 [sp 5/5] RUN mvn clean package -DskipTests
+#25 CACHED
+
+#26 [cauth internal] load build context
+#26 transferring context: 527B done
+#26 DONE 0.0s
+
+#27 [cauth 4/5] COPY . .
+#27 CACHED
+
+#28 [cauth 2/5] RUN apt-get update &&     apt-get install -y maven &&     rm -rf /var/lib/apt/lists/*
+#28 CACHED
+
+#29 [cauth 3/5] WORKDIR /app
+#29 CACHED
+
+#30 [cauth 5/5] RUN mvn clean package -DskipTests
+#30 CACHED
+
+#31 [sp] exporting to image
+#31 exporting layers done
+#31 writing image sha256:da148129397fab7448ed0def9cea982834fa0a5e8d0b71dbc0e3f98275b90389 done
+#31 naming to docker.io/library/secure_software_assignment-sp done
+#31 DONE 0.0s
+
+#32 [cauth] exporting to image
+#32 exporting layers done
+#32 writing image sha256:97d9242be68c94e75c7f151a50c4d68f39529016a440fe97fc2e03ef7f00b490 done
+#32 naming to docker.io/library/secure_software_assignment-cauth done
+#32 DONE 0.0s
+
+#33 [sp] resolving provenance for metadata file
+#33 DONE 0.0s
+
+#34 [cauth] resolving provenance for metadata file
+#34 DONE 0.0s
+ secure_software_assignment-cauth  Built
+ secure_software_assignment-sp  Built
+ secure_software_assignment-ho  Built
+ Network secure_software_assignment_java-network  Creating
+ Network secure_software_assignment_java-network  Created
+ Volume secure_software_assignment_sp_keystore  Creating
+ Volume secure_software_assignment_sp_keystore  Created
+ Volume secure_software_assignment_ho_keystore  Creating
+ Volume secure_software_assignment_ho_keystore  Created
+ Container cauth-container  Creating
+ Container cauth-container  Created
+ Container sp-container  Creating
+ Container sp-container  Created
+ Container ho-container  Creating
+ Container ho-container  Created
+ Container cauth-container  Starting
+ Container cauth-container  Started
+ Container sp-container  Starting
+ Container sp-container  Started
+ Container ho-container  Starting
+ Container ho-container  Started
+[INFO] Waiting for services to become reachable on published host ports...
+[INFO] Waiting for localhost:8443
+[INFO] Waiting for localhost:8444
+[INFO] Waiting for localhost:8445
+[INFO] Core services reachable
+[INFO] --no-tmux specified; skipping tmux UI setup
+
+==== P1_HONEST: Baseline Normal Flow ====
+[INFO] Command: docker compose run --rm co
+[INFO] Running CO (scenario=normal) envs: NONE
+ Volume secure_software_assignment_co_keystore  Creating
+ Volume secure_software_assignment_co_keystore  Created
+ Container cauth-container  Running
+ Container sp-container  Running
+Waiting for CAuth, SP, and HO to start...
+
+=== Car Owner (CO) Starting ===
+No existing certificate found, enrolling with CAuth...
+Step 1: Generating RSA key pair...
+✓ RSA-2048 key pair generated successfully
+
+Step 2: Creating Certificate Signing Request (CSR)...
+✓ CSR created with subject: CN=CarOwner, O=Parking System, C=BE
+
+Step 3: Connecting to CAuth server over TLS...
+✓ TLS connection established to CAuth
+  Protocol: TLSv1.3
+  Cipher suite: TLS_AES_256_GCM_SHA384
+
+→ Sending CSR to CAuth for signing...
+Received CA certificate from CAuth.
+Received Root CA certificate from CAuth.
+Certificate signed by CAuth!
+✓ Certificate received from CAuth
+
+Step 4: Storing certificate and private key securely...
+✓ Credentials stored in ./keystore/co_keystore.p12
+
+╔═══════════════════════════════════════════╗
+║   CO CRYPTOGRAPHIC IDENTITY ESTABLISHED   ║
+╚═══════════════════════════════════════════╝
+Subject: C=BE,O=Parking System,CN=CarOwner
+Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+Valid from: Fri Dec 26 10:57:23 UTC 2025
+Valid until: Sat Dec 26 10:58:23 UTC 2026
+
+=== Discovering Parking Availabilities from SP ===
+Establishing hardened mTLS connection to SP for authenticated discovery...
+✓ mTLS connection established to SP
+  Protocol: TLSv1.3
+  Cipher suite: TLS_AES_256_GCM_SHA384
+  SP certificate subject: C=BE,O=Parking System,CN=ServiceProvider
+  SP certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+✓ SP certificate validity verified
+
+→ Requesting parking availabilities from SP...
+← Received availability list from SP
+
+╔═══════════════════════════════════════════════════════════╗
+║   AUTHENTICATED AVAILABILITY DISCOVERY SUCCESSFUL         ║
+╚═══════════════════════════════════════════════════════════╝
+Discovered 1 parking availability record(s)
+
+════════════════════════════════════════════════════════════
+Availability #1
+════════════════════════════════════════════════════════════
+Availability ID: c9e1cd6c-8b63-4188-9945-9326ff1a9117
+Spot ID: SPOT-A1
+Price: 5 tokens
+Valid: 2025-12-26T10:58:19.575535040Z to 2025-12-26T18:58:19.575535040Z
+Location: Downtown-North
+Home Owner ID: HO-001
+
+─ HO Certificate Identity Verification ─
+✓ HO certificate is within validity period
+  Valid from: Fri Dec 26 10:57:19 UTC 2025
+  Valid until: Sat Dec 26 10:58:19 UTC 2026
+⚠ Note: Full chain validation not possible (intermediate CA cert not provided)
+  Relying on certificate fingerprint verification for trust anchor
+  In production: SP should include full certificate chain
+✓ HO Identity (CN): HomeOwner
+  Full Subject: CN=HomeOwner,O=Parking System,C=BE
+  Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+✓ Certificate fingerprint verified: 7FA6B0B454883DB4...
+✓ Identity binding persisted to ./keystore/ho_identity_bindings.txt
+
+✓ HO IDENTITY BINDING ESTABLISHED
+  Spot: SPOT-A1 ⟷ HO: HomeOwner
+  Fingerprint: 7FA6B0B454883DB4F20F8230654B8CF1...
+
+✓ Stored availability for reservation request
+════════════════════════════════════════════════════════════
+✓✓✓ AVAILABILITY DISCOVERY COMPLETE ✓✓✓
+════════════════════════════════════════════════════════════
+All HO identities verified and bound to availabilities
+Identity bindings persisted for future interaction verification
+
+=== Requesting Reservation from HO (Milestone 2.4) ===
+
+═══════════════════════════════════════════════════════════
+   MILESTONE 2.4: RESERVATION HANDSHAKE WITH HO
+═══════════════════════════════════════════════════════════
+✓ CO Identity: CarOwner
+✓ Target HO: HomeOwner (ho:8445)
+✓ Availability ID: c9e1cd6c-8b63-4188-9945-9326ff1a9117
+
+--- Loading CO keystore and truststore for mTLS ---
+✓ CO keystore loaded
+✓ CO truststore loaded (contains Root CA)
+
+--- Establishing mTLS connection to HO ---
+✓ TLS hardened: TLS 1.3/1.2, AEAD cipher suites only
+✓ mTLS handshake complete
+  Protocol: TLSv1.3
+  Cipher Suite: TLS_AES_256_GCM_SHA384
+
+--- Verifying HO certificate binding ---
+  Expected fingerprint: 7FA6B0B454883DB4F20F8230654B8CF188CA4E2C9AEB5A43E4BDEFA699826D9E
+  Received fingerprint: 7FA6B0B454883DB4F20F8230654B8CF188CA4E2C9AEB5A43E4BDEFA699826D9E
+✓ HO certificate fingerprint verified (matches persisted binding)
+✓ HO peer identity verified: HomeOwner
+
+--- Building reservation request ---
+  Request fields:
+    availabilityId: c9e1cd6c-8b63-4188-9945-9326ff1a9117
+    spotId: SPOT-A1
+    validFrom: 2025-12-26T10:58:19.575535040Z
+    validTo: 2025-12-26T18:58:19.575535040Z
+    priceTokens: 5
+    coIdentity: CarOwner
+✓ Reservation request sent to HO
+
+--- Received reservation response ---
+  Status: success
+  Reservation ID: 05e5be73-8011-4ef2-a11b-63fb0f4e961b
+  Verdict: OK
+  HO Identity: HomeOwner
+  Signature Algorithm: SHA256withRSA
+
+--- Verifying HO signature (RSA-2048) ---
+✓ Signature decoded (256 bytes)
+✓ Reconstructed canonical data:
+  reservationId=05e5be73-8011-4ef2-a11b-63fb0f4e961b|verdict=OK|availabilityId=c9e1cd6c-8b63-4188-9945-9326ff1a9117|spotId=SPOT-A1|validFrom=2025-12-26T10:58:19.575535040Z|validTo=2025-12-26T18:58:19.575535040Z|priceTokens=5|coIdentity=CarOwner
+✓ Signed data from HO:
+  reservationId=05e5be73-8011-4ef2-a11b-63fb0f4e961b|verdict=OK|availabilityId=c9e1cd6c-8b63-4188-9945-9326ff1a9117|spotId=SPOT-A1|validFrom=2025-12-26T10:58:19.575535040Z|validTo=2025-12-26T18:58:19.575535040Z|priceTokens=5|coIdentity=CarOwner
+✓ Signed data matches reconstructed canonical format
+✓ HO signature verified successfully (RSA-2048, SHA256withRSA)
+✓ HO identity confirmed: HomeOwner
+✓ All signature validation checks passed
+✓ Non-repudiable proof: HO cannot deny issuing this reservation
+✓ Cryptographic proof stored: ./keystore/reservations/05e5be73-8011-4ef2-a11b-63fb0f4e961b.json
+
+--- Sending payment request to HO (Milestone 3.2 - Using SP tokens) ---
+✓ mTLS connection to SP established
+  Protocol: TLSv1.3
+  Cipher suite: TLS_AES_256_GCM_SHA384
+  SP certificate: C=BE,O=Parking System,CN=ServiceProvider
+[M3.4] SP certificate cached for receipt verification
+
+→ Requesting 5 payment tokens from SP...
+
+← Received response from SP
+{
+  "tokenHashAlg": "SHA-256",
+  "signatureAlg": "SHA256withRSA",
+  "chainId": "2c55dc86-c857-4d6c-9cd3-42d68396f6b9",
+  "rootSignature": "XKJDJqxkwwCLcf2KNYmi85KSkeIvMYNfFoP9gEZMuA7rwVHVvCit4wD9PWo5gf1BufJqxMU5XGmhFvE/jFVnSSMY8kdM9pGkPLnH6BmQN9zGcPdTeLzaPdNl7RmFM8LaVrqCq426oNi17LD7sq7UaRkn8/sUXZ/JWkRw1BMWJ+eUicrVK9+otko4iaA9glKS8zJyejgc1WuDFTks+nbKGOOl6bIvw4mbNMrjNxolaHSv4ATPlax8tLK/16kOZTSu/OPyDbhoGpTHrHtc9E6NdU7ZQxQ/bKmM6w3Xlr5zu7WTJFGEfQDTzkq5uUdWxcyStodv23YK0tPY7KFLuPkCfg==",
+  "root": "uDBAqcezPwZvOLxyQT6ItTLseJGYuOBzMmoNFulT+A4=",
+  "x": 5,
+  "tokens": [
+    "2sGP/N4cGG2MBEGVH7uJ89bvN7+cF05xO6pHs61rJpg=",
+    "cDCCOd38lFV4Fu9mAiI8QK0jj05/xIlvP5ISliFVj6w=",
+    "ZAIRwh4YIf9bAizZuiG/d21Npyl6BD9DKcsEXHnzIUY=",
+    "IBZ13ey2AdzTQy59czNrCGiZZ7OhMGjYubxROn5dVSY=",
+    "uDBAqcezPwZvOLxyQT6ItTLseJGYuOBzMmoNFulT+A4="
+  ],
+  "status": "success"
+}
+
+=== Verifying Token Batch ===
+Chain ID: 2c55dc86-c857-4d6c-9cd3-42d68396f6b9
+Token count: 5
+Tokens received: 5
+✓ All tokens are distinct
+Root hash: B83040A9C7B33F066F38BC72413E88B532EC789198B8E073326A0D16E953F80E
+✓ Root signature verified with SP's public key
+
+Verifying hash chain:
+  Starting with token[0]: DAC18FFCDE1C186D...
+  Chain verified: 5 hashes lead to signed root
+✓ Hash chain verification successful
+
+═════════════════════════════════════════════
+✓✓✓ TOKEN BATCH VERIFIED SUCCESSFULLY ✓✓✓
+═════════════════════════════════════════════
+Received 5 valid payment tokens from SP
+Chain ID: 2c55dc86-c857-4d6c-9cd3-42d68396f6b9
+  Using SP-issued token batch, chainId=2c55dc86-c857-4d6c-9cd3-42d68396f6b9
+  tokensToSpend: indices [0, 5)
+  Total tokens to spend: 5 (matching reservation price)
+
+[M4] Negative Test Mode: NONE
+[M3] Normal payment flow (no negative scenarios)
+→ Sending pay request to HO at ho:8445
+← HO pay response:
+{
+  "startIndex": 0,
+  "reservationId": "05e5be73-8011-4ef2-a11b-63fb0f4e961b",
+  "chainId": "2c55dc86-c857-4d6c-9cd3-42d68396f6b9",
+  "spentCount": 5,
+  "newLastSpentIndex": 4,
+  "paymentReceipt": {
+    "hoIdentity": "HomeOwner",
+    "reservationId": "05e5be73-8011-4ef2-a11b-63fb0f4e961b",
+    "signatureAlg": "SHA256withRSA",
+    "chainId": "2c55dc86-c857-4d6c-9cd3-42d68396f6b9",
+    "availabilityId": "c9e1cd6c-8b63-4188-9945-9326ff1a9117",
+    "newLastSpentIndex": 5,
+    "spCertFingerprint": "122A5348B837F97A79C0B47350BB12CCC518E1DC6FE199A5E5CE8F218A279F7A",
+    "y": 5,
+    "receiptId": "a5bbd813-70c7-4a3d-b693-6ec674377135",
+    "canonicalReceipt": "receiptId=a5bbd813-70c7-4a3d-b693-6ec674377135|chainId=2c55dc86-c857-4d6c-9cd3-42d68396f6b9|reservationId=05e5be73-8011-4ef2-a11b-63fb0f4e961b|availabilityId=c9e1cd6c-8b63-4188-9945-9326ff1a9117|y=5|newLastSpentIndex=5|timestamp=2025-12-26T10:58:24.600963501Z|hoIdentity=HomeOwner",
+    "receiptSignature": "CPZe+QIlVnOIf0qQyuosnwhnFaorGf/bL6HRLLJnAZzUWf04ByUGVqsZLJpS07DhyJ38bbEHyEhlIv+xHo1qxgf/ddM1+f5TMI89/Rl5/uAwCgBg6swow3q/vFgQc+wCaN7bx273yHnGlU2ZyqM8g8r27cdXyXrBoD/vRsAWtMEYjTpJUl4nVzy1jeCbn/84SPwc9l9xxU7b8F+2fx2Y+oWpeHFXe02dH11hDmIzf2XizcsYWEXb/K81uetKmR1nhA+wSWrpa8pxjy+QS80/2meIwD8rCBpxGObloIn/8wTUkSnnXGOTiiBusqUULKG2c3Ha522IRhJp5VRj+6ODbw==",
+    "timestamp": "2025-12-26T10:58:24.600963501Z"
+  },
+  "message": "payment accepted",
+  "status": "success",
+  "timestamp": "2025-12-26T10:58:24.635436959Z"
+}
+✓✓✓ PAYMENT ACCEPTED BY HO ✓✓✓
+
+═══════════════════════════════════════════════════
+M3.4: Verifying Payment Finalization Receipt
+═══════════════════════════════════════════════════
+[M3.4-VERIFY] Starting receipt verification...
+[M3.4-VERIFY] Receipt ID: a5bbd813-70c7-4a3d-b693-6ec674377135
+[M3.4-VERIFY] Canonical data: receiptId=a5bbd813-70c7-4a3d-b693-6ec674377135|chainId=2c55dc86-c857-4d6c-9cd3-42d68396f6b9|reservationId=05e5be73-8011-4ef2-a11b-63fb0f4e961b|availabilityId=c9e1cd6c-8b63-4188-9945-9326ff1a9117|y=5|newLastSpentIndex=5|timestamp=2025-12-26T10:58:24.600963501Z|hoIdentity=HomeOwner
+[M3.4-VERIFY] Signature algorithm: SHA256withRSA
+[M3.4-VERIFY] Validating consistency with local payment state...
+[M3.4-VERIFY] ✓ Consistency validated
+[M3.4-VERIFY]   chainId: 2c55dc86-c857-4d6c-9cd3-42d68396f6b9
+[M3.4-VERIFY]   reservationId: 05e5be73-8011-4ef2-a11b-63fb0f4e961b
+[M3.4-VERIFY]   tokens spent: 5
+[M3.4-VERIFY] Verifying SP signature (RSA-2048, SHA256withRSA)...
+[M3.4-VERIFY] ✓ SP signature verified successfully
+[M3.4-VERIFY] ✓ Non-repudiation: SP cannot deny issuing this receipt
+[M3.4-VERIFY] ✓ Integrity: Receipt has not been modified
+[M3.4-VERIFY] Validating SP certificate to Root CA...
+[M3.4-VERIFY] ✓ SP certificate is within validity period
+[M3.4-VERIFY] ✓ SP certificate validated
+[M3.4-VERIFY] Persisting receipt as immutable proof...
+[M3.4-VERIFY] ✓ Receipt persisted: ./keystore/receipts/receipt_a5bbd813-70c7-4a3d-b693-6ec674377135.json
+[M3.4-VERIFY] ✓ Immutable proof stored for dispute resolution
+[M3.4-VERIFY] ✓ Enables offline third-party verification
+[M3.4-VERIFY] ═══════════════════════════════════════════════════
+[M3.4-VERIFY] PAYMENT FINALITY ACHIEVED
+[M3.4-VERIFY] ═══════════════════════════════════════════════════
+[M3.4-VERIFY] ✓ SP signature verified (cryptographic proof)
+[M3.4-VERIFY] ✓ Consistency validated (no substitution)
+[M3.4-VERIFY] ✓ Immutable receipt stored (audit trail)
+[M3.4-VERIFY] ✓ Non-repudiation guaranteed (SP cannot deny)
+[M3.4-VERIFY] ✓ Dispute resolution enabled (third-party verification)
+✓✓✓ PAYMENT FINALITY ESTABLISHED ✓✓✓
+✓ SP-signed receipt verified
+✓ Non-repudiation guaranteed
+✓ Immutable proof of payment stored
+═══════════════════════════════════════════════════
+
+═══════════════════════════════════════════════════════════
+   RESERVATION HANDSHAKE COMPLETE
+   Verdict: OK
+   Non-repudiable proof stored: 05e5be73-8011-4ef2-a11b-63fb0f4e961b
+═══════════════════════════════════════════════════════════
+
+✓✓✓ CO SERVICE COMPLETED SUCCESSFULLY ✓✓✓
+[INFO] [RESULT] normal: PASS (exit=0)
+
+==== M4.1 TOKEN_TAMPER ====
+[INFO] Command: docker compose run --rm -e NEG_TEST_MODE=TAMPER -e TAMPER_TOKEN_INDEX=0 -e TAMPER_BYTE_INDEX=0 co
+[INFO] Running CO (scenario=token_tamper) envs: NEG_TEST_MODE=TAMPER TAMPER_TOKEN_INDEX=0 TAMPER_BYTE_INDEX=0
+ Container cauth-container  Running
+ Container sp-container  Running
+Waiting for CAuth, SP, and HO to start...
+
+=== Car Owner (CO) Starting ===
+Found existing certificate, loading from keystore...
+✓ Certificate validity period verified
+
+╔═══════════════════════════════════════════╗
+║   CO CRYPTOGRAPHIC IDENTITY ESTABLISHED   ║
+╚═══════════════════════════════════════════╝
+Subject: C=BE,O=Parking System,CN=CarOwner
+Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+Valid from: Fri Dec 26 10:57:23 UTC 2025
+Valid until: Sat Dec 26 10:58:23 UTC 2026
+
+=== Discovering Parking Availabilities from SP ===
+Establishing hardened mTLS connection to SP for authenticated discovery...
+✓ mTLS connection established to SP
+  Protocol: TLSv1.3
+  Cipher suite: TLS_AES_256_GCM_SHA384
+  SP certificate subject: C=BE,O=Parking System,CN=ServiceProvider
+  SP certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+✓ SP certificate validity verified
+
+→ Requesting parking availabilities from SP...
+← Received availability list from SP
+
+╔═══════════════════════════════════════════════════════════╗
+║   AUTHENTICATED AVAILABILITY DISCOVERY SUCCESSFUL         ║
+╚═══════════════════════════════════════════════════════════╝
+Discovered 1 parking availability record(s)
+
+════════════════════════════════════════════════════════════
+Availability #1
+════════════════════════════════════════════════════════════
+Availability ID: c9e1cd6c-8b63-4188-9945-9326ff1a9117
+Spot ID: SPOT-A1
+Price: 5 tokens
+Valid: 2025-12-26T10:58:19.575535040Z to 2025-12-26T18:58:19.575535040Z
+Location: Downtown-North
+Home Owner ID: HO-001
+
+─ HO Certificate Identity Verification ─
+✓ HO certificate is within validity period
+  Valid from: Fri Dec 26 10:57:19 UTC 2025
+  Valid until: Sat Dec 26 10:58:19 UTC 2026
+⚠ Note: Full chain validation not possible (intermediate CA cert not provided)
+  Relying on certificate fingerprint verification for trust anchor
+  In production: SP should include full certificate chain
+✓ HO Identity (CN): HomeOwner
+  Full Subject: CN=HomeOwner,O=Parking System,C=BE
+  Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+✓ Certificate fingerprint verified: 7FA6B0B454883DB4...
+✓ Identity binding persisted to ./keystore/ho_identity_bindings.txt
+
+✓ HO IDENTITY BINDING ESTABLISHED
+  Spot: SPOT-A1 ⟷ HO: HomeOwner
+  Fingerprint: 7FA6B0B454883DB4F20F8230654B8CF1...
+
+✓ Stored availability for reservation request
+════════════════════════════════════════════════════════════
+✓✓✓ AVAILABILITY DISCOVERY COMPLETE ✓✓✓
+════════════════════════════════════════════════════════════
+All HO identities verified and bound to availabilities
+Identity bindings persisted for future interaction verification
+
+=== Requesting Reservation from HO (Milestone 2.4) ===
+
+═══════════════════════════════════════════════════════════
+   MILESTONE 2.4: RESERVATION HANDSHAKE WITH HO
+═══════════════════════════════════════════════════════════
+✓ CO Identity: CarOwner
+✓ Target HO: HomeOwner (ho:8445)
+✓ Availability ID: c9e1cd6c-8b63-4188-9945-9326ff1a9117
+
+--- Loading CO keystore and truststore for mTLS ---
+✓ CO keystore loaded
+✓ CO truststore loaded (contains Root CA)
+
+--- Establishing mTLS connection to HO ---
+✓ TLS hardened: TLS 1.3/1.2, AEAD cipher suites only
+✓ mTLS handshake complete
+  Protocol: TLSv1.3
+  Cipher Suite: TLS_AES_256_GCM_SHA384
+
+--- Verifying HO certificate binding ---
+  Expected fingerprint: 7FA6B0B454883DB4F20F8230654B8CF188CA4E2C9AEB5A43E4BDEFA699826D9E
+  Received fingerprint: 7FA6B0B454883DB4F20F8230654B8CF188CA4E2C9AEB5A43E4BDEFA699826D9E
+✓ HO certificate fingerprint verified (matches persisted binding)
+✓ HO peer identity verified: HomeOwner
+
+--- Building reservation request ---
+  Request fields:
+    availabilityId: c9e1cd6c-8b63-4188-9945-9326ff1a9117
+    spotId: SPOT-A1
+    validFrom: 2025-12-26T10:58:19.575535040Z
+    validTo: 2025-12-26T18:58:19.575535040Z
+    priceTokens: 5
+    coIdentity: CarOwner
+✓ Reservation request sent to HO
+
+--- Received reservation response ---
+  Status: success
+  Reservation ID: 757e631c-33b0-4b96-b17d-e16634a65ca1
+  Verdict: OK
+  HO Identity: HomeOwner
+  Signature Algorithm: SHA256withRSA
+
+--- Verifying HO signature (RSA-2048) ---
+✓ Signature decoded (256 bytes)
+✓ Reconstructed canonical data:
+  reservationId=757e631c-33b0-4b96-b17d-e16634a65ca1|verdict=OK|availabilityId=c9e1cd6c-8b63-4188-9945-9326ff1a9117|spotId=SPOT-A1|validFrom=2025-12-26T10:58:19.575535040Z|validTo=2025-12-26T18:58:19.575535040Z|priceTokens=5|coIdentity=CarOwner
+✓ Signed data from HO:
+  reservationId=757e631c-33b0-4b96-b17d-e16634a65ca1|verdict=OK|availabilityId=c9e1cd6c-8b63-4188-9945-9326ff1a9117|spotId=SPOT-A1|validFrom=2025-12-26T10:58:19.575535040Z|validTo=2025-12-26T18:58:19.575535040Z|priceTokens=5|coIdentity=CarOwner
+✓ Signed data matches reconstructed canonical format
+✓ HO signature verified successfully (RSA-2048, SHA256withRSA)
+✓ HO identity confirmed: HomeOwner
+✓ All signature validation checks passed
+✓ Non-repudiable proof: HO cannot deny issuing this reservation
+✓ Cryptographic proof stored: ./keystore/reservations/757e631c-33b0-4b96-b17d-e16634a65ca1.json
+
+--- Sending payment request to HO (Milestone 3.2 - Using SP tokens) ---
+✓ mTLS connection to SP established
+  Protocol: TLSv1.3
+  Cipher suite: TLS_AES_256_GCM_SHA384
+  SP certificate: C=BE,O=Parking System,CN=ServiceProvider
+[M3.4] SP certificate cached for receipt verification
+
+→ Requesting 5 payment tokens from SP...
+
+← Received response from SP
+{
+  "tokenHashAlg": "SHA-256",
+  "signatureAlg": "SHA256withRSA",
+  "chainId": "6a3a7739-2b28-47b0-9735-0feab76594a9",
+  "rootSignature": "oSUr4oDD+mNsTxgDYmAa6JyPzNFcBtRexgctQ4MqGmDPVmHYCHLWr71BO9kVk382njKkHa2QGl2JQMGmK4lzb0JcxjFEj/uMRA25SG2DbaCWNIYfeFup2k/NM6rXtYp54v8I/rbLC6UG/yDhG+c7TkOgmuNnTJXgvNm3pBD6HaeIwwbNsr46SOf8Sjkquroknf4FXJYr5unQvyUMdhpII3MgyPyWllaZqMrcvgR7gXbzfXuQMq9vvS0OaneeuqqdmiTOl59wH+XroGlciI7QWDnYpAFwjSygCM+4UIvGoiFTpWEcTrvHdFYlD29KaMKfw2v9dZvXZEgylUFiYNyamw==",
+  "root": "7uzTuSUBV2UJYbZsip1M4p1f8kwPWc4nIvVUSPzG5HM=",
+  "x": 5,
+  "tokens": [
+    "tx688VvuDf6CRdPej7yPO9A00XYiuvfvFy5Z0Ca6XJw=",
+    "At5FVC71V/5YAbBU/ffdzbXK6r8YgcAKwtabhHGYlHM=",
+    "qfvzXArndNe7a5n+MBHqhEMCS4YX7D9ggCqbi7+KmYs=",
+    "njvus2IcTiY4rHmMWIYZHQlJ9nzLZIxV9QgJC2UI9zc=",
+    "7uzTuSUBV2UJYbZsip1M4p1f8kwPWc4nIvVUSPzG5HM="
+  ],
+  "status": "success"
+}
+
+=== Verifying Token Batch ===
+Chain ID: 6a3a7739-2b28-47b0-9735-0feab76594a9
+Token count: 5
+Tokens received: 5
+✓ All tokens are distinct
+Root hash: EEECD3B9250157650961B66C8A9D4CE29D5FF24C0F59CE2722F55448FCC6E473
+✓ Root signature verified with SP's public key
+
+Verifying hash chain:
+  Starting with token[0]: B71EBCF15BEE0DFE...
+  Chain verified: 5 hashes lead to signed root
+✓ Hash chain verification successful
+
+═════════════════════════════════════════════
+✓✓✓ TOKEN BATCH VERIFIED SUCCESSFULLY ✓✓✓
+═════════════════════════════════════════════
+Received 5 valid payment tokens from SP
+Chain ID: 6a3a7739-2b28-47b0-9735-0feab76594a9
+  Using SP-issued token batch, chainId=6a3a7739-2b28-47b0-9735-0feab76594a9
+  tokensToSpend: indices [0, 5)
+  Total tokens to spend: 5 (matching reservation price)
+
+[M4] Negative Test Mode: TAMPER
+[M4.1] Tampering token[0] byte[0]
+[M4.1] TOKEN TAMPERING ENABLED: flipped byte 0 of token index 0
+[M4.1] Expect HO rejection (adjacency/anchor check failure)
+→ Sending TAMPERED pay request to HO at ho:8445
+← HO pay response:
+{
+  "reason": "security_violation",
+  "code": "token_tampering_detected",
+  "message": "adjacency check failed at i=0 - possible token tampering",
+  "status": "error"
+}
+[M4.1] ✓ Expected rejection received from HO: security_violation
+
+═══════════════════════════════════════════════════════════
+   RESERVATION HANDSHAKE COMPLETE
+   Verdict: OK
+   Non-repudiable proof stored: 757e631c-33b0-4b96-b17d-e16634a65ca1
+═══════════════════════════════════════════════════════════
+
+✓✓✓ CO SERVICE COMPLETED SUCCESSFULLY ✓✓✓
+[INFO] [RESULT] token_tamper: PASS (exit=0)
+
+==== M4.2 REPLAY (Production): HO rejects locally ====
+[INFO] Recreating HO with REPLAY_TEST_MODE=false
+ Container ho-container  Recreate
+ Container ho-container  Recreated
+ Container ho-container  Starting
+ Container ho-container  Started
+[WARN] Could not verify HO env via docker inspect (may still be correct depending on compose env wiring)
+[INFO] Command: docker compose run --rm -e NEG_TEST_MODE=REPLAY -e REPLAY_DELAY_MS=1000 co
+[INFO] Running CO (scenario=replay_local_reject) envs: NEG_TEST_MODE=REPLAY REPLAY_DELAY_MS=1000
+ Container cauth-container  Running
+ Container sp-container  Running
+Waiting for CAuth, SP, and HO to start...
+
+=== Car Owner (CO) Starting ===
+Found existing certificate, loading from keystore...
+✓ Certificate validity period verified
+
+╔═══════════════════════════════════════════╗
+║   CO CRYPTOGRAPHIC IDENTITY ESTABLISHED   ║
+╚═══════════════════════════════════════════╝
+Subject: C=BE,O=Parking System,CN=CarOwner
+Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+Valid from: Fri Dec 26 10:57:23 UTC 2025
+Valid until: Sat Dec 26 10:58:23 UTC 2026
+
+=== Discovering Parking Availabilities from SP ===
+Establishing hardened mTLS connection to SP for authenticated discovery...
+✓ mTLS connection established to SP
+  Protocol: TLSv1.3
+  Cipher suite: TLS_AES_256_GCM_SHA384
+  SP certificate subject: C=BE,O=Parking System,CN=ServiceProvider
+  SP certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+✓ SP certificate validity verified
+
+→ Requesting parking availabilities from SP...
+← Received availability list from SP
+
+╔═══════════════════════════════════════════════════════════╗
+║   AUTHENTICATED AVAILABILITY DISCOVERY SUCCESSFUL         ║
+╚═══════════════════════════════════════════════════════════╝
+Discovered 2 parking availability record(s)
+
+════════════════════════════════════════════════════════════
+Availability #1
+════════════════════════════════════════════════════════════
+Availability ID: e5e6f044-261f-46b3-b212-290b0428dbd5
+Spot ID: SPOT-A1
+Price: 5 tokens
+Valid: 2025-12-26T10:58:47.546678304Z to 2025-12-26T18:58:47.546678304Z
+Location: Downtown-North
+Home Owner ID: HO-001
+
+─ HO Certificate Identity Verification ─
+✓ HO certificate is within validity period
+  Valid from: Fri Dec 26 10:57:19 UTC 2025
+  Valid until: Sat Dec 26 10:58:19 UTC 2026
+⚠ Note: Full chain validation not possible (intermediate CA cert not provided)
+  Relying on certificate fingerprint verification for trust anchor
+  In production: SP should include full certificate chain
+✓ HO Identity (CN): HomeOwner
+  Full Subject: CN=HomeOwner,O=Parking System,C=BE
+  Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+✓ Certificate fingerprint verified: 7FA6B0B454883DB4...
+✓ Identity binding persisted to ./keystore/ho_identity_bindings.txt
+
+✓ HO IDENTITY BINDING ESTABLISHED
+  Spot: SPOT-A1 ⟷ HO: HomeOwner
+  Fingerprint: 7FA6B0B454883DB4F20F8230654B8CF1...
+
+✓ Stored availability for reservation request
+════════════════════════════════════════════════════════════
+Availability #2
+════════════════════════════════════════════════════════════
+Availability ID: c9e1cd6c-8b63-4188-9945-9326ff1a9117
+Spot ID: SPOT-A1
+Price: 5 tokens
+Valid: 2025-12-26T10:58:19.575535040Z to 2025-12-26T18:58:19.575535040Z
+Location: Downtown-North
+Home Owner ID: HO-001
+
+─ HO Certificate Identity Verification ─
+✓ HO certificate is within validity period
+  Valid from: Fri Dec 26 10:57:19 UTC 2025
+  Valid until: Sat Dec 26 10:58:19 UTC 2026
+⚠ Note: Full chain validation not possible (intermediate CA cert not provided)
+  Relying on certificate fingerprint verification for trust anchor
+  In production: SP should include full certificate chain
+✓ HO Identity (CN): HomeOwner
+  Full Subject: CN=HomeOwner,O=Parking System,C=BE
+  Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+✓ Certificate fingerprint verified: 7FA6B0B454883DB4...
+✓ Identity binding persisted to ./keystore/ho_identity_bindings.txt
+
+✓ HO IDENTITY BINDING ESTABLISHED
+  Spot: SPOT-A1 ⟷ HO: HomeOwner
+  Fingerprint: 7FA6B0B454883DB4F20F8230654B8CF1...
+
+════════════════════════════════════════════════════════════
+✓✓✓ AVAILABILITY DISCOVERY COMPLETE ✓✓✓
+════════════════════════════════════════════════════════════
+All HO identities verified and bound to availabilities
+Identity bindings persisted for future interaction verification
+
+=== Requesting Reservation from HO (Milestone 2.4) ===
+
+═══════════════════════════════════════════════════════════
+   MILESTONE 2.4: RESERVATION HANDSHAKE WITH HO
+═══════════════════════════════════════════════════════════
+✓ CO Identity: CarOwner
+✓ Target HO: HomeOwner (ho:8445)
+✓ Availability ID: e5e6f044-261f-46b3-b212-290b0428dbd5
+
+--- Loading CO keystore and truststore for mTLS ---
+✓ CO keystore loaded
+✓ CO truststore loaded (contains Root CA)
+
+--- Establishing mTLS connection to HO ---
+✓ TLS hardened: TLS 1.3/1.2, AEAD cipher suites only
+✓ mTLS handshake complete
+  Protocol: TLSv1.3
+  Cipher Suite: TLS_AES_256_GCM_SHA384
+
+--- Verifying HO certificate binding ---
+  Expected fingerprint: 7FA6B0B454883DB4F20F8230654B8CF188CA4E2C9AEB5A43E4BDEFA699826D9E
+  Received fingerprint: 7FA6B0B454883DB4F20F8230654B8CF188CA4E2C9AEB5A43E4BDEFA699826D9E
+✓ HO certificate fingerprint verified (matches persisted binding)
+✓ HO peer identity verified: HomeOwner
+
+--- Building reservation request ---
+  Request fields:
+    availabilityId: e5e6f044-261f-46b3-b212-290b0428dbd5
+    spotId: SPOT-A1
+    validFrom: 2025-12-26T10:58:47.546678304Z
+    validTo: 2025-12-26T18:58:47.546678304Z
+    priceTokens: 5
+    coIdentity: CarOwner
+✓ Reservation request sent to HO
+
+--- Received reservation response ---
+  Status: success
+  Reservation ID: 49725dc1-e98f-4e49-9bf6-eea223351cd3
+  Verdict: OK
+  HO Identity: HomeOwner
+  Signature Algorithm: SHA256withRSA
+
+--- Verifying HO signature (RSA-2048) ---
+✓ Signature decoded (256 bytes)
+✓ Reconstructed canonical data:
+  reservationId=49725dc1-e98f-4e49-9bf6-eea223351cd3|verdict=OK|availabilityId=e5e6f044-261f-46b3-b212-290b0428dbd5|spotId=SPOT-A1|validFrom=2025-12-26T10:58:47.546678304Z|validTo=2025-12-26T18:58:47.546678304Z|priceTokens=5|coIdentity=CarOwner
+✓ Signed data from HO:
+  reservationId=49725dc1-e98f-4e49-9bf6-eea223351cd3|verdict=OK|availabilityId=e5e6f044-261f-46b3-b212-290b0428dbd5|spotId=SPOT-A1|validFrom=2025-12-26T10:58:47.546678304Z|validTo=2025-12-26T18:58:47.546678304Z|priceTokens=5|coIdentity=CarOwner
+✓ Signed data matches reconstructed canonical format
+✓ HO signature verified successfully (RSA-2048, SHA256withRSA)
+✓ HO identity confirmed: HomeOwner
+✓ All signature validation checks passed
+✓ Non-repudiable proof: HO cannot deny issuing this reservation
+✓ Cryptographic proof stored: ./keystore/reservations/49725dc1-e98f-4e49-9bf6-eea223351cd3.json
+
+--- Sending payment request to HO (Milestone 3.2 - Using SP tokens) ---
+✓ mTLS connection to SP established
+  Protocol: TLSv1.3
+  Cipher suite: TLS_AES_256_GCM_SHA384
+  SP certificate: C=BE,O=Parking System,CN=ServiceProvider
+[M3.4] SP certificate cached for receipt verification
+
+→ Requesting 5 payment tokens from SP...
+
+← Received response from SP
+{
+  "tokenHashAlg": "SHA-256",
+  "signatureAlg": "SHA256withRSA",
+  "chainId": "0b87844f-f081-481b-9d52-323a8c8f5e51",
+  "rootSignature": "FZmqdkPe1CIVafkFt/1gPTgb7w/RICPmdA+WxkeI0WDxakF9WH+N1PDhmiHnlrwTXI+/TASuGWQA8XIzZhbjGabIb+ZKEPf4O1PbD0a+G6fKvX5IAt+SEbTXJqAeWm8VaZrEdQkaO3XbmWhIAJyS8Qf6y3smzywhtJJACgygKNFMu1jzB0JTcC83ZRM2rugxu2g66sH91jwurB4tG0fpQMCQeqstvfP1dBJ6qqNoSMyJq8QWHpe6JmS0Jo1SXB3uBeQ6Wx6vsN8iH61m1SMEmeEayLtST0FCfcwzmljhYmb/elQ8wO6xkdo+y2blgeLEalzxljpTTZ+aRtbWJWnzmg==",
+  "root": "E7O615ywePbPNsTzMQq2cNgG1DkN1+fJUx12xPwtKWk=",
+  "x": 5,
+  "tokens": [
+    "Ixg0M6o7TZGPpkCdorU7gaomg4Z6XkZZyx6IYyO1fD4=",
+    "Dq5PdWmXzUWO+9g2cvVU+UkSVdgAU7pD2ThVGJ7wswQ=",
+    "zy0+wLl6QWJQOtheIqlrrP5xe/XbVUU4Tb/ysSk2cYs=",
+    "wVpOBh/qYhnIcIPuQN3yATUyK6RLnfZHRM1XTCw9ZFc=",
+    "E7O615ywePbPNsTzMQq2cNgG1DkN1+fJUx12xPwtKWk="
+  ],
+  "status": "success"
+}
+
+=== Verifying Token Batch ===
+Chain ID: 0b87844f-f081-481b-9d52-323a8c8f5e51
+Token count: 5
+Tokens received: 5
+✓ All tokens are distinct
+Root hash: 13B3BAD79CB078F6CF36C4F3310AB670D806D4390DD7E7C9531D76C4FC2D2969
+✓ Root signature verified with SP's public key
+
+Verifying hash chain:
+  Starting with token[0]: 23183433AA3B4D91...
+  Chain verified: 5 hashes lead to signed root
+✓ Hash chain verification successful
+
+═════════════════════════════════════════════
+✓✓✓ TOKEN BATCH VERIFIED SUCCESSFULLY ✓✓✓
+═════════════════════════════════════════════
+Received 5 valid payment tokens from SP
+Chain ID: 0b87844f-f081-481b-9d52-323a8c8f5e51
+  Using SP-issued token batch, chainId=0b87844f-f081-481b-9d52-323a8c8f5e51
+  tokensToSpend: indices [0, 5)
+  Total tokens to spend: 5 (matching reservation price)
+
+[M4] Negative Test Mode: REPLAY
+[M4.2] Attempting replay: sending same pay twice
+[M4.2] Attempt #1: Sending pay request...
+→ Sending pay request (attempt #1) to HO at ho:8445
+← HO response (attempt #1):
+{
+  "startIndex": 0,
+  "reservationId": "49725dc1-e98f-4e49-9bf6-eea223351cd3",
+  "chainId": "0b87844f-f081-481b-9d52-323a8c8f5e51",
+  "spentCount": 5,
+  "newLastSpentIndex": 4,
+  "paymentReceipt": {
+    "hoIdentity": "HomeOwner",
+    "reservationId": "49725dc1-e98f-4e49-9bf6-eea223351cd3",
+    "signatureAlg": "SHA256withRSA",
+    "chainId": "0b87844f-f081-481b-9d52-323a8c8f5e51",
+    "availabilityId": "e5e6f044-261f-46b3-b212-290b0428dbd5",
+    "newLastSpentIndex": 5,
+    "spCertFingerprint": "122A5348B837F97A79C0B47350BB12CCC518E1DC6FE199A5E5CE8F218A279F7A",
+    "y": 5,
+    "receiptId": "0c9bb965-e2ba-4586-bf46-8ee9f8b2369e",
+    "canonicalReceipt": "receiptId=0c9bb965-e2ba-4586-bf46-8ee9f8b2369e|chainId=0b87844f-f081-481b-9d52-323a8c8f5e51|reservationId=49725dc1-e98f-4e49-9bf6-eea223351cd3|availabilityId=e5e6f044-261f-46b3-b212-290b0428dbd5|y=5|newLastSpentIndex=5|timestamp=2025-12-26T10:58:52.392807056Z|hoIdentity=HomeOwner",
+    "receiptSignature": "DQpMJzx8tYEFgE3do+qhSLiK//m4N03v9tkf5+RAoNgRG6qep4kTudJlMIQ1kVqGiGOhZjvCytsAuY8G6klXMX5XPoS7XY1aMfVYl2WBt9SjgWLzpWgs60sIIapdV4X9UroBgobCwlYVhnoy7LFaW2IFfwjwHxkwJdwhwDDbl3mOcaLpxHTefkZLF9OO8RZyB5JZUxn/mzi/PvCignfQk5cUc2f9byXn4sSfoH282ITo8rhGvkniAO2oSCUPupMrjHdXVVT2ODYerK1g1mJh3muE1o5ug4Zi+e8HlawZn6PzfcJPlMTXdJ3aqxm/KnxEpeItyaDfpL5rI7bIxlQwNQ==",
+    "timestamp": "2025-12-26T10:58:52.392807056Z"
+  },
+  "message": "payment accepted",
+  "status": "success",
+  "timestamp": "2025-12-26T10:58:52.439379389Z"
+}
+
+[M4.2] Waiting 1000 ms before replay...
+[M4.2] Attempt #2 REPLAY: Sending same payload again...
+→ Sending pay request (attempt #2 REPLAY) to HO at ho:8445
+← HO response (attempt #2 REPLAY):
+{
+  "reason": "settlement_failed",
+  "message": "Settlement with SP failed - payment not accepted",
+  "status": "error"
+}
+[M4.2] Expect SP settlement rejection on 2nd settle (reason: replay_or_double_spend)
+← HO pay response:
+{
+  "reason": "settlement_failed",
+  "message": "Settlement with SP failed - payment not accepted",
+  "status": "error"
+}
+✗ HO rejected payment: Settlement with SP failed - payment not accepted
+
+═══════════════════════════════════════════════════════════
+   RESERVATION HANDSHAKE COMPLETE
+   Verdict: OK
+   Non-repudiable proof stored: 49725dc1-e98f-4e49-9bf6-eea223351cd3
+═══════════════════════════════════════════════════════════
+
+✓✓✓ CO SERVICE COMPLETED SUCCESSFULLY ✓✓✓
+[INFO] [RESULT] replay_local_reject: PASS (exit=0)
+
+==== M4.2 REPLAY (Test): HO forwards, SP rejects ====
+[INFO] Recreating HO with REPLAY_TEST_MODE=true
+ Container ho-container  Recreate
+ Container ho-container  Recreated
+ Container ho-container  Starting
+ Container ho-container  Started
+[INFO] HO env verified: REPLAY_TEST_MODE=true
+[INFO] Command: docker compose run --rm -e NEG_TEST_MODE=REPLAY -e REPLAY_DELAY_MS=1000 co
+[INFO] Running CO (scenario=replay_sp_reject) envs: NEG_TEST_MODE=REPLAY REPLAY_DELAY_MS=1000
+ Container cauth-container  Running
+ Container sp-container  Running
+Waiting for CAuth, SP, and HO to start...
+
+=== Car Owner (CO) Starting ===
+Found existing certificate, loading from keystore...
+✓ Certificate validity period verified
+
+╔═══════════════════════════════════════════╗
+║   CO CRYPTOGRAPHIC IDENTITY ESTABLISHED   ║
+╚═══════════════════════════════════════════╝
+Subject: C=BE,O=Parking System,CN=CarOwner
+Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+Valid from: Fri Dec 26 10:57:23 UTC 2025
+Valid until: Sat Dec 26 10:58:23 UTC 2026
+
+=== Discovering Parking Availabilities from SP ===
+Establishing hardened mTLS connection to SP for authenticated discovery...
+✓ mTLS connection established to SP
+  Protocol: TLSv1.3
+  Cipher suite: TLS_AES_256_GCM_SHA384
+  SP certificate subject: C=BE,O=Parking System,CN=ServiceProvider
+  SP certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+✓ SP certificate validity verified
+
+→ Requesting parking availabilities from SP...
+← Received availability list from SP
+
+╔═══════════════════════════════════════════════════════════╗
+║   AUTHENTICATED AVAILABILITY DISCOVERY SUCCESSFUL         ║
+╚═══════════════════════════════════════════════════════════╝
+Discovered 3 parking availability record(s)
+
+════════════════════════════════════════════════════════════
+Availability #1
+════════════════════════════════════════════════════════════
+Availability ID: e5e6f044-261f-46b3-b212-290b0428dbd5
+Spot ID: SPOT-A1
+Price: 5 tokens
+Valid: 2025-12-26T10:58:47.546678304Z to 2025-12-26T18:58:47.546678304Z
+Location: Downtown-North
+Home Owner ID: HO-001
+
+─ HO Certificate Identity Verification ─
+✓ HO certificate is within validity period
+  Valid from: Fri Dec 26 10:57:19 UTC 2025
+  Valid until: Sat Dec 26 10:58:19 UTC 2026
+⚠ Note: Full chain validation not possible (intermediate CA cert not provided)
+  Relying on certificate fingerprint verification for trust anchor
+  In production: SP should include full certificate chain
+✓ HO Identity (CN): HomeOwner
+  Full Subject: CN=HomeOwner,O=Parking System,C=BE
+  Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+✓ Certificate fingerprint verified: 7FA6B0B454883DB4...
+✓ Identity binding persisted to ./keystore/ho_identity_bindings.txt
+
+✓ HO IDENTITY BINDING ESTABLISHED
+  Spot: SPOT-A1 ⟷ HO: HomeOwner
+  Fingerprint: 7FA6B0B454883DB4F20F8230654B8CF1...
+
+✓ Stored availability for reservation request
+════════════════════════════════════════════════════════════
+Availability #2
+════════════════════════════════════════════════════════════
+Availability ID: 158b0ff7-d192-46e3-bd93-dc97846f9aef
+Spot ID: SPOT-A1
+Price: 5 tokens
+Valid: 2025-12-26T10:59:02.990295269Z to 2025-12-26T18:59:02.990295269Z
+Location: Downtown-North
+Home Owner ID: HO-001
+
+─ HO Certificate Identity Verification ─
+✓ HO certificate is within validity period
+  Valid from: Fri Dec 26 10:57:19 UTC 2025
+  Valid until: Sat Dec 26 10:58:19 UTC 2026
+⚠ Note: Full chain validation not possible (intermediate CA cert not provided)
+  Relying on certificate fingerprint verification for trust anchor
+  In production: SP should include full certificate chain
+✓ HO Identity (CN): HomeOwner
+  Full Subject: CN=HomeOwner,O=Parking System,C=BE
+  Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+✓ Certificate fingerprint verified: 7FA6B0B454883DB4...
+✓ Identity binding persisted to ./keystore/ho_identity_bindings.txt
+
+✓ HO IDENTITY BINDING ESTABLISHED
+  Spot: SPOT-A1 ⟷ HO: HomeOwner
+  Fingerprint: 7FA6B0B454883DB4F20F8230654B8CF1...
+
+════════════════════════════════════════════════════════════
+Availability #3
+════════════════════════════════════════════════════════════
+Availability ID: c9e1cd6c-8b63-4188-9945-9326ff1a9117
+Spot ID: SPOT-A1
+Price: 5 tokens
+Valid: 2025-12-26T10:58:19.575535040Z to 2025-12-26T18:58:19.575535040Z
+Location: Downtown-North
+Home Owner ID: HO-001
+
+─ HO Certificate Identity Verification ─
+✓ HO certificate is within validity period
+  Valid from: Fri Dec 26 10:57:19 UTC 2025
+  Valid until: Sat Dec 26 10:58:19 UTC 2026
+⚠ Note: Full chain validation not possible (intermediate CA cert not provided)
+  Relying on certificate fingerprint verification for trust anchor
+  In production: SP should include full certificate chain
+✓ HO Identity (CN): HomeOwner
+  Full Subject: CN=HomeOwner,O=Parking System,C=BE
+  Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+✓ Certificate fingerprint verified: 7FA6B0B454883DB4...
+✓ Identity binding persisted to ./keystore/ho_identity_bindings.txt
+
+✓ HO IDENTITY BINDING ESTABLISHED
+  Spot: SPOT-A1 ⟷ HO: HomeOwner
+  Fingerprint: 7FA6B0B454883DB4F20F8230654B8CF1...
+
+════════════════════════════════════════════════════════════
+✓✓✓ AVAILABILITY DISCOVERY COMPLETE ✓✓✓
+════════════════════════════════════════════════════════════
+All HO identities verified and bound to availabilities
+Identity bindings persisted for future interaction verification
+
+=== Requesting Reservation from HO (Milestone 2.4) ===
+
+═══════════════════════════════════════════════════════════
+   MILESTONE 2.4: RESERVATION HANDSHAKE WITH HO
+═══════════════════════════════════════════════════════════
+✓ CO Identity: CarOwner
+✓ Target HO: HomeOwner (ho:8445)
+✓ Availability ID: e5e6f044-261f-46b3-b212-290b0428dbd5
+
+--- Loading CO keystore and truststore for mTLS ---
+✓ CO keystore loaded
+✓ CO truststore loaded (contains Root CA)
+
+--- Establishing mTLS connection to HO ---
+✓ TLS hardened: TLS 1.3/1.2, AEAD cipher suites only
+✓ mTLS handshake complete
+  Protocol: TLSv1.3
+  Cipher Suite: TLS_AES_256_GCM_SHA384
+
+--- Verifying HO certificate binding ---
+  Expected fingerprint: 7FA6B0B454883DB4F20F8230654B8CF188CA4E2C9AEB5A43E4BDEFA699826D9E
+  Received fingerprint: 7FA6B0B454883DB4F20F8230654B8CF188CA4E2C9AEB5A43E4BDEFA699826D9E
+✓ HO certificate fingerprint verified (matches persisted binding)
+✓ HO peer identity verified: HomeOwner
+
+--- Building reservation request ---
+  Request fields:
+    availabilityId: e5e6f044-261f-46b3-b212-290b0428dbd5
+    spotId: SPOT-A1
+    validFrom: 2025-12-26T10:58:47.546678304Z
+    validTo: 2025-12-26T18:58:47.546678304Z
+    priceTokens: 5
+    coIdentity: CarOwner
+✓ Reservation request sent to HO
+
+--- Received reservation response ---
+  Status: success
+  Reservation ID: 9fab166a-a118-4e7b-a911-03b18f35e9bb
+  Verdict: NOT_OK
+  HO Identity: HomeOwner
+  Signature Algorithm: SHA256withRSA
+
+--- Verifying HO signature (RSA-2048) ---
+✓ Signature decoded (256 bytes)
+✓ Reconstructed canonical data:
+  reservationId=9fab166a-a118-4e7b-a911-03b18f35e9bb|verdict=NOT_OK|availabilityId=e5e6f044-261f-46b3-b212-290b0428dbd5|spotId=SPOT-A1|validFrom=2025-12-26T10:58:47.546678304Z|validTo=2025-12-26T18:58:47.546678304Z|priceTokens=5|coIdentity=CarOwner
+✓ Signed data from HO:
+  reservationId=9fab166a-a118-4e7b-a911-03b18f35e9bb|verdict=NOT_OK|availabilityId=e5e6f044-261f-46b3-b212-290b0428dbd5|spotId=SPOT-A1|validFrom=2025-12-26T10:58:47.546678304Z|validTo=2025-12-26T18:58:47.546678304Z|priceTokens=5|coIdentity=CarOwner
+✓ Signed data matches reconstructed canonical format
+✓ HO signature verified successfully (RSA-2048, SHA256withRSA)
+✓ HO identity confirmed: HomeOwner
+✓ All signature validation checks passed
+✓ Non-repudiable proof: HO cannot deny issuing this reservation
+✓ Cryptographic proof stored: ./keystore/reservations/9fab166a-a118-4e7b-a911-03b18f35e9bb.json
+
+--- Sending payment request to HO (Milestone 3.2 - Using SP tokens) ---
+✓ mTLS connection to SP established
+  Protocol: TLSv1.3
+  Cipher suite: TLS_AES_256_GCM_SHA384
+  SP certificate: C=BE,O=Parking System,CN=ServiceProvider
+[M3.4] SP certificate cached for receipt verification
+
+→ Requesting 5 payment tokens from SP...
+
+← Received response from SP
+{
+  "tokenHashAlg": "SHA-256",
+  "signatureAlg": "SHA256withRSA",
+  "chainId": "583ad4ce-ad91-4567-8728-84fe9b612efa",
+  "rootSignature": "iAQ1zEG47jbP+iJO1klKTaL3V9hnD1lONLpmDGzCGiJfSXasg6EVkf6AHdKqbuqLApEzoTJOUIH4h1DIHy8q0mv7tjMWszS85is28HNFWWXh5hyNoxOGfp+nebM4fWaapFdH/fozFRX4We/acub9xA2iDG8o7/l4AO2zcgnJAMtnITWsTm5KFIwxoW+bkjK7sNtzg0bipPhNaFK+9kfV1ipkBITakGTTL1f+CUhKkZlv6Dypnijz+ymwPtAPVyciabgO28G8nL5yDuuUjG4Xw3vOugJ6pfD0Hpm3ze9T5Gt4Ognb/eDMcFkidQA2cZD7G72ll2FbeA3B/vJJQ9V8og==",
+  "root": "DDdeK8vQU3yICmrH4oR0s5zhXtWybf8DEwModFAwOeY=",
+  "x": 5,
+  "tokens": [
+    "ePa/EdIY2ilXVVUO0MftPMAXxqcudEWXbXYCoUv+NOQ=",
+    "8rQcTKQ51xPPFFpGkmV0WTzsD5znUS2wFGwPSm0iHjc=",
+    "u8jetUJ8pQtu7mYuiB6KvTmVieDMKy2zKvq6E30eO9c=",
+    "rxyGzo/3OoQevcCzNNfELbD+qlAEu3GQAZCfygF/7/Y=",
+    "DDdeK8vQU3yICmrH4oR0s5zhXtWybf8DEwModFAwOeY="
+  ],
+  "status": "success"
+}
+
+=== Verifying Token Batch ===
+Chain ID: 583ad4ce-ad91-4567-8728-84fe9b612efa
+Token count: 5
+Tokens received: 5
+✓ All tokens are distinct
+Root hash: 0C375E2BCBD0537C880A6AC7E28474B39CE15ED5B26DFF0313032874503039E6
+✓ Root signature verified with SP's public key
+
+Verifying hash chain:
+  Starting with token[0]: 78F6BF11D218DA29...
+  Chain verified: 5 hashes lead to signed root
+✓ Hash chain verification successful
+
+═════════════════════════════════════════════
+✓✓✓ TOKEN BATCH VERIFIED SUCCESSFULLY ✓✓✓
+═════════════════════════════════════════════
+Received 5 valid payment tokens from SP
+Chain ID: 583ad4ce-ad91-4567-8728-84fe9b612efa
+  Using SP-issued token batch, chainId=583ad4ce-ad91-4567-8728-84fe9b612efa
+  tokensToSpend: indices [0, 5)
+  Total tokens to spend: 5 (matching reservation price)
+
+[M4] Negative Test Mode: REPLAY
+[M4.2] Attempting replay: sending same pay twice
+[M4.2] Attempt #1: Sending pay request...
+→ Sending pay request (attempt #1) to HO at ho:8445
+← HO response (attempt #1):
+{
+  "reason": "security_violation",
+  "message": "Reservation verdict != OK",
+  "status": "error"
+}
+
+[M4.2] Waiting 1000 ms before replay...
+[M4.2] Attempt #2 REPLAY: Sending same payload again...
+→ Sending pay request (attempt #2 REPLAY) to HO at ho:8445
+✗ HO rejected payment: Reservation verdict != OK
+← HO response (attempt #2 REPLAY):
+{
+  "reason": "security_violation",
+  "message": "Reservation verdict != OK",
+  "status": "error"
+}
+[M4.2] Expect SP settlement rejection on 2nd settle (reason: replay_or_double_spend)
+← HO pay response:
+{
+  "reason": "security_violation",
+  "message": "Reservation verdict != OK",
+  "status": "error"
+}
+
+═══════════════════════════════════════════════════════════
+   RESERVATION HANDSHAKE COMPLETE
+   Verdict: NOT_OK
+   Non-repudiable proof stored: 9fab166a-a118-4e7b-a911-03b18f35e9bb
+═══════════════════════════════════════════════════════════
+
+✓✓✓ CO SERVICE COMPLETED SUCCESSFULLY ✓✓✓
+[INFO] Recreating HO with REPLAY_TEST_MODE=false
+ Container ho-container  Recreate
+ Container ho-container  Recreated
+ Container ho-container  Starting
+ Container ho-container  Started
+[WARN] Could not verify HO env via docker inspect (may still be correct depending on compose env wiring)
+[INFO] [RESULT] replay_sp_reject: PASS (exit=0)
+
+==== CAuth-1 FAKE_CAUTH: Rogue Intermediate ====
+[INFO] Clearing CO keystore to force fresh enrollment with fake-cauth
+[INFO] Starting fake-cauth service
+#1 [internal] load local bake definitions
+#1 reading from stdin 629B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 523B done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/eclipse-temurin:17-jdk
+#3 DONE 0.8s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [1/5] FROM docker.io/library/eclipse-temurin:17-jdk@sha256:7995efb7f9276fc16433aa8e2856a06082cd09f7f6603579db2534937ccc6778
+#5 resolve docker.io/library/eclipse-temurin:17-jdk@sha256:7995efb7f9276fc16433aa8e2856a06082cd09f7f6603579db2534937ccc6778 done
+#5 DONE 0.0s
+
+#6 [internal] load build context
+#6 transferring context: 1.26kB done
+#6 DONE 0.0s
+
+#7 [4/5] COPY . .
+#7 CACHED
+
+#8 [3/5] WORKDIR /app
+#8 CACHED
+
+#9 [2/5] RUN apt-get update &&     apt-get install -y maven &&     rm -rf /var/lib/apt/lists/*
+#9 CACHED
+
+#10 [5/5] RUN mvn clean package -DskipTests
+#10 CACHED
+
+#11 exporting to image
+#11 exporting layers done
+#11 writing image sha256:b782db31d9fbb1f2f04b90a1fb06f9815620cf184552b73af4caa8ddc7110ab0 done
+#11 naming to docker.io/library/secure_software_assignment-fake-cauth done
+#11 DONE 0.0s
+
+#12 resolving provenance for metadata file
+#12 DONE 0.0s
+ secure_software_assignment-fake-cauth  Built
+ Container fake-cauth-container  Creating
+ Container fake-cauth-container  Created
+ Container fake-cauth-container  Starting
+ Container fake-cauth-container  Started
+[INFO] fake-cauth published port for 8443 is localhost:8543
+[INFO] Command: docker compose run --rm -e NEG_TEST_MODE=FAKE_CAUTH -e CAUTH_HOST=fake-cauth co
+[INFO] Running CO (scenario=fake_cauth) envs: NEG_TEST_MODE=FAKE_CAUTH CAUTH_HOST=fake-cauth
+ Container cauth-container  Running
+ Container sp-container  Running
+Waiting for CAuth, SP, and HO to start...
+
+=== Car Owner (CO) Starting ===
+No existing certificate found, enrolling with CAuth...
+Step 1: Generating RSA key pair...
+✓ RSA-2048 key pair generated successfully
+
+Step 2: Creating Certificate Signing Request (CSR)...
+✓ CSR created with subject: CN=CarOwner, O=Parking System, C=BE
+
+Step 3: Connecting to CAuth server over TLS...
+[CAuth-1] TEST MODE: Connecting to fake-cauth (skipping server cert validation)
+[CAuth-1] NOTE: This is for testing only - allows enrollment with rogue CA
+✓ TLS connection established to CAuth
+  Protocol: TLSv1.3
+  Cipher suite: TLS_AES_256_GCM_SHA384
+
+→ Sending CSR to CAuth for signing...
+Received CA certificate from CAuth.
+Certificate signed by CAuth!
+✓ Certificate received from CAuth
+
+Step 4: Storing certificate and private key securely...
+✓ Credentials stored in ./keystore/co_keystore.p12
+
+╔═══════════════════════════════════════════╗
+║   CO CRYPTOGRAPHIC IDENTITY ESTABLISHED   ║
+╚═══════════════════════════════════════════╝
+Subject: C=BE,O=Parking System,CN=CarOwner
+Issuer: C=XX,O=Fake Authority,CN=ROGUE-CA-DO-NOT-TRUST
+Valid from: Fri Dec 26 10:58:26 UTC 2025
+Valid until: Sat Dec 26 10:59:26 UTC 2026
+
+═══════════════════════════════════════════════════════════════
+  [CAuth-1] NEGATIVE TEST MODE: FAKE_CAUTH
+═══════════════════════════════════════════════════════════════
+[CAuth-1] Testing rejection of rogue intermediate CA certificate
+[CAuth-1] Enrolled with: fake-cauth:8443
+[CAuth-1] Certificate Details:
+  Subject: C=BE, O=Parking System, CN=CarOwner
+  Issuer:  C=XX, O=Fake Authority, CN=ROGUE-CA-DO-NOT-TRUST
+  Serial:  40800436806374919185193423085535403306
+[CAuth-1] ⚠ DETECTED: Certificate issued by ROGUE CA!
+[CAuth-1] ⚠ This certificate is NOT chained to the trusted Root CA
+
+[CAuth-1] Attempting mTLS connection to SP...
+[CAuth-1] EXPECTED: Connection should FAIL with PKIX validation error
+[CAuth-1] REASON: SP truststore only contains real Root CA, not rogue CA
+
+Establishing hardened mTLS connection to SP for authenticated discovery...
+✓ mTLS connection established to SP
+  Protocol: TLSv1.3
+  Cipher suite: TLS_AES_256_GCM_SHA384
+  SP certificate subject: C=BE,O=Parking System,CN=ServiceProvider
+  SP certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+✓ SP certificate validity verified
+
+→ Requesting parking availabilities from SP...
+
+╔═══════════════════════════════════════════════════════════════╗
+║   [CAuth-1] ✓ SECURITY SUCCESS: Rogue CA Certificate REJECTED║
+╚═══════════════════════════════════════════════════════════════╝
+[CAuth-1] mTLS connection to SP failed as expected!
+[CAuth-1] Error type: SSLHandshakeException
+[CAuth-1] Error message: Received fatal alert: bad_certificate
+
+[CAuth-1] VERIFICATION COMPLETE:
+  ✓ CO successfully enrolled with fake-cauth
+  ✓ CO received certificate signed by rogue CA
+  ✓ CO stored certificate in keystore (normal behavior)
+  ✓ SP rejected mTLS connection (PKIX validation failed)
+  ✓ Certificate chain does not terminate at trusted Root CA
+  ✓ System correctly enforces trust anchor validation
+
+[CAuth-1] CONCLUSION: Rogue intermediate CA properly rejected!
+[CAuth-1] The system is SECURE against untrusted CA attacks.
+
+ Container fake-cauth-container  Stopping
+ Container fake-cauth-container  Stopped
+[INFO] [RESULT] fake_cauth: PASS (exit=0)
+
+==== ROGUE_CO: BAD_CERT (MISSING) ====
+[INFO] Command: docker compose run --rm -e NEG_TEST_MODE=BAD_CERT -e BAD_CERT_MODE=MISSING co
+[INFO] Running CO (scenario=bad_cert_missing) envs: NEG_TEST_MODE=BAD_CERT BAD_CERT_MODE=MISSING
+ Container cauth-container  Running
+ Container sp-container  Running
+Waiting for CAuth, SP, and HO to start...
+
+=== Car Owner (CO) Starting ===
+
+═══════════════════════════════════════════════════════════════
+  [ROGUE_CO] NEGATIVE TEST MODE: BAD_CERT
+  Sub-mode: MISSING
+═══════════════════════════════════════════════════════════════
+[ROGUE_CO] Testing rejection of CO without valid certificate
+[ROGUE_CO] Mode: MISSING
+[ROGUE_CO] MISSING mode: Skipping enrollment, no client certificate
+[ROGUE_CO] Will attempt mTLS without presenting client certificate
+
+[ROGUE_CO] Attempting mTLS connection to SP...
+[ROGUE_CO] EXPECTED: Connection should FAIL
+[ROGUE_CO] REASON: No client certificate presented (peer not authenticated)
+
+[ROGUE_CO] Creating SSLContext WITHOUT client KeyManager
+[ROGUE_CO] Connecting to SP at sp:8444
+[ROGUE_CO] Starting TLS handshake...
+[ROGUE_CO] TLS negotiation completed; validating mTLS acceptance...
+[ROGUE_CO] Server authenticated: C=BE,O=Parking System,CN=ServiceProvider
+[ROGUE_CO] Performing post-handshake proof (send request)...
+[ROGUE_CO] Reading response to confirm mTLS acceptance...
+
+╔═══════════════════════════════════════════════════════════════╗
+║   [ROGUE_CO] ✓ SECURITY SUCCESS: Rogue CO REJECTED          ║
+╚═══════════════════════════════════════════════════════════════╝
+[ROGUE_CO] mTLS rejected by peer during client certificate validation!
+[ROGUE_CO] Error type: SSLHandshakeException
+[ROGUE_CO] Error message: Received fatal alert: bad_certificate
+[ROGUE_CO] Analysis: SP rejected the client certificate (fatal alert: bad_certificate)
+[ROGUE_CO] Reason: No client certificate presented (peer not authenticated)
+
+[ROGUE_CO] VERIFICATION COMPLETE:
+  ✓ CO skipped enrollment (no certificate obtained)
+  ✓ CO attempted mTLS without client certificate
+  ✓ SP rejected connection (peer not authenticated)
+  ✓ System requires valid client certificate for mTLS
+  ✓ System correctly enforces client certificate validation
+  ✓ No bypass mechanisms available (strong security)
+
+[ROGUE_CO] CONCLUSION: Rogue CO properly rejected!
+[ROGUE_CO] The system is SECURE against unauthorized clients.
+
+[INFO] [RESULT] bad_cert_missing: PASS (exit=0)
+
+==== ROGUE_CO: BAD_CERT (SELF_SIGNED) ====
+[INFO] Command: docker compose run --rm -e NEG_TEST_MODE=BAD_CERT -e BAD_CERT_MODE=SELF_SIGNED co
+[INFO] Running CO (scenario=bad_cert_selfsigned) envs: NEG_TEST_MODE=BAD_CERT BAD_CERT_MODE=SELF_SIGNED
+ Container cauth-container  Running
+ Container sp-container  Running
+Waiting for CAuth, SP, and HO to start...
+
+=== Car Owner (CO) Starting ===
+
+═══════════════════════════════════════════════════════════════
+  [ROGUE_CO] NEGATIVE TEST MODE: BAD_CERT
+  Sub-mode: SELF_SIGNED
+═══════════════════════════════════════════════════════════════
+[ROGUE_CO] Testing rejection of CO without valid certificate
+[ROGUE_CO] Mode: SELF_SIGNED
+[ROGUE_CO] SELF_SIGNED mode: Generating untrusted self-signed certificate
+[ROGUE_CO] Generating RSA-2048 keypair for self-signed certificate...
+[ROGUE_CO] Self-signed certificate created:
+[ROGUE_CO]   BasicConstraints: CA=false
+[ROGUE_CO]   KeyUsage: digitalSignature, keyEncipherment
+[ROGUE_CO]   ExtendedKeyUsage: clientAuth
+[ROGUE_CO] Certificate stored in keystore as PrivateKeyEntry
+[ROGUE_CO] Keystore path: ./keystore/co_keystore.p12
+[ROGUE_CO] Generated self-signed certificate:
+  Subject: C=XX, O=Unauthorized, CN=ROGUE-CO-UNTRUSTED
+  Issuer:  C=XX, O=Unauthorized, CN=ROGUE-CO-UNTRUSTED
+  Serial:  104932295788696429393647697806209850470
+[ROGUE_CO] ⚠ This certificate is NOT chained to trusted Root CA
+[ROGUE_CO] ⚠ It is self-signed and will be rejected by services
+
+[ROGUE_CO] Attempting mTLS connection to SP...
+[ROGUE_CO] EXPECTED: Connection should FAIL
+[ROGUE_CO] REASON: Self-signed cert not chained to Root CA (PKIX validation fails)
+
+[ROGUE_CO] Creating SSLContext WITH self-signed certificate
+[ROGUE_CO] Loading keystore to verify certificate availability...
+[ROGUE_CO] Keystore loaded successfully:
+[ROGUE_CO]   Type: PKCS12
+[ROGUE_CO]   Path: ./keystore/co_keystore.p12
+[ROGUE_CO]   Alias [1]: co_key
+[ROGUE_CO]     Entry type: PrivateKeyEntry (has private key)
+[ROGUE_CO]     Subject: C=XX,O=Unauthorized,CN=ROGUE-CO-UNTRUSTED
+[ROGUE_CO]     Issuer: C=XX,O=Unauthorized,CN=ROGUE-CO-UNTRUSTED
+[ROGUE_CO]     SHA-256: 0CB0EA7A9CC23BA2B0D15C75268B3470...
+[ROGUE_CO] Certificate is available and ready to be sent during TLS handshake
+[ROGUE_CO] KeyManagers created: 1 manager(s)
+[ROGUE_CO] KeyManager wrapped to force alias selection: co_key
+[ROGUE_CO] SSLContext initialized with wrapped KeyManagers
+[ROGUE_CO] Connecting to SP at sp:8444
+[ROGUE_CO] Starting TLS handshake...
+[ROGUE_CO] chooseClientAlias called - forcing alias: co_key
+[ROGUE_CO] TLS negotiation completed; validating mTLS acceptance...
+[ROGUE_CO] Server authenticated: C=BE,O=Parking System,CN=ServiceProvider
+[ROGUE_CO] Performing post-handshake proof (send request)...
+[ROGUE_CO] Reading response to confirm mTLS acceptance...
+
+╔═══════════════════════════════════════════════════════════════╗
+║   [ROGUE_CO] ✓ SECURITY SUCCESS: Rogue CO REJECTED          ║
+╚═══════════════════════════════════════════════════════════════╝
+[ROGUE_CO] mTLS rejected by peer during client certificate validation!
+[ROGUE_CO] Error type: SSLHandshakeException
+[ROGUE_CO] Error message: Received fatal alert: certificate_unknown
+
+[ROGUE_CO] VERIFICATION COMPLETE:
+  ✓ CO generated self-signed certificate
+  ✓ CO attempted mTLS with untrusted certificate
+  ✓ SP rejected connection (PKIX validation failed)
+  ✓ Certificate not chained to trusted Root CA
+  ✓ System correctly enforces client certificate validation
+  ✓ No bypass mechanisms available (strong security)
+
+[ROGUE_CO] CONCLUSION: Rogue CO properly rejected!
+[ROGUE_CO] The system is SECURE against unauthorized clients.
+
+[INFO] [RESULT] bad_cert_selfsigned: PASS (exit=0)
+
+==== FORGED_RESERVATION: RESV_TAMPER FIELD_EDIT ====
+[INFO] Command: docker compose run --rm -e NEG_TEST_MODE=RESV_TAMPER -e RESV_TAMPER_MODE=FIELD_EDIT co
+[INFO] Running CO (scenario=resv_field_edit) envs: NEG_TEST_MODE=RESV_TAMPER RESV_TAMPER_MODE=FIELD_EDIT
+ Container cauth-container  Running
+ Container sp-container  Running
+Waiting for CAuth, SP, and HO to start...
+
+=== Car Owner (CO) Starting ===
+
+═══════════════════════════════════════════════════════════════
+  [RESV_TAMPER] NEGATIVE TEST MODE: FORGED_RESERVATION
+  Sub-mode: FIELD_EDIT
+═══════════════════════════════════════════════════════════════
+[RESV_TAMPER] Testing detection of forged/tampered reservation responses
+[RESV_TAMPER] Mode: FIELD_EDIT
+[RESV_TAMPER] Tampering will be applied BEFORE signature verification
+[RESV_TAMPER] Expected: Signature verification MUST fail
+
+Found existing certificate, loading from keystore...
+✓ Certificate validity period verified
+
+╔═══════════════════════════════════════════╗
+║   CO CRYPTOGRAPHIC IDENTITY ESTABLISHED   ║
+╚═══════════════════════════════════════════╝
+Subject: C=XX,O=Unauthorized,CN=ROGUE-CO-UNTRUSTED
+Issuer: C=XX,O=Unauthorized,CN=ROGUE-CO-UNTRUSTED
+Valid from: Fri Dec 26 10:58:52 UTC 2025
+Valid until: Sat Dec 26 10:59:52 UTC 2026
+
+=== Discovering Parking Availabilities from SP ===
+Establishing hardened mTLS connection to SP for authenticated discovery...
+✓ mTLS connection established to SP
+  Protocol: TLSv1.3
+  Cipher suite: TLS_AES_256_GCM_SHA384
+  SP certificate subject: C=BE,O=Parking System,CN=ServiceProvider
+  SP certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+✓ SP certificate validity verified
+
+→ Requesting parking availabilities from SP...
+
+✖ CRITICAL ERROR: CO failed to start
+Reason: Received fatal alert: bad_certificate
+javax.net.ssl.SSLHandshakeException: Received fatal alert: bad_certificate
+	at java.base/sun.security.ssl.Alert.createSSLException(Unknown Source)
+	at java.base/sun.security.ssl.Alert.createSSLException(Unknown Source)
+	at java.base/sun.security.ssl.TransportContext.fatal(Unknown Source)
+	at java.base/sun.security.ssl.Alert$AlertConsumer.consume(Unknown Source)
+	at java.base/sun.security.ssl.TransportContext.dispatch(Unknown Source)
+	at java.base/sun.security.ssl.SSLTransport.decode(Unknown Source)
+	at java.base/sun.security.ssl.SSLSocketImpl.decode(Unknown Source)
+	at java.base/sun.security.ssl.SSLSocketImpl.readApplicationRecord(Unknown Source)
+	at java.base/sun.security.ssl.SSLSocketImpl$AppInputStream.read(Unknown Source)
+	at java.base/sun.nio.cs.StreamDecoder.readBytes(Unknown Source)
+	at java.base/sun.nio.cs.StreamDecoder.implRead(Unknown Source)
+	at java.base/sun.nio.cs.StreamDecoder.read(Unknown Source)
+	at java.base/java.io.InputStreamReader.read(Unknown Source)
+	at java.base/java.io.BufferedReader.fill(Unknown Source)
+	at java.base/java.io.BufferedReader.readLine(Unknown Source)
+	at java.base/java.io.BufferedReader.readLine(Unknown Source)
+	at com.example.Main.discoverAvailabilities(Main.java:1058)
+	at com.example.Main.main(Main.java:450)
+

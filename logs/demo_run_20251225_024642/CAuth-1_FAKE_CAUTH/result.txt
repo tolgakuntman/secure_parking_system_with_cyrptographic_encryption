@@ -1,0 +1,7 @@
+Scenario: CAuth-1_FAKE_CAUTH
+Description: CO fails mTLS with fake CA cert
+Status: PASS
+Exit Code: 137
+Expected Exit: 0
+Reason: Security rejection (expected)
+Timestamp: 2025-12-24T23:52:29Z

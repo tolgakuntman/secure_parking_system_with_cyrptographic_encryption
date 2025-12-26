@@ -1,0 +1,94 @@
+[SP][INFO][NONE] Waiting for CAuth to start...
+[SP][INFO][NONE] 
+=== Service Provider Starting ===
+[SP][INFO][NONE] Initializing cryptographic baseline...
+
+[SP][INFO][NONE] No existing certificate found, enrolling with CAuth...
+[SP][INFO][NONE] Step 1: Generating RSA key pair...
+[SP][INFO][NONE] ...
+[SP][INFO][NONE] 
+Step 2: Creating Certificate Signing Request (CSR)...
+[SP][INFO][NONE] ...
+[SP][INFO][NONE] 
+Step 3: Connecting to CAuth server over TLS...
+[SP][INFO][NONE] ...
+[SP][INFO][NONE]   Protocol: TLSv1.3
+[SP][INFO][NONE]   Cipher suite: TLS_AES_256_GCM_SHA384
+[SP][INFO][NONE]   CAuth certificate verified:
+[SP][INFO][NONE]     Subject: CN=172.20.0.10,O=Private Parking,C=BE
+[SP][INFO][NONE]     Issuer: CN=Root CA,O=National Authority,C=Country Code
+[SP][INFO][NONE] 
+→ Sending CSR to CAuth for signing...
+[SP][INFO][NONE] Received CA certificate from CAuth.
+[SP][INFO][NONE] Received Root CA certificate from CAuth.
+[SP][INFO][NONE] Certificate signed by CAuth!
+[SP][INFO][NONE] ...
+[SP][INFO][NONE] 
+Step 4: Validating received certificate...
+[SP][INFO][NONE]   ...
+[SP][INFO][NONE]     Valid from: Wed Dec 24 22:12:08 UTC 2025
+[SP][INFO][NONE]     Valid until: Thu Dec 24 22:13:08 UTC 2026
+[SP][INFO][NONE]   ...
+[SP][INFO][NONE]   Validating certificate chain (3 certificates):
+[SP][INFO][NONE]     [0] C=BE,O=Parking System,CN=ServiceProvider
+[SP][INFO][NONE]         Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+[SP][INFO][NONE]         ...
+[SP][INFO][NONE]     [1] CN=172.20.0.10,O=Private Parking,C=BE
+[SP][INFO][NONE]         Issuer: CN=Root CA,O=National Authority,C=Country Code
+[SP][INFO][NONE]         ...
+[SP][INFO][NONE]     [2] CN=Root CA,O=National Authority,C=Country Code
+[SP][INFO][NONE]         Issuer: CN=Root CA,O=National Authority,C=Country Code
+[SP][INFO][NONE]   ✓ Chain terminates at trusted Root CA: root_ca
+[SP][INFO][NONE]   ...
+[SP][INFO][NONE] ...
+[SP][INFO][NONE] 
+Step 5: Storing certificate and private key securely...
+[SP][INFO][NONE] Storing certificate chain with 3 certificate(s)
+[SP][INFO][NONE]   [0] C=BE,O=Parking System,CN=ServiceProvider
+[SP][INFO][NONE]   [1] CN=172.20.0.10,O=Private Parking,C=BE
+[SP][INFO][NONE]   [2] CN=Root CA,O=National Authority,C=Country Code
+[SP][INFO][NONE] ✓ Credentials stored in ./keystore/sp_keystore.p12
+[SP][INFO][NONE] 
+╔═══════════════════════════════════════════╗
+[SP][INFO][NONE] ║   CRYPTOGRAPHIC IDENTITY ESTABLISHED     ║
+[SP][INFO][NONE] ╚═══════════════════════════════════════════╝
+[SP][INFO][NONE] Subject: C=BE,O=Parking System,CN=ServiceProvider
+[SP][INFO][NONE] Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+[SP][INFO][NONE] Valid from: Wed Dec 24 22:12:08 UTC 2025
+[SP][INFO][NONE] Valid until: Thu Dec 24 22:13:08 UTC 2026
+[SP][INFO][NONE] Serial: 35AA7E887BABAA4920454B6F30C27951
+[SP][INFO][NONE] ✓ Certificate and private key verified
+
+[SP][INFO][NONE] === Starting SP Server ===
+[SP][INFO][NONE] 
+=== SP CRYPTOGRAPHIC BASELINE ESTABLISHED ===
+[SP][INFO][NONE] Version: 2025-12-22 (Hardened TLS with mTLS enforcement)
+[SP][INFO][NONE] ✓ Enabled TLS protocols: [TLSv1.3, TLSv1.2]
+[SP][INFO][NONE] ✓ Strong cipher suites configured: 9 suites
+[SP][INFO][NONE]  Mutual TLS (mTLS) REQUIRED - client certificates enforced
+[SP][INFO][NONE] 
+=== TLS Server Configuration ===
+[SP][INFO][NONE] Server listening on port: 8444
+[SP][INFO][NONE] Server certificate subject: C=BE,O=Parking System,CN=ServiceProvider
+[SP][INFO][NONE] Server certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+[SP][INFO][NONE] Certificate serial: 35AA7E887BABAA4920454B6F30C27951
+[SP][INFO][NONE] Certificate algorithm: SHA256withRSA
+[SP][INFO][NONE] Public key algorithm: RSA
+[SP][INFO][NONE] RSA key size: 2048 bits
+[SP][INFO][NONE] mTLS enforcement: ENABLED (client certificates REQUIRED)
+[SP][INFO][NONE] 
+...
+[SP][INFO][NONE] SP server ready | Port=8444
+[SP][AUDIT][NONE] Client authenticated | CN=HomeOwner | Fingerprint=1D5100D394B89C6B...
+[SP][INFO][NONE] 
+=== Publishing Parking Availability from HomeOwner ===
+[SP][INFO][NONE]   Home Owner: HO-001
+[SP][INFO][NONE]   Spot ID: SPOT-A1
+[SP][INFO][NONE]   Valid: 2025-12-24T22:13:11.822859432Z to 2025-12-25T06:13:11.822859432Z
+[SP][INFO][NONE]   Price: 5 tokens
+[SP][INFO][NONE]   Location: Downtown-North
+[SP][INFO][NONE] ✓ Availability stored with ID: 3d256d62-ce00-435b-8fe3-b1cb080ee913
+[SP][INFO][NONE] ✓ Total availabilities in system: 1
+[SP][INFO][NONE] ══════════════════════════════════════════════════
+[SP][INFO][NONE] 
+HomeOwner disconnected

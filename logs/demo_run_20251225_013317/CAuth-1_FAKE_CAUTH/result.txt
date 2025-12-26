@@ -1,0 +1,4 @@
+Scenario: CAuth-1_FAKE_CAUTH
+Description: CO with fake CA fails PKIX at SP
+Exit Code: 1
+Result: ✗ FAIL (exit: 1)

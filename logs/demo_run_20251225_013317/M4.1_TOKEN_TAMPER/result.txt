@@ -1,0 +1,4 @@
+Scenario: M4.1_TOKEN_TAMPER
+Description: HO detects tampered token chain
+Exit Code: 1
+Result: ✗ FAIL (exit: 1)

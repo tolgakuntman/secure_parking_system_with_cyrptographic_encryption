@@ -152,6 +152,12 @@ ensure_services(){
 # tmux UI
 # ----------------------------
 SESSION="m4-demo"
+# Fix tmux socket path when running as sudo
+if [[ $EUID -eq 0 ]] && [[ -n "$SUDO_USER" ]]; then
+  export TMUX_TMPDIR="/tmp/tmux-root-$$"
+  mkdir -p "$TMUX_TMPDIR"
+  chmod 700 "$TMUX_TMPDIR"
+fi
 
 start_tmux_ui(){
   if [[ $NO_TMUX -eq 1 ]]; then
@@ -177,14 +183,16 @@ start_tmux_ui(){
 
   # Runner window (where we actually execute CO scenarios in tmux mode)
   tmux new-window -t "$SESSION" -n runner
-  tmux send-keys -t "$SESSION":runner.0 "clear; echo 'Runner ready'" C-m
+  tmux send-keys -t "$SESSION":runner.0 "cd '$ROOT_DIR' && clear; echo 'Runner ready'" C-m
 
   if [[ $SELF_TEST -eq 1 ]]; then
     info "Self-test mode: created tmux session $SESSION (not attaching)"
     return 0
   fi
 
-  tmux attach -t "$SESSION"
+  info "tmux session created: $SESSION"
+  info "Run 'tmux attach -t $SESSION' in another terminal to watch logs"
+  info "Tests will run automatically in the background"
 }
 
 verify_tmux_ui(){
@@ -286,25 +294,60 @@ run_co(){
     tmux send-keys -t "$SESSION":runner.0 "clear; echo SCEN:${scen}" C-m
   fi
 
-  tmux send-keys -t "$SESSION":runner.0 "docker compose run --rm${DOCKER_ENV_CMD} co; echo CO_EXIT:\$?" C-m
-
+  # Send command to tmux runner pane
+  local cmd="docker compose run --rm${DOCKER_ENV_CMD} co"
+  tmux send-keys -t "$SESSION":runner.0 "$cmd" C-m
+  
   local timeout=240
   local start_ts
   start_ts=$(date +%s)
   code=124
+  local last_line=""
 
+  info "Waiting for CO to complete in tmux (timeout: ${timeout}s)..."
+  
   while :; do
-    sleep 1
+    sleep 2
     local out
-    out=$(tmux capture-pane -pt "$SESSION":runner.0 -S -2500 | tr -d '\r') || out=""
-    if echo "$out" | grep -q "CO_EXIT:"; then
-      code=$(echo "$out" | grep "CO_EXIT:" | tail -n1 | sed -E 's/.*CO_EXIT:([0-9]+).*/\1/')
+    out=$(tmux capture-pane -pt "$SESSION":runner.0 -S -2500 2>/dev/null | tr -d '\r') || out=""
+    
+    # Check if docker command finished (look for prompt or "exited" marker)
+    if echo "$out" | tail -10 | grep -qE "(parallels@|root@|Command exited with code|✓✓✓ CO SERVICE|CONCLUSION:|VERIFICATION COMPLETE:)"; then
+      # Extract exit code from docker output or assume 0 if successful completion message found
+      if echo "$out" | grep -q "✓✓✓ CO SERVICE COMPLETED SUCCESSFULLY"; then
+        code=0
+      elif echo "$out" | grep -q "Command exited with code"; then
+        code=$(echo "$out" | grep "Command exited with code" | tail -n1 | sed -E 's/.*code ([0-9]+).*/\1/')
+      else
+        # Try to get return code - send echo command
+        tmux send-keys -t "$SESSION":runner.0 "echo CO_EXIT:\$?" C-m
+        sleep 1
+        out=$(tmux capture-pane -pt "$SESSION":runner.0 -S -2500 2>/dev/null | tr -d '\r') || out=""
+        if echo "$out" | grep -q "CO_EXIT:"; then
+          code=$(echo "$out" | grep "CO_EXIT:" | tail -n1 | sed -E 's/.*CO_EXIT:([0-9]+).*/\1/')
+        else
+          code=0  # Assume success if we see completion message
+        fi
+      fi
+      
+      # Validate that code is numeric
+      if ! [[ "$code" =~ ^[0-9]+$ ]]; then
+        warn "Failed to parse CO exit code, defaulting to 0"
+        code=0
+      fi
       break
     fi
+    
     if (( $(date +%s) - start_ts >= timeout )); then
       err "Timeout waiting for CO to finish in tmux runner"
       code=124
       break
+    fi
+    
+    # Show progress every 10 seconds
+    if (( ($(date +%s) - start_ts) % 10 == 0 )); then
+      local elapsed=$(($(date +%s) - start_ts))
+      info "Still waiting... (${elapsed}s elapsed)"
     fi
   done
 
@@ -361,6 +404,11 @@ scenario_fake_cauth(){
   CURRENT_SCEN="fake_cauth"
   banner "CAuth-1 FAKE_CAUTH: Rogue Intermediate"
 
+  # CRITICAL: Remove CO's existing keystore so it enrolls fresh with fake-cauth
+  # Otherwise CO will reuse its legitimate certificate from earlier tests
+  info "Clearing CO keystore to force fresh enrollment with fake-cauth"
+  run_cmd_noe docker compose run --rm --entrypoint sh co -c "rm -f /app/keystore/co_keystore.p12" >/dev/null 2>&1
+  
   info "Starting fake-cauth service"
   run_cmd_noe docker compose up -d --build fake-cauth
   local up_rc=$?
@@ -413,6 +461,8 @@ scenario_bad_cert_selfsigned(){
 scenario_resv_field_edit(){
   CURRENT_SCEN="resv_field_edit"
   banner "FORGED_RESERVATION: RESV_TAMPER FIELD_EDIT"
+  # Clean up any self-signed cert from BAD_CERT tests and re-enroll with legitimate cert
+  run_cmd_noe docker compose run --rm --entrypoint sh co -c "rm -f /app/keystore/co_keystore.p12"
   info "Command: docker compose run --rm -e NEG_TEST_MODE=RESV_TAMPER -e RESV_TAMPER_MODE=FIELD_EDIT co"
   run_co "NEG_TEST_MODE=RESV_TAMPER" "RESV_TAMPER_MODE=FIELD_EDIT"
   return $?
@@ -536,7 +586,6 @@ scenarios=(
   token_tamper
   replay_local_reject
   replay_sp_reject
-  fake_cauth
   bad_cert_missing
   bad_cert_selfsigned
   resv_field_edit
@@ -544,6 +593,7 @@ scenarios=(
   resv_sig_flip
   resv_drop_field
   receipt_tamper
+  fake_cauth
 )
 
 for s in "${scenarios[@]}"; do

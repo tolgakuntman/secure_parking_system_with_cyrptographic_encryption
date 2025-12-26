@@ -1,0 +1,85 @@
+[SP][INFO][NONE] Waiting for CAuth to start...
+[SP][INFO][NONE] 
+=== Service Provider Starting ===
+[SP][INFO][NONE] Initializing cryptographic baseline...
+
+[SP][INFO][NONE] Found existing certificate, loading from keystore...
+[SP][INFO][NONE] ...
+[SP][INFO][NONE] ✓ Certificate chain loaded (3 certificates)
+[SP][INFO][NONE] ...
+[SP][INFO][NONE]   Validating certificate chain (3 certificates):
+[SP][INFO][NONE]     [0] C=BE,O=Parking System,CN=ServiceProvider
+[SP][INFO][NONE]         Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+[SP][INFO][NONE]         ...
+[SP][INFO][NONE]     [1] CN=172.20.0.10,O=Private Parking,C=BE
+[SP][INFO][NONE]         Issuer: CN=Root CA,O=National Authority,C=Country Code
+[SP][INFO][NONE]         ...
+[SP][INFO][NONE]     [2] CN=Root CA,O=National Authority,C=Country Code
+[SP][INFO][NONE]         Issuer: CN=Root CA,O=National Authority,C=Country Code
+[SP][INFO][NONE]   ✓ Chain terminates at trusted Root CA: root_ca
+[SP][INFO][NONE]   ...
+[SP][INFO][NONE] 
+╔═══════════════════════════════════════════╗
+[SP][INFO][NONE] ║   CRYPTOGRAPHIC IDENTITY ESTABLISHED     ║
+[SP][INFO][NONE] ╚═══════════════════════════════════════════╝
+[SP][INFO][NONE] Subject: C=BE,O=Parking System,CN=ServiceProvider
+[SP][INFO][NONE] Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+[SP][INFO][NONE] Valid from: Wed Dec 24 22:22:40 UTC 2025
+[SP][INFO][NONE] Valid until: Thu Dec 24 22:23:40 UTC 2026
+[SP][INFO][NONE] Serial: 929A808AD0EFCF0ACB484BC62D80E082
+[SP][INFO][NONE] ✓ Certificate and private key verified
+
+[SP][INFO][NONE] === Starting SP Server ===
+[SP][INFO][NONE] 
+=== SP CRYPTOGRAPHIC BASELINE ESTABLISHED ===
+[SP][INFO][NONE] Version: 2025-12-22 (Hardened TLS with mTLS enforcement)
+[SP][INFO][NONE] ✓ Enabled TLS protocols: [TLSv1.3, TLSv1.2]
+[SP][INFO][NONE] ✓ Strong cipher suites configured: 9 suites
+[SP][INFO][NONE]  Mutual TLS (mTLS) REQUIRED - client certificates enforced
+[SP][INFO][NONE] 
+=== TLS Server Configuration ===
+[SP][INFO][NONE] Server listening on port: 8444
+[SP][INFO][NONE] Server certificate subject: C=BE,O=Parking System,CN=ServiceProvider
+[SP][INFO][NONE] Server certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+[SP][INFO][NONE] Certificate serial: 929A808AD0EFCF0ACB484BC62D80E082
+[SP][INFO][NONE] Certificate algorithm: SHA256withRSA
+[SP][INFO][NONE] Public key algorithm: RSA
+[SP][INFO][NONE] RSA key size: 2048 bits
+[SP][INFO][NONE] mTLS enforcement: ENABLED (client certificates REQUIRED)
+[SP][INFO][NONE] 
+...
+[SP][INFO][NONE] SP server ready | Port=8444
+[SP][AUDIT][NONE] Client authenticated | CN=HomeOwner | Fingerprint=8349A96A416D8E51...
+[SP][INFO][NONE] 
+=== Publishing Parking Availability from HomeOwner ===
+[SP][INFO][NONE]   Home Owner: HO-001
+[SP][INFO][NONE]   Spot ID: SPOT-A1
+[SP][INFO][NONE]   Valid: 2025-12-24T22:24:28.277117338Z to 2025-12-25T06:24:28.277117338Z
+[SP][INFO][NONE]   Price: 5 tokens
+[SP][INFO][NONE]   Location: Downtown-North
+[SP][INFO][NONE] ✓ Availability stored with ID: 78433dcb-7b88-4c02-9b28-ade1b3fe25bb
+[SP][INFO][NONE] ✓ Total availabilities in system: 1
+[SP][INFO][NONE] ══════════════════════════════════════════════════
+[SP][INFO][NONE] 
+HomeOwner disconnected
+[SP][AUDIT][NONE] Client authenticated | CN=CarOwner | Fingerprint=42CCA2CA927C4B2F...
+[SP][INFO][NONE] 
+=== Availability Discovery Request from CarOwner ===
+[SP][INFO][NONE]   Total availabilities in system: 1
+[SP][INFO][NONE]   [78433dcb-7b88-4c02-9b28-ade1b3fe25bb] SPOT-A1 - 5 tokens (HO: HomeOwner)
+[SP][INFO][NONE] ✓ Returned 1 availability record(s) to CarOwner
+[SP][INFO][NONE] ══════════════════════════════════════════════════
+[SP][INFO][NONE] 
+CarOwner disconnected
+[SP][AUDIT][NONE] Client authenticated | CN=CarOwner | Fingerprint=42CCA2CA927C4B2F...
+[SP][INFO][NONE] 
+=== Generating 5 payment tokens for CarOwner ===
+[SP][INFO][NONE] ✓ Generated secret s (32 bytes)
+[SP][INFO][NONE] ✓ Generated hash chain of length 5
+[SP][INFO][NONE]   Root H^5(s): 2814AF3C3DEEF9B6...
+[SP][INFO][NONE] ✓ Signed root with SP private key (256 bytes)
+[SP][INFO][NONE] ✓ Stored chain metadata (ID: bb78422a-6104-42fe-ba2c-3d4400959843)
+[SP][INFO][NONE] ✓ Token batch ready to send to CarOwner
+[SP][INFO][NONE] ══════════════════════════════════════════════════
+[SP][INFO][NONE] 
+CarOwner disconnected

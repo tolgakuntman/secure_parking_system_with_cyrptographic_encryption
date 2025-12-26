@@ -1,0 +1,24 @@
+SCEN:normal START:2025-12-26T11:16:00Z
+root@ubuntu-linux-2404:/home/parallels/Desktop/secure_software_assignment# docke
+r compose run --rm co; echo CO_EXIT:$?
+[+] Creating 3/3
+ ✔ Volume secure_software_assignment_co_keystore  Created                  0.0s
+ ✔ Container cauth-container                      Running                  0.0s
+ ✔ Container sp-container                         Running                  0.0s
+Waiting for CAuth, SP, and HO to start...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,5 @@
+sp-container  | 23:48:11 [SP][AUDIT] mTLS peer CN=CarOwner fp=CCAAFC5A37A94C14 tls=TLSv1.3 suite=TLS_AES_256_GCM_SHA384
+sp-container  | 23:48:11 [SP][INFO] Returned 1 availability records to CarOwner
+sp-container  | 23:48:12 [SP][AUDIT] mTLS peer CN=CarOwner fp=CCAAFC5A37A94C14 tls=TLSv1.3 suite=TLS_AES_256_GCM_SHA384
+sp-container  | 23:48:12 [SP][INFO] Generating 5 tokens for CarOwner
+sp-container  | 23:48:12 [SP][AUDIT] Token batch issued: chainId=c445e808... count=5 to=CarOwner

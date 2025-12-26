@@ -1,0 +1,56 @@
+[HO][INFO][NONE] Waiting for CAuth and SP to start...
+[HO][INFO][NONE] 
+=== Home Owner (HO) Starting ===
+[HO][INFO][NONE] Found existing certificate, loading from keystore...
+[HO][INFO][NONE] ...
+[HO][INFO][NONE] 
+╔═══════════════════════════════════════════╗
+[HO][INFO][NONE] ║   HO CRYPTOGRAPHIC IDENTITY ESTABLISHED   ║
+[HO][INFO][NONE] ╚═══════════════════════════════════════════╝
+[HO][INFO][NONE] Subject: CN=HomeOwner,O=Parking System,C=BE
+[HO][INFO][NONE] Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+[HO][INFO][NONE] Valid from: Wed Dec 24 22:22:43 UTC 2025
+[HO][INFO][NONE] Valid until: Thu Dec 24 22:23:43 UTC 2026
+[HO][INFO][NONE] 
+=== Publishing Parking Availability to SP ===
+[HO][INFO][NONE] ...
+[HO][INFO][NONE]   Protocol: TLSv1.3
+[HO][INFO][NONE]   Cipher suite: TLS_AES_256_GCM_SHA384
+[HO][INFO][NONE]   SP certificate: C=BE,O=Parking System,CN=ServiceProvider
+[HO][INFO][NONE] [M3.2] SP public key cached from mTLS handshake
+[HO][INFO][NONE] 
+→ Publishing availability to SP...
+[HO][INFO][NONE]   Spot ID: SPOT-A1
+[HO][INFO][NONE]   Valid from: 2025-12-24T22:33:15.876009381Z
+[HO][INFO][NONE]   Valid to: 2025-12-25T06:33:15.876009381Z
+[HO][INFO][NONE]   Price: 5 tokens
+[HO][INFO][NONE]   Location: Downtown-North
+[HO][INFO][NONE] 
+← Received response from SP
+[HO][INFO][NONE] 
+╔═══════════════════════════════════════════╗
+[HO][INFO][NONE] ║   AVAILABILITY PUBLISHED SUCCESSFULLY     ║
+[HO][INFO][NONE] ╚═══════════════════════════════════════════╝
+[HO][INFO][NONE] Availability ID: 631f02f1-c3de-45e1-8356-4024642d5e2f
+[HO][INFO][NONE] Message: Parking availability published successfully
+[HO][INFO][NONE] 
+=== Starting HO Reservation & Payment Server ===
+[HO][INFO][NONE] 
+╔═══════════════════════════════════════════════════════════╗
+[HO][INFO][NONE] ║   HO RESERVATION SERVER CRYPTOGRAPHIC BASELINE           ║
+[HO][INFO][NONE] ╚═══════════════════════════════════════════════════════════╝
+[HO][INFO][NONE] Version: 2025-12-22 (Milestone 2.4 - Reservation Handshake)
+[HO][INFO][NONE] ✓ Enabled TLS protocols: [TLSv1.3, TLSv1.2]
+[HO][INFO][NONE] ...
+[HO][INFO][NONE] 
+[HO][INFO][NONE] === HO Reservation Server Configuration ===
+[HO][INFO][NONE] Server listening on port: 8445
+[HO][INFO][NONE] Server certificate subject: CN=HomeOwner,O=Parking System,C=BE
+[HO][INFO][NONE] Server certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+[HO][INFO][NONE] RSA key size: 2048 bits
+[HO][INFO][NONE] Signature algorithm: SHA256withRSA
+[HO][INFO][NONE] mTLS enforcement: ENABLED (CO certificates REQUIRED)
+[HO][INFO][NONE] 
+[HO][INFO][NONE] ...
+[HO][INFO][NONE] ==========================================
+

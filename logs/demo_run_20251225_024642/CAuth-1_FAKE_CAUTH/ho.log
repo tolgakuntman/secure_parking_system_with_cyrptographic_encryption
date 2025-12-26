@@ -1,8 +1,0 @@
-ho-container  | 23:51:27 [HO][INFO] HO starting - initializing crypto
-ho-container  | 23:51:27 [HO][AUDIT] Identity established: HomeOwner Serial=45D11FC5...
-ho-container  | 23:51:27 [HO][INFO] Publishing parking availability to SP
-ho-container  | 23:51:27 [HO][INFO] Publishing availability: spot=SPOT-A1 price=5 tokens
-ho-container  | 23:51:27 [HO][AUDIT] Availability published: 6669cabc...
-ho-container  | 23:51:27 [HO][INFO] Starting HO Reservation & Payment Server on port 8445
-ho-container  | 23:51:27 [HO][INFO] Reservation server ready on :8445 TLS=TLSv1.3,TLSv1.2
-ho-container  | 23:51:27 [HO][AUDIT] mTLS enforcement=REQUIRED for CO

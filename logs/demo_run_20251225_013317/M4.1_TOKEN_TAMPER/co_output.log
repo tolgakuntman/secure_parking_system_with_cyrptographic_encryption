@@ -1,3 +1,0 @@
- Container cauth-container  Running
- Container sp-container  Running
-Error response from daemon: failed to set up container networking: Address already in use

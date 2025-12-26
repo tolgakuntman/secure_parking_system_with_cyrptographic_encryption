@@ -1,8 +1,0 @@
-ho-container  | 23:48:12 [HO][AUDIT] mTLS peer CN=CarOwner fp=CCAAFC5A37A94C14 tls=TLSv1.3 suite=TLS_AES_256_GCM_SHA384
-ho-container  | 23:48:12 [HO][INFO] Reservation: avail=5e4d586c... spot=SPOT-A1 price=5
-ho-container  | 23:48:12 [HO][AUDIT] RESERVATION OK resv=c22c2e82... co=CarOwner
-ho-container  | 23:48:12 [HO][INFO] Sent reservation response to CarOwner
-ho-container  | 23:48:12 [HO][AUDIT] mTLS peer CN=CarOwner fp=CCAAFC5A37A94C14 tls=TLSv1.3 suite=TLS_AES_256_GCM_SHA384
-ho-container  | 23:48:12 [HO][INFO] Payment: chain=c445e808... resv=c22c2e82... tokens=5
-ho-container  | 23:48:12 [HO][SEC_ERR] Token adjacency check failed at i=0 - possible tampering
-ho-container  | 23:48:12 [HO][INFO] Sent pay response to CarOwner

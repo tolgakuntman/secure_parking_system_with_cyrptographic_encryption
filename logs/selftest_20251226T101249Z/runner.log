@@ -1,6 +1,0 @@
-[INFO] Self-test mode enabled. Logs: /home/parallels/Desktop/secure_software_assignment/logs/selftest_20251226T101249Z
-
-==== Sanity checks ====
-[INFO] Sanity checks passed
-[INFO] Fresh start: docker compose down -v --remove-orphans
-permission denied while trying to connect to the Docker daemon socket at unix:///var/run/docker.sock: Get "http://%2Fvar%2Frun%2Fdocker.sock/v1.51/containers/json?all=1&filters=%7B%22label%22%3A%7B%22com.docker.compose.config-hash%22%3Atrue%2C%22com.docker.compose.project%3Dsecure_software_assignment%22%3Atrue%7D%7D": dial unix /var/run/docker.sock: connect: permission denied

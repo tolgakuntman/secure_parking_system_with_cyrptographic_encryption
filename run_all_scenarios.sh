@@ -103,6 +103,22 @@ record_result() {
     TEST_RESULTS+=("$scenario|$status")
 }
 
+cleanup_from_previous_run() {
+    print_info "Cleaning up any stale containers from previous runs..."
+    
+    # Remove any stale test-profile containers (fake-cauth)
+    sudo docker compose --profile test rm -f fake-cauth 2>/dev/null || true
+    
+    # Remove any manually started containers (ho-container from M4.2 test)
+    sudo docker stop ho-container 2>/dev/null || true
+    sudo docker rm ho-container 2>/dev/null || true
+    
+    # Stop all compose-managed containers
+    sudo docker compose down -v 2>/dev/null || true
+    
+    print_success "Cleanup complete"
+}
+
 # ═══════════════════════════════════════════════════════════════════════════
 # Test Execution Functions
 # ═══════════════════════════════════════════════════════════════════════════
@@ -268,13 +284,14 @@ run_test_5_fake_cauth() {
     # Stop real cauth, start fake-cauth
     print_info "Stopping real cauth, starting fake-cauth..."
     sudo docker compose stop cauth
-    sudo docker compose up -d fake-cauth
+    sudo docker compose --profile test rm -f fake-cauth
+    sudo docker compose --profile test up -d fake-cauth
     wait_for_services "fake-cauth"
     
     print_info "Running CO with NEG_TEST_MODE=FAKE_CAUTH, CAUTH_HOST=fake-cauth..."
     mkdir -p "$LOG_DIR/CAuth-1_FAKE_CAUTH"
     
-    if sudo docker compose run --rm \
+    if sudo docker compose run --rm --no-deps \
         -e NEG_TEST_MODE=FAKE_CAUTH \
         -e CAUTH_HOST=fake-cauth \
         -e CAUTH_PORT=8443 \
@@ -288,7 +305,8 @@ run_test_5_fake_cauth() {
     
     # Restore real cauth
     print_info "Stopping fake-cauth, restoring real cauth..."
-    sudo docker compose stop fake-cauth
+    sudo docker compose --profile test stop fake-cauth
+    sudo docker compose --profile test rm -f fake-cauth
     sudo docker compose up -d cauth
     wait_for_services "cauth"
     
@@ -469,9 +487,8 @@ main() {
     # Create log directory
     mkdir -p "$LOG_DIR"
     
-    # Stop all containers and clean volumes
-    print_info "Cleaning up previous runs..."
-    sudo docker compose down -v
+    # Cleanup from any previous crashed runs
+    cleanup_from_previous_run
     
     # Run all tests in sequence
     run_test_1_honest
@@ -485,7 +502,6 @@ main() {
     run_test_9_resv_reorder
     run_test_10_resv_sig_flip
     run_test_11_resv_drop_field
-    
     # Print summary
     print_summary
     

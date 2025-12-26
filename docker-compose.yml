@@ -90,6 +90,22 @@ services:
       - cauth
       - sp
     restart: "no"
+
+  fake-cauth:
+    build: ./fake-cauth
+    container_name: fake-cauth-container
+    networks:
+      java-network:
+        ipv4_address: 172.20.0.10
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./crypto_do_once/fake_cauth_keystore.p12:/app/keystore.p12
+      - ./crypto_do_once/fake_cauth_truststore.p12:/app/truststore.p12
+    profiles:
+      - test
+    restart: "no"
+
 networks:
   java-network:
     driver: bridge

@@ -1,9 +1,0 @@
-cauth-container  | CAuth running on port 8443
-cauth-container  | CAuth cert subject: CN=172.20.0.10, O=Private Parking, C=BE
-cauth-container  | CAuth cert issuer:  CN=Root CA, O=National Authority, C=Country Code
-cauth-container  | TLS: TLSv1.3 / TLS_AES_256_GCM_SHA384
-cauth-container  | Could not log peer identity: peer not authenticated
-cauth-container  | TLS: TLSv1.3 / TLS_AES_256_GCM_SHA384
-cauth-container  | Could not log peer identity: peer not authenticated
-cauth-container  | TLS: TLSv1.3 / TLS_AES_256_GCM_SHA384
-cauth-container  | Could not log peer identity: peer not authenticated

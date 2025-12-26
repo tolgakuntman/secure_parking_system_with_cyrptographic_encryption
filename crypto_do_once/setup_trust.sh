@@ -35,8 +35,8 @@ SERVER_COUNTRY="BE"
 ###########################################
 
 rm -f "$ROOT_CA_KEYSTORE" "$SERVER_KEYSTORE"
-rm -f cauth_truststore.p12 sp_truststore.p12 ho_truststore.p12 co_truststore.p12
-rm -f root_ca.crt server.csr server.crt
+rm -f cauth_truststore.p12 sp_truststore.p12 ho_truststore.p12 co_truststore.p12 fake_cauth_truststore.p12 fake_cauth_keystore.p12
+rm -f root_ca.crt server.csr server.crt fake_server.csr fake_server.crt
 
 ###########################################
 # 1. Create Root CA keystore + self-signed certificate
@@ -180,12 +180,79 @@ keytool -importcert \
     -file root_ca.crt \
     -noprompt
 
+# Create fake-cauth truststore (for testing scenarios)
+keytool -importcert \
+    -alias "$ROOT_CA_ALIAS" \
+    -keystore fake_cauth_truststore.p12 \
+    -storepass "$TRUSTSTORE_PASSWORD" \
+    -file root_ca.crt \
+    -noprompt
+
+###########################################
+# 9. Create fake-cauth keystore (for testing)
+###########################################
+
+echo "9. Creating fake-cauth keystore for testing scenarios..."
+
+# Generate fake-cauth's own key pair
+keytool -genkeypair \
+    -alias "fake_cauth_server" \
+    -keyalg RSA \
+    -keysize 4096 \
+    -validity "$VALIDITY_DAYS" \
+    -keystore fake_cauth_keystore.p12 \
+    -storepass "$SERVER_PASSWORD" \
+    -keypass "$SERVER_PASSWORD" \
+    -dname "CN=$SERVER_CN, O=Fake Authority, C=$SERVER_COUNTRY" \
+    -ext BasicConstraints:critical=ca:true,pathlen:0 \
+    -ext KeyUsage:critical=keyCertSign,cRLSign,digitalSignature,keyEncipherment \
+    -ext ExtendedKeyUsage=serverAuth,clientAuth
+
+# Generate CSR for fake-cauth
+keytool -certreq \
+    -alias "fake_cauth_server" \
+    -keystore fake_cauth_keystore.p12 \
+    -storepass "$SERVER_PASSWORD" \
+    -file fake_server.csr \
+    -ext BasicConstraints:critical=ca:true,pathlen:0 \
+    -ext KeyUsage:critical=keyCertSign,cRLSign,digitalSignature,keyEncipherment \
+    -ext ExtendedKeyUsage=serverAuth,clientAuth
+
+# Sign fake-cauth's certificate with Root CA
+keytool -gencert \
+    -alias "$ROOT_CA_ALIAS" \
+    -keystore "$ROOT_CA_KEYSTORE" \
+    -storepass "$ROOT_CA_PASSWORD" \
+    -infile fake_server.csr \
+    -outfile fake_server.crt \
+    -validity "$VALIDITY_DAYS" \
+    -ext BasicConstraints:critical=ca:true,pathlen:0 \
+    -ext KeyUsage:critical=keyCertSign,cRLSign,digitalSignature,keyEncipherment \
+    -ext ExtendedKeyUsage=serverAuth,clientAuth \
+    -rfc
+
+# Import Root CA certificate into fake-cauth keystore
+keytool -importcert \
+    -alias "$ROOT_CA_ALIAS" \
+    -keystore fake_cauth_keystore.p12 \
+    -storepass "$SERVER_PASSWORD" \
+    -file root_ca.crt \
+    -noprompt
+
+# Import signed fake-cauth certificate
+keytool -importcert \
+    -alias "fake_cauth_server" \
+    -keystore fake_cauth_keystore.p12 \
+    -storepass "$SERVER_PASSWORD" \
+    -file fake_server.crt \
+    -noprompt
+
 ###########################################
 # Cleanup
 ###########################################
 
-echo "9. Cleaning up CSR and intermediate files..."
-rm -f server.csr server.crt
+echo "10. Cleaning up CSR and intermediate files..."
+rm -f server.csr server.crt fake_server.csr fake_server.crt
 
 ###########################################
 # Summary
@@ -202,6 +269,8 @@ echo "  - cauth_truststore.p12 (server truststore)"
 echo "  - sp_truststore.p12 (client truststore)"
 echo "  - ho_truststore.p12 (homeowner truststore)"
 echo "  - co_truststore.p12 (carowner truststore)"
+echo "  - fake_cauth_keystore.p12 (fake-cauth keystore for testing)"
+echo "  - fake_cauth_truststore.p12 (fake-cauth truststore for testing)"
 echo ""
 echo "Client keystores (SP/HO/CO) will be created during enrollment."
 echo ""

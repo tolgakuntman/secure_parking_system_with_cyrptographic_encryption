@@ -17,8 +17,11 @@ RUN mvn clean package -DskipTests
 
 # Run the application
 CMD ["java",\
+  "-Djavax.net.ssl.keyStore=/app/keystore.p12",\
+  "-Djavax.net.ssl.keyStorePassword=serverpassword",\
+  "-Djavax.net.ssl.keyStoreType=PKCS12",\
   "-Djavax.net.ssl.trustStore=/app/truststore.p12",\
-  "-Djavax.net.ssl.trustStorePassword=password",\
+  "-Djavax.net.ssl.trustStorePassword=trustpassword",\
   "-Djavax.net.ssl.trustStoreType=PKCS12",\
   "-jar",\
   "/app/target/fake-cauth-1.0-SNAPSHOT.jar"\

@@ -1,0 +1,3 @@
+sp-container  | 23:51:27 [SP][AUDIT] mTLS peer CN=HomeOwner fp=58C169422886A140 tls=TLSv1.3 suite=TLS_AES_256_GCM_SHA384
+sp-container  | 23:51:27 [SP][INFO] Publish availability from HomeOwner spot=SPOT-A1 price=5
+sp-container  | 23:51:27 [SP][AUDIT] Availability stored: 6669cabc... total=4

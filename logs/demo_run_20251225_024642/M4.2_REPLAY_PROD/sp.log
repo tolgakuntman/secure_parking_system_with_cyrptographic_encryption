@@ -1,0 +1,15 @@
+sp-container  | 23:49:10 [SP][AUDIT] mTLS peer CN=HomeOwner fp=58C169422886A140 tls=TLSv1.3 suite=TLS_AES_256_GCM_SHA384
+sp-container  | 23:49:10 [SP][INFO] Publish availability from HomeOwner spot=SPOT-A1 price=5
+sp-container  | 23:49:10 [SP][AUDIT] Availability stored: 32acda5e... total=2
+sp-container  | 23:49:19 [SP][AUDIT] mTLS peer CN=CarOwner fp=CCAAFC5A37A94C14 tls=TLSv1.3 suite=TLS_AES_256_GCM_SHA384
+sp-container  | 23:49:19 [SP][INFO] Returned 2 availability records to CarOwner
+sp-container  | 23:49:20 [SP][AUDIT] mTLS peer CN=CarOwner fp=CCAAFC5A37A94C14 tls=TLSv1.3 suite=TLS_AES_256_GCM_SHA384
+sp-container  | 23:49:20 [SP][INFO] Generating 5 tokens for CarOwner
+sp-container  | 23:49:20 [SP][AUDIT] Token batch issued: chainId=2ca97447... count=5 to=CarOwner
+sp-container  | 23:49:20 [SP][AUDIT] mTLS peer CN=HomeOwner fp=58C169422886A140 tls=TLSv1.3 suite=TLS_AES_256_GCM_SHA384
+sp-container  | 23:49:20 [SP][INFO] Settlement: chain=2ca97447... resv=89caa62c... y=5
+sp-container  | 23:49:20 [SP][AUDIT] SETTLEMENT chain=2ca97447... y=5 idx=0->5 remaining=0
+sp-container  | 23:49:20 [SP][AUDIT] RECEIPT receiptId=e92cac2f... resv=89caa62c...
+sp-container  | 23:49:24 [SP][AUDIT] mTLS peer CN=HomeOwner fp=58C169422886A140 tls=TLSv1.3 suite=TLS_AES_256_GCM_SHA384
+sp-container  | 23:49:24 [SP][INFO] Settlement: chain=2ca97447... resv=89caa62c... y=5
+sp-container  | 23:49:24 [SP][SEC_ERR] DOUBLE_SPEND chain=2ca97447... old=5 new=5

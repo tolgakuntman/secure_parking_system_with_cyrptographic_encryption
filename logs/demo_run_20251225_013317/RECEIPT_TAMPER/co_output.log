@@ -1,0 +1,49 @@
+ Container cauth-container  Running
+ Container sp-container  Running
+[CO][INFO][RECEIPT_TAMPER] Waiting for CAuth, SP, and HO to start...
+[CO][INFO][RECEIPT_TAMPER] 
+=== Car Owner (CO) Starting ===
+[CO][INFO][RECEIPT_TAMPER] Found existing certificate, loading from keystore...
+[CO][INFO][RECEIPT_TAMPER] ...
+[CO][INFO][RECEIPT_TAMPER] 
+╔═══════════════════════════════════════════╗
+[CO][INFO][RECEIPT_TAMPER] ║   CO CRYPTOGRAPHIC IDENTITY ESTABLISHED   ║
+[CO][INFO][RECEIPT_TAMPER] ╚═══════════════════════════════════════════╝
+[CO][INFO][RECEIPT_TAMPER] Subject: C=XX,O=Unauthorized,CN=ROGUE-CO-UNTRUSTED
+[CO][INFO][RECEIPT_TAMPER] Issuer: C=XX,O=Unauthorized,CN=ROGUE-CO-UNTRUSTED
+[CO][INFO][RECEIPT_TAMPER] Valid from: Wed Dec 24 22:33:41 UTC 2025
+[CO][INFO][RECEIPT_TAMPER] Valid until: Thu Dec 24 22:34:41 UTC 2026
+[CO][INFO][RECEIPT_TAMPER] 
+=== Discovering Parking Availabilities from SP ===
+[CO][INFO][RECEIPT_TAMPER] Establishing hardened mTLS connection to SP for authenticated discovery...
+[CO][INFO][RECEIPT_TAMPER] ...
+[CO][INFO][RECEIPT_TAMPER]   Protocol: TLSv1.3
+[CO][INFO][RECEIPT_TAMPER]   Cipher suite: TLS_AES_256_GCM_SHA384
+[CO][INFO][RECEIPT_TAMPER]   SP certificate subject: C=BE,O=Parking System,CN=ServiceProvider
+[CO][INFO][RECEIPT_TAMPER]   SP certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+[CO][INFO][RECEIPT_TAMPER] ...
+[CO][INFO][RECEIPT_TAMPER] 
+→ Requesting parking availabilities from SP...
+[CO][ERR][RECEIPT_TAMPER] 
+✖ CRITICAL ERROR: CO failed to start
+[CO][ERR][RECEIPT_TAMPER] Reason: Received fatal alert: bad_certificate
+javax.net.ssl.SSLHandshakeException: Received fatal alert: bad_certificate
+	at java.base/sun.security.ssl.Alert.createSSLException(Unknown Source)
+	at java.base/sun.security.ssl.Alert.createSSLException(Unknown Source)
+	at java.base/sun.security.ssl.TransportContext.fatal(Unknown Source)
+	at java.base/sun.security.ssl.Alert$AlertConsumer.consume(Unknown Source)
+	at java.base/sun.security.ssl.TransportContext.dispatch(Unknown Source)
+	at java.base/sun.security.ssl.SSLTransport.decode(Unknown Source)
+	at java.base/sun.security.ssl.SSLSocketImpl.decode(Unknown Source)
+	at java.base/sun.security.ssl.SSLSocketImpl.readApplicationRecord(Unknown Source)
+	at java.base/sun.security.ssl.SSLSocketImpl$AppInputStream.read(Unknown Source)
+	at java.base/sun.nio.cs.StreamDecoder.readBytes(Unknown Source)
+	at java.base/sun.nio.cs.StreamDecoder.implRead(Unknown Source)
+	at java.base/sun.nio.cs.StreamDecoder.read(Unknown Source)
+	at java.base/java.io.InputStreamReader.read(Unknown Source)
+	at java.base/java.io.BufferedReader.fill(Unknown Source)
+	at java.base/java.io.BufferedReader.readLine(Unknown Source)
+	at java.base/java.io.BufferedReader.readLine(Unknown Source)
+	at com.example.Main.discoverAvailabilities(Main.java:1040)
+	at com.example.Main.main(Main.java:450)
+

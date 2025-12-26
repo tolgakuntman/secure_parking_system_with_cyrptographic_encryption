@@ -1,0 +1,265 @@
+ Volume secure_software_assignment_co_keystore  Creating
+ Volume secure_software_assignment_co_keystore  Created
+ Container cauth-container  Running
+ Container sp-container  Running
+[CO][INFO][P1_HONEST] Waiting for CAuth, SP, and HO to start...
+[CO][INFO][P1_HONEST] 
+=== Car Owner (CO) Starting ===
+[CO][INFO][P1_HONEST] No existing certificate found, enrolling with CAuth...
+[CO][INFO][P1_HONEST] Step 1: Generating RSA key pair...
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST] 
+Step 2: Creating Certificate Signing Request (CSR)...
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST] 
+Step 3: Connecting to CAuth server over TLS...
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST]   Protocol: TLSv1.3
+[CO][INFO][P1_HONEST]   Cipher suite: TLS_AES_256_GCM_SHA384
+[CO][INFO][P1_HONEST] 
+→ Sending CSR to CAuth for signing...
+[CO][INFO][P1_HONEST] Received CA certificate from CAuth.
+[CO][INFO][P1_HONEST] Received Root CA certificate from CAuth.
+[CO][INFO][P1_HONEST] Certificate signed by CAuth!
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST] 
+Step 4: Storing certificate and private key securely...
+[CO][INFO][P1_HONEST] ✓ Credentials stored in ./keystore/co_keystore.p12
+[CO][INFO][P1_HONEST] 
+╔═══════════════════════════════════════════╗
+[CO][INFO][P1_HONEST] ║   CO CRYPTOGRAPHIC IDENTITY ESTABLISHED   ║
+[CO][INFO][P1_HONEST] ╚═══════════════════════════════════════════╝
+[CO][INFO][P1_HONEST] Subject: C=BE,O=Parking System,CN=CarOwner
+[CO][INFO][P1_HONEST] Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+[CO][INFO][P1_HONEST] Valid from: Wed Dec 24 22:12:59 UTC 2025
+[CO][INFO][P1_HONEST] Valid until: Thu Dec 24 22:13:59 UTC 2026
+[CO][INFO][P1_HONEST] 
+=== Discovering Parking Availabilities from SP ===
+[CO][INFO][P1_HONEST] Establishing hardened mTLS connection to SP for authenticated discovery...
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST]   Protocol: TLSv1.3
+[CO][INFO][P1_HONEST]   Cipher suite: TLS_AES_256_GCM_SHA384
+[CO][INFO][P1_HONEST]   SP certificate subject: C=BE,O=Parking System,CN=ServiceProvider
+[CO][INFO][P1_HONEST]   SP certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST] 
+→ Requesting parking availabilities from SP...
+[CO][INFO][P1_HONEST] ← Received availability list from SP
+
+[CO][INFO][P1_HONEST] ╔═══════════════════════════════════════════════════════════╗
+[CO][INFO][P1_HONEST] ║   AUTHENTICATED AVAILABILITY DISCOVERY SUCCESSFUL         ║
+[CO][INFO][P1_HONEST] ╚═══════════════════════════════════════════════════════════╝
+[CO][INFO][P1_HONEST] Discovered 1 parking availability record(s)
+
+[CO][INFO][P1_HONEST] ════════════════════════════════════════════════════════════
+[CO][INFO][P1_HONEST] Availability #1
+[CO][INFO][P1_HONEST] ════════════════════════════════════════════════════════════
+[CO][INFO][P1_HONEST] Availability ID: 5e6ed5f6-a38d-406f-93a0-d87229cc32ae
+[CO][INFO][P1_HONEST] Spot ID: SPOT-A1
+[CO][INFO][P1_HONEST] Price: 5 tokens
+[CO][INFO][P1_HONEST] Valid: 2025-12-24T22:13:45.562387240Z to 2025-12-25T06:13:45.562387240Z
+[CO][INFO][P1_HONEST] Location: Downtown-North
+[CO][INFO][P1_HONEST] Home Owner ID: HO-001
+[CO][INFO][P1_HONEST] 
+[CO][INFO][P1_HONEST] ─ HO Certificate Identity Verification ─
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST]   Valid from: Wed Dec 24 22:12:45 UTC 2025
+[CO][INFO][P1_HONEST]   Valid until: Thu Dec 24 22:13:45 UTC 2026
+[CO][INFO][P1_HONEST] ⚠ Note: Full chain validation not possible (intermediate CA cert not provided)
+[CO][INFO][P1_HONEST]   Relying on certificate fingerprint verification for trust anchor
+[CO][INFO][P1_HONEST]   In production: SP should include full certificate chain
+[CO][INFO][P1_HONEST] ✓ HO Identity (CN): HomeOwner
+[CO][INFO][P1_HONEST]   Full Subject: CN=HomeOwner,O=Parking System,C=BE
+[CO][INFO][P1_HONEST]   Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+[CO][INFO][P1_HONEST] ✓ Certificate fingerprint verified: 3E37713060E831A2...
+[CO][INFO][P1_HONEST] ✓ Identity binding persisted to ./keystore/ho_identity_bindings.txt
+[CO][INFO][P1_HONEST] 
+...
+[CO][INFO][P1_HONEST]   Spot: SPOT-A1 ⟷ HO: HomeOwner
+[CO][INFO][P1_HONEST]   Fingerprint: 3E37713060E831A293422E7D9FF387F9...
+[CO][INFO][P1_HONEST] 
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST] ════════════════════════════════════════════════════════════
+[CO][INFO][P1_HONEST] ✓✓✓ AVAILABILITY DISCOVERY COMPLETE ✓✓...
+[CO][INFO][P1_HONEST] ════════════════════════════════════════════════════════════
+[CO][INFO][P1_HONEST] All HO identities verified and bound to availabilities
+[CO][INFO][P1_HONEST] Identity bindings persisted for future interaction verification
+[CO][INFO][P1_HONEST] 
+=== Requesting Reservation from HO (Milestone 2.4) ===
+[CO][INFO][P1_HONEST] 
+═══════════════════════════════════════════════════════════
+[CO][INFO][P1_HONEST]    MILESTONE 2.4: RESERVATION HANDSHAKE WITH HO
+[CO][INFO][P1_HONEST] ═══════════════════════════════════════════════════════════
+[CO][INFO][P1_HONEST] ✓ CO Identity: CarOwner
+[CO][INFO][P1_HONEST] ✓ Target HO: HomeOwner (ho:8445)
+[CO][INFO][P1_HONEST] ✓ Availability ID: 5e6ed5f6-a38d-406f-93a0-d87229cc32ae
+[CO][INFO][P1_HONEST] 
+--- Loading CO keystore and truststore for mTLS ---
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST] 
+--- Establishing mTLS connection to HO ---
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST]   Protocol: TLSv1.3
+[CO][INFO][P1_HONEST]   Cipher Suite: TLS_AES_256_GCM_SHA384
+[CO][INFO][P1_HONEST] 
+--- Verifying HO certificate binding ---
+[CO][INFO][P1_HONEST]   Expected fingerprint: 3E37713060E831A293422E7D9FF387F9717BB04395EC8FCA8B60E5D5EFCF3D7F
+[CO][INFO][P1_HONEST]   Received fingerprint: 3E37713060E831A293422E7D9FF387F9717BB04395EC8FCA8B60E5D5EFCF3D7F
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST] ✓ HO peer identity verified: HomeOwner
+[CO][INFO][P1_HONEST] 
+--- Building reservation request ---
+[CO][INFO][P1_HONEST]   Request fields:
+[CO][INFO][P1_HONEST]     availabilityId: 5e6ed5f6-a38d-406f-93a0-d87229cc32ae
+[CO][INFO][P1_HONEST]     spotId: SPOT-A1
+[CO][INFO][P1_HONEST]     validFrom: 2025-12-24T22:13:45.562387240Z
+[CO][INFO][P1_HONEST]     validTo: 2025-12-25T06:13:45.562387240Z
+[CO][INFO][P1_HONEST]     priceTokens: 5
+[CO][INFO][P1_HONEST]     coIdentity: CarOwner
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST] 
+--- Received reservation response ---
+[CO][INFO][P1_HONEST]   Status: success
+[CO][INFO][P1_HONEST]   Reservation ID: bb5dec74-2100-4d28-ac66-7a9d42964fa2
+[CO][INFO][P1_HONEST]   Verdict: OK
+[CO][INFO][P1_HONEST]   HO Identity: HomeOwner
+[CO][INFO][P1_HONEST]   Signature Algorithm: SHA256withRSA
+[CO][INFO][P1_HONEST] 
+--- Verifying HO signature (RSA-2048) ---
+[CO][INFO][P1_HONEST] ✓ Signature decoded (256 bytes)
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST]   reservationId=bb5dec74-2100-4d28-ac66-7a9d42964fa2|verdict=OK|availabilityId=5e6ed5f6-a38d-406f-93a0-d87229cc32ae|spotId=SPOT-A1|validFrom=2025-12-24T22:13:45.562387240Z|validTo=2025-12-25T06:13:45.562387240Z|priceTokens=5|coIdentity=CarOwner
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST]   reservationId=bb5dec74-2100-4d28-ac66-7a9d42964fa2|verdict=OK|availabilityId=5e6ed5f6-a38d-406f-93a0-d87229cc32ae|spotId=SPOT-A1|validFrom=2025-12-24T22:13:45.562387240Z|validTo=2025-12-25T06:13:45.562387240Z|priceTokens=5|coIdentity=CarOwner
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST] ✓ HO identity confirmed: HomeOwner
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST] ✓ Cryptographic proof stored: ./keystore/reservations/bb5dec74-2100-4d28-ac66-7a9d42964fa2.json
+[CO][INFO][P1_HONEST] 
+--- Sending payment request to HO (Milestone 3.2 - Using SP tokens) ---
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST]   Protocol: TLSv1.3
+[CO][INFO][P1_HONEST]   Cipher suite: TLS_AES_256_GCM_SHA384
+[CO][INFO][P1_HONEST]   SP certificate: C=BE,O=Parking System,CN=ServiceProvider
+[CO][INFO][P1_HONEST] [M3.4] SP certificate cached for receipt verification
+[CO][INFO][P1_HONEST] 
+→ Requesting 5 payment tokens from SP...
+[CO][INFO][P1_HONEST] 
+← Received response from SP
+[CO][INFO][P1_HONEST] {
+  "tokenHashAlg": "SHA-256",
+  "signatureAlg": "SHA256withRSA",
+  "chainId": "c24c7490-03d8-4fc1-993a-573ba2157455",
+  "rootSignature": "j3dtNM1qHt64fFpBpwBQ8FRwTGO565uiHuxPOw2Lc40ZUsD9BJbKe0lQpFHsUFe4P7kd046RGvWE9S+urW9d5a3JHxYMHlvEq+c5Aup317mqkHEbFeSKKHlczOXm74FpiATnXBnV/X9c0PFzeJcgnTMsJPHWwVbgUasznlQcygOUGLo1a/VNLolHZzs75oAJDHrhHffpAQgjW14c9ZywPy1I2pr6cBRenGcLCOJXboHCdz5UPVk9fK3MDfFsoDAYuGwUBhJoluNwmpU8JneruKWK48mT3rphYohCpCvEof5mRn9gJ2mRrbRCsTmjo6FXIm4ApQc/kvvdZW/DpqiiSg==",
+  "root": "5D2MBpsOnn8elTr8cbIXlj1KhiZM5lgBgQmwzkdrMgI=",
+  "x": 5,
+  "tokens": [
+    "hd/whdB93YGzXXoh4/hYHjrjddrZ3l6zlOB0phZG8HA=",
+    "detos1aQjm3YVKx9vcq4bhjke3qq85EjXyPgyNOCZ94=",
+    "xtVGEUeBPI1dRuqtdzvhZYIgNJfVyPEyHLsR/cBZnWk=",
+    "IsX8iLSISGf1NqY9C7ZTD8vvbS+ytEG21CWuC6luBDU=",
+    "5D2MBpsOnn8elTr8cbIXlj1KhiZM5lgBgQmwzkdrMgI="
+  ],
+  "status": "success"
+}
+[CO][INFO][P1_HONEST] 
+=== Verifying Token Batch ===
+[CO][INFO][P1_HONEST] Chain ID: c24c7490-03d8-4fc1-993a-573ba2157455
+[CO][INFO][P1_HONEST] Token count: 5
+[CO][INFO][P1_HONEST] Tokens received: 5
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST] Root hash: E43D8C069B0E9E7F1E953AFC71B217963D4A86264CE658018109B0CE476B3202
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST] 
+Verifying hash chain:
+[CO][INFO][P1_HONEST]   Starting with token[0]: 85DFF085D07DDD81...
+[CO][INFO][P1_HONEST]   Chain verified: 5 hashes lead to signed root
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST] 
+═════════════════════════════════════════════
+[CO][INFO][P1_HONEST] ✓✓✓ TOKEN BATCH VERIFIED SUCCESSFULLY ✓✓...
+[CO][INFO][P1_HONEST] ═════════════════════════════════════════════
+[CO][INFO][P1_HONEST] Received 5 valid payment tokens from SP
+[CO][INFO][P1_HONEST] Chain ID: c24c7490-03d8-4fc1-993a-573ba2157455
+[CO][INFO][P1_HONEST]   Using SP-issued token batch, chainId=c24c7490-03d8-4fc1-993a-573ba2157455
+[CO][INFO][P1_HONEST]   tokensToSpend: indices [0, 5)
+[CO][INFO][P1_HONEST]   Total tokens to spend: 5 (matching reservation price)
+[CO][INFO][P1_HONEST] 
+[M4] Negative Test Mode: NONE
+[CO][INFO][P1_HONEST] [M3] Normal payment flow (no negative scenarios)
+[CO][INFO][P1_HONEST] → Sending pay request to HO at ho:8445
+[CO][INFO][P1_HONEST] ← HO pay response:
+[CO][INFO][P1_HONEST] {
+  "startIndex": 0,
+  "reservationId": "bb5dec74-2100-4d28-ac66-7a9d42964fa2",
+  "chainId": "c24c7490-03d8-4fc1-993a-573ba2157455",
+  "spentCount": 5,
+  "newLastSpentIndex": 4,
+  "paymentReceipt": {
+    "hoIdentity": "HomeOwner",
+    "reservationId": "bb5dec74-2100-4d28-ac66-7a9d42964fa2",
+    "signatureAlg": "SHA256withRSA",
+    "chainId": "c24c7490-03d8-4fc1-993a-573ba2157455",
+    "availabilityId": "5e6ed5f6-a38d-406f-93a0-d87229cc32ae",
+    "newLastSpentIndex": 5,
+    "spCertFingerprint": "1178DBB3DCA72FEF5EC30642BA185A8441B3F132059EFBEFF2ED978FA4B30094",
+    "y": 5,
+    "receiptId": "ae56998e-4e95-431b-9bbb-97bb72c556c0",
+    "canonicalReceipt": "receiptId=ae56998e-4e95-431b-9bbb-97bb72c556c0|chainId=c24c7490-03d8-4fc1-993a-573ba2157455|reservationId=bb5dec74-2100-4d28-ac66-7a9d42964fa2|availabilityId=5e6ed5f6-a38d-406f-93a0-d87229cc32ae|y=5|newLastSpentIndex=5|timestamp=2025-12-24T22:14:00.603749747Z|hoIdentity=HomeOwner",
+    "receiptSignature": "c2PNaxdF9UlRrxL5oP9rc49I4fDOyNbBMoIKzpc3/ATsR9g0OE4lhS2g2v/svmZq14ckYhrRwD1sV/MUK1yxtNbyVh7keSqNCqOt90P6oGv55SGlRIIjDeghfZS+Vb8bnIOBsDxn6x7ddkFlyvlHPziCXMY9bEuaHGxFgBBP5HSRAqLTV/76IVpzbkhASumIUp35qPuEUDx1XaJXQtjxzhmD/ROJ6e8uhEGxJiQ3RdhqgzQUWVC0F08PtPPuH0zpiE4xBdTSHqNFkmrVmAHTcCLOcqT4UJE0yAWf+Utf/gL9rxXyxiewfGFT9uqp+5xMOFL/2V1Pj/aQbzX7szxM/g==",
+    "timestamp": "2025-12-24T22:14:00.603749747Z"
+  },
+  "message": "payment accepted",
+  "status": "success",
+  "timestamp": "2025-12-24T22:14:00.637774914Z"
+}
+[CO][INFO][P1_HONEST] ✓✓✓ PAYMENT ACCEPTED BY HO ✓✓...
+[CO][INFO][P1_HONEST] 
+═══════════════════════════════════════════════════
+[CO][INFO][P1_HONEST] M3.4: Verifying Payment Finalization Receipt
+[CO][INFO][P1_HONEST] ═══════════════════════════════════════════════════
+[CO][INFO][P1_HONEST] [M3.4-VERIFY] Starting receipt verification...
+[CO][INFO][P1_HONEST] [M3.4-VERIFY] Receipt ID: ae56998e-4e95-431b-9bbb-97bb72c556c0
+[CO][INFO][P1_HONEST] [M3.4-VERIFY] Canonical data: receiptId=ae56998e-4e95-431b-9bbb-97bb72c556c0|chainId=c24c7490-03d8-4fc1-993a-573ba2157455|reservationId=bb5dec74-2100-4d28-ac66-7a9d42964fa2|availabilityId=5e6ed5f6-a38d-406f-93a0-d87229cc32ae|y=5|newLastSpentIndex=5|timestamp=2025-12-24T22:14:00.603749747Z|hoIdentity=HomeOwner
+[CO][INFO][P1_HONEST] [M3.4-VERIFY] Signature algorithm: SHA256withRSA
+[CO][INFO][P1_HONEST] [M3.4-VERIFY] Validating consistency with local payment state...
+[CO][INFO][P1_HONEST] [M3.4-VERIFY] ✓ Consistency validated
+[CO][INFO][P1_HONEST] [M3.4-VERIFY]   chainId: c24c7490-03d8-4fc1-993a-573ba2157455
+[CO][INFO][P1_HONEST] [M3.4-VERIFY]   reservationId: bb5dec74-2100-4d28-ac66-7a9d42964fa2
+[CO][INFO][P1_HONEST] [M3.4-VERIFY]   tokens spent: 5
+[CO][INFO][P1_HONEST] [M3.4-VERIFY] Verifying SP signature (RSA-2048, SHA256withRSA)...
+[CO][INFO][P1_HONEST] [M3.4-VERIFY] ✓ SP signature verified successfully
+[CO][INFO][P1_HONEST] [M3.4-VERIFY] ✓ Non-repudiation: SP cannot deny issuing this receipt
+[CO][INFO][P1_HONEST] [M3.4-VERIFY] ✓ Integrity: Receipt has not been modified
+[CO][INFO][P1_HONEST] [M3.4-VERIFY] Validating SP certificate to Root CA...
+[CO][INFO][P1_HONEST] [M3.4-VERIFY] ✓ SP certificate is within validity period
+[CO][INFO][P1_HONEST] [M3.4-VERIFY] ✓ SP certificate validated
+[CO][INFO][P1_HONEST] [M3.4-VERIFY] Persisting receipt as immutable proof...
+[CO][INFO][P1_HONEST] [M3.4-VERIFY] ✓ Receipt persisted: ./keystore/receipts/receipt_ae56998e-4e95-431b-9bbb-97bb72c556c0.json
+[CO][INFO][P1_HONEST] [M3.4-VERIFY] ✓ Immutable proof stored for dispute resolution
+[CO][INFO][P1_HONEST] [M3.4-VERIFY] ✓ Enables offline third-party verification
+[CO][INFO][P1_HONEST] [M3.4-VERIFY] ═══════════════════════════════════════════════════
+[CO][INFO][P1_HONEST] [M3.4-VERIFY] PAYMENT FINALITY ACHIEVED
+[CO][INFO][P1_HONEST] [M3.4-VERIFY] ═══════════════════════════════════════════════════
+[CO][INFO][P1_HONEST] [M3.4-VERIFY] ✓ SP signature verified (cryptographic proof)
+[CO][INFO][P1_HONEST] [M3.4-VERIFY] ✓ Consistency validated (no substitution)
+[CO][INFO][P1_HONEST] [M3.4-VERIFY] ✓ Immutable receipt stored (audit trail)
+[CO][INFO][P1_HONEST] [M3.4-VERIFY] ✓ Non-repudiation guaranteed (SP cannot deny)
+[CO][INFO][P1_HONEST] [M3.4-VERIFY] ✓ Dispute resolution enabled (third-party verification)
+[CO][INFO][P1_HONEST] ✓✓✓ PAYMENT FINALITY ESTABLISHED ✓✓...
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST] ...
+[CO][INFO][P1_HONEST] ═══════════════════════════════════════════════════
+[CO][INFO][P1_HONEST] 
+═══════════════════════════════════════════════════════════
+[CO][INFO][P1_HONEST]    RESERVATION HANDSHAKE COMPLETE
+[CO][INFO][P1_HONEST]    Verdict: OK
+[CO][INFO][P1_HONEST]    Non-repudiable proof stored: bb5dec74-2100-4d28-ac66-7a9d42964fa2
+[CO][INFO][P1_HONEST] ═══════════════════════════════════════════════════════════
+[CO][INFO][P1_HONEST] 
+✓✓✓ CO SERVICE COMPLETED SUCCESSFULLY ✓✓...

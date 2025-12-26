@@ -1,0 +1,27 @@
+ Container cauth-container  Running
+ Container sp-container  Running
+10:13:20 [CO][INFO] Waiting for CAuth, SP, and HO to start...
+10:13:32 [CO][INFO] Car Owner (CO) starting
+10:13:32 [CO][INFO] Loading existing certificate from keystore
+10:13:32 [CO][AUDIT] CO IDENTITY subj=CarOwner issuer=CN=172.20.0.10,O=Private Parking,C=BE
+10:13:32 [CO][INFO] Discovering parking availabilities from SP
+10:13:32 [CO][INFO] Establishing mTLS connection to SP for discovery...
+10:13:33 [CO][AUDIT] mTLS to SP: TLSv1.3 TLS_AES_256_GCM_SHA384
+10:13:33 [CO][AUDIT] SP peer CN=ServiceProvider fp=2CD1D4B77C5262DB
+10:13:33 [CO][INFO] Discovery success: 1 availability record(s)
+10:13:33 [CO][AUDIT] HO identity: CN=HomeOwner issuer=172.20.0.10
+10:13:33 [CO][INFO] HO identity bound: spot=SPOT-A1 CN=HomeOwner
+10:13:33 [CO][INFO] Availability discovery complete: all HO identities verified
+10:13:33 [CO][INFO] Requesting reservation from HO
+10:13:33 [CO][INFO] M2.4: Reservation handshake with HO
+10:13:33 [CO][AUDIT] mTLS to HO: TLSv1.3 TLS_AES_256_GCM_SHA384
+10:13:33 [CO][AUDIT] HO peer CN=HomeOwner fp=7AAF33BEAD7E3C11
+10:13:33 [CO][INFO] Signature verified: RSA-2048/SHA256withRSA, HO=HomeOwner
+10:13:33 [CO][INFO] M3.2: Sending payment request to HO (using SP tokens)
+10:13:33 [CO][AUDIT] mTLS to SP: TLSv1.3 TLS_AES_256_GCM_SHA384
+10:13:33 [CO][AUDIT] SP peer CN=ServiceProvider fp=2CD1D4B77C5262DB
+10:13:33 [CO][INFO] Token batch verified: 5 tokens, chainId=ca029345-de32-4062-9800-27637851cdf7
+10:13:33 [CO][INFO] M4.1 TOKEN TAMPER: token[0] byte[0]
+10:13:33 [CO][SEC_OK] M4.1/TOKEN_TAMPER: HO rejected tampered token: security_violation (expected)
+10:13:33 [CO][INFO] Reservation complete: verdict=OK proof=4bcc6400-9cf3-45cc-9df0-2b491ab31eac
+10:13:33 [CO][INFO] CO completed successfully

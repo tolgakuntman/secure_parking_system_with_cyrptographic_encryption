@@ -1,0 +1,8 @@
+sp-container  | 23:50:23 [SP][AUDIT] mTLS peer CN=HomeOwner fp=58C169422886A140 tls=TLSv1.3 suite=TLS_AES_256_GCM_SHA384
+sp-container  | 23:50:23 [SP][INFO] Publish availability from HomeOwner spot=SPOT-A1 price=5
+sp-container  | 23:50:23 [SP][AUDIT] Availability stored: aa31024e... total=3
+sp-container  | 23:50:31 [SP][AUDIT] mTLS peer CN=CarOwner fp=CCAAFC5A37A94C14 tls=TLSv1.3 suite=TLS_AES_256_GCM_SHA384
+sp-container  | 23:50:31 [SP][INFO] Returned 3 availability records to CarOwner
+sp-container  | 23:50:32 [SP][AUDIT] mTLS peer CN=CarOwner fp=CCAAFC5A37A94C14 tls=TLSv1.3 suite=TLS_AES_256_GCM_SHA384
+sp-container  | 23:50:32 [SP][INFO] Generating 5 tokens for CarOwner
+sp-container  | 23:50:32 [SP][AUDIT] Token batch issued: chainId=1cf44b50... count=5 to=CarOwner

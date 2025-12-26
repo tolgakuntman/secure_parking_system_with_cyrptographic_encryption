@@ -1,0 +1,13 @@
+ Container cauth-container  Running
+ Container sp-container  Running
+23:56:45 [RESV_TAMPER_SIG_FLIP][INFO] Waiting for CAuth, SP, and HO to start...
+23:56:57 [RESV_TAMPER_SIG_FLIP][INFO] Car Owner (CO) starting
+23:56:57 [RESV_TAMPER_SIG_FLIP][INFO] RESV_TAMPER NEGATIVE TEST: mode=SIG_FLIP
+23:56:58 [RESV_TAMPER_SIG_FLIP][INFO] Loading existing certificate from keystore
+23:56:58 [RESV_TAMPER_SIG_FLIP][AUDIT] CO IDENTITY subj=ROGUE-CO-UNTRUSTED issuer=C=XX,O=Unauthorized,CN=ROGUE-CO-UNTRUSTED
+23:56:58 [RESV_TAMPER_SIG_FLIP][INFO] Discovering parking availabilities from SP
+23:56:58 [RESV_TAMPER_SIG_FLIP][INFO] Establishing mTLS connection to SP for discovery...
+23:56:58 [RESV_TAMPER_SIG_FLIP][AUDIT] mTLS to SP: TLSv1.3 TLS_AES_256_GCM_SHA384
+23:56:58 [RESV_TAMPER_SIG_FLIP][AUDIT] SP peer CN=ServiceProvider fp=BD1FDE1C8CB5E7F4
+23:56:58 [RESV_TAMPER_SIG_FLIP][SEC_ERR] CO failed: bad_certificate
+

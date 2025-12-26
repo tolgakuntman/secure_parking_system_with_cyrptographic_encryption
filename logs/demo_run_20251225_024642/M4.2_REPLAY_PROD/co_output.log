@@ -1,0 +1,29 @@
+ Container cauth-container  Running
+ Container sp-container  Running
+23:49:06 [M4.2_REPLAY_PROD][INFO] Waiting for CAuth, SP, and HO to start...
+23:49:18 [M4.2_REPLAY_PROD][INFO] Car Owner (CO) starting
+23:49:18 [M4.2_REPLAY_PROD][INFO] Loading existing certificate from keystore
+23:49:18 [M4.2_REPLAY_PROD][AUDIT] CO IDENTITY subj=CarOwner issuer=CN=172.20.0.10,O=Private Parking,C=BE
+23:49:18 [M4.2_REPLAY_PROD][INFO] Discovering parking availabilities from SP
+23:49:18 [M4.2_REPLAY_PROD][INFO] Establishing mTLS connection to SP for discovery...
+23:49:19 [M4.2_REPLAY_PROD][AUDIT] mTLS to SP: TLSv1.3 TLS_AES_256_GCM_SHA384
+23:49:19 [M4.2_REPLAY_PROD][AUDIT] SP peer CN=ServiceProvider fp=BD1FDE1C8CB5E7F4
+23:49:19 [M4.2_REPLAY_PROD][INFO] Discovery success: 2 availability record(s)
+23:49:19 [M4.2_REPLAY_PROD][AUDIT] HO identity: CN=HomeOwner issuer=172.20.0.10
+23:49:19 [M4.2_REPLAY_PROD][INFO] HO identity bound: spot=SPOT-A1 CN=HomeOwner
+23:49:19 [M4.2_REPLAY_PROD][AUDIT] HO identity: CN=HomeOwner issuer=172.20.0.10
+23:49:19 [M4.2_REPLAY_PROD][INFO] HO identity bound: spot=SPOT-A1 CN=HomeOwner
+23:49:19 [M4.2_REPLAY_PROD][INFO] Availability discovery complete: all HO identities verified
+23:49:19 [M4.2_REPLAY_PROD][INFO] Requesting reservation from HO
+23:49:19 [M4.2_REPLAY_PROD][INFO] M2.4: Reservation handshake with HO
+23:49:20 [M4.2_REPLAY_PROD][AUDIT] mTLS to HO: TLSv1.3 TLS_AES_256_GCM_SHA384
+23:49:20 [M4.2_REPLAY_PROD][AUDIT] HO peer CN=HomeOwner fp=58C169422886A140
+23:49:20 [M4.2_REPLAY_PROD][INFO] Signature verified: RSA-2048/SHA256withRSA, HO=HomeOwner
+23:49:20 [M4.2_REPLAY_PROD][INFO] M3.2: Sending payment request to HO (using SP tokens)
+23:49:20 [M4.2_REPLAY_PROD][AUDIT] mTLS to SP: TLSv1.3 TLS_AES_256_GCM_SHA384
+23:49:20 [M4.2_REPLAY_PROD][AUDIT] SP peer CN=ServiceProvider fp=BD1FDE1C8CB5E7F4
+23:49:20 [M4.2_REPLAY_PROD][INFO] Token batch verified: 5 tokens, chainId=2ca97447-09bf-4a07-813b-2eb34848bf7b
+23:49:20 [M4.2_REPLAY_PROD][INFO] M4.2 REPLAY: sending same pay twice
+23:49:21 [M4.2_REPLAY_PROD][WARN] HO rejected payment: Double-spend detected: startIndex=0 <= lastSpentIndex=4
+23:49:21 [M4.2_REPLAY_PROD][INFO] Reservation complete: verdict=OK proof=89caa62c-217c-41ee-9f13-0fe76b7bd1ec
+23:49:21 [M4.2_REPLAY_PROD][INFO] CO completed successfully

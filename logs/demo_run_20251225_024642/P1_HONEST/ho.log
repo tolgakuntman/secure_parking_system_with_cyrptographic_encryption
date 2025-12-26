@@ -1,0 +1,18 @@
+ho-container  | 23:47:10 [HO][AUDIT] mTLS peer CN=CarOwner fp=CCAAFC5A37A94C14 tls=TLSv1.3 suite=TLS_AES_256_GCM_SHA384
+ho-container  | 23:47:10 [HO][INFO] Reservation: avail=5e4d586c... spot=SPOT-A1 price=5
+ho-container  | 23:47:10 [HO][AUDIT] RESERVATION OK resv=37f0137e... co=CarOwner
+ho-container  | 23:47:10 [HO][INFO] Sent reservation response to CarOwner
+ho-container  | 23:47:10 [HO][AUDIT] mTLS peer CN=CarOwner fp=CCAAFC5A37A94C14 tls=TLSv1.3 suite=TLS_AES_256_GCM_SHA384
+ho-container  | 23:47:10 [HO][INFO] Payment: chain=1b9adbb3... resv=37f0137e... tokens=5
+ho-container  | 23:47:10 [HO][INFO] Payment verified: chain=1b9adbb3... tokens=5 start=0
+ho-container  | 23:47:10 [HO][INFO] Settlement request: chain=1b9adbb3... y=5 newLastIdx=5
+ho-container  | 23:47:10 [HO][AUDIT] SP SETTLEMENT ACCEPTED chain=1b9adbb3...
+ho-container  | 23:47:10 [HO][INFO] Verifying SP payment receipt
+ho-container  | 23:47:10 [HO][AUDIT] RECEIPT VERIFIED id=2fb55c3b...
+ho-container  | 23:47:10 [HO][AUDIT] PAYMENT ACCEPTED chain=1b9adbb3... lastIdx=4
+ho-container  | 23:47:10 [HO][INFO] Sent pay response to CarOwner
+ho-container  | 23:47:13 [HO][INFO] NEGATIVE TEST: Attempting double-spend replay
+ho-container  | 23:47:13 [HO][INFO] Settlement request: chain=1b9adbb3... y=5 newLastIdx=5
+ho-container  | 23:47:13 [HO][SEC_ERR] SP SETTLEMENT REJECTED: double_spend - DOUBLE_SPEND_DETECTED: attempting to reuse already-spent tokens
+ho-container  | 23:47:13 [HO][SEC_ERR] DOUBLE_SPEND detected by SP: currentIdx=5 rejectedIdx=5
+ho-container  | 23:47:13 [HO][AUDIT] SECURITY SUCCESS: SP rejected double-spend

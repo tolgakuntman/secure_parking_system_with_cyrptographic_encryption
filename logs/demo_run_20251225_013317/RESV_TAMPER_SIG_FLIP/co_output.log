@@ -1,0 +1,59 @@
+ Container cauth-container  Running
+ Container sp-container  Running
+[CO][INFO][RESV_TAMPER_SIG_FLIP] Waiting for CAuth, SP, and HO to start...
+[CO][INFO][RESV_TAMPER_SIG_FLIP] 
+=== Car Owner (CO) Starting ===
+[CO][INFO][RESV_TAMPER_SIG_FLIP] 
+═══════════════════════════════════════════════════════════════
+[CO][INFO][RESV_TAMPER_SIG_FLIP]   [RESV_TAMPER] NEGATIVE TEST MODE: FORGED_RESERVATION
+[CO][INFO][RESV_TAMPER_SIG_FLIP]   Sub-mode: SIG_FLIP
+[CO][INFO][RESV_TAMPER_SIG_FLIP] ═══════════════════════════════════════════════════════════════
+[CO][INFO][RESV_TAMPER_SIG_FLIP] [RESV_TAMPER] Testing detection of forged/tampered reservation responses
+[CO][INFO][RESV_TAMPER_SIG_FLIP] [RESV_TAMPER] Mode: SIG_FLIP
+[CO][INFO][RESV_TAMPER_SIG_FLIP] [RESV_TAMPER] Tampering will be applied BEFORE signature verification
+[CO][INFO][RESV_TAMPER_SIG_FLIP] [RESV_TAMPER] Expected: Signature verification MUST fail
+
+[CO][INFO][RESV_TAMPER_SIG_FLIP] Found existing certificate, loading from keystore...
+[CO][INFO][RESV_TAMPER_SIG_FLIP] ...
+[CO][INFO][RESV_TAMPER_SIG_FLIP] 
+╔═══════════════════════════════════════════╗
+[CO][INFO][RESV_TAMPER_SIG_FLIP] ║   CO CRYPTOGRAPHIC IDENTITY ESTABLISHED   ║
+[CO][INFO][RESV_TAMPER_SIG_FLIP] ╚═══════════════════════════════════════════╝
+[CO][INFO][RESV_TAMPER_SIG_FLIP] Subject: C=XX,O=Unauthorized,CN=ROGUE-CO-UNTRUSTED
+[CO][INFO][RESV_TAMPER_SIG_FLIP] Issuer: C=XX,O=Unauthorized,CN=ROGUE-CO-UNTRUSTED
+[CO][INFO][RESV_TAMPER_SIG_FLIP] Valid from: Wed Dec 24 22:33:41 UTC 2025
+[CO][INFO][RESV_TAMPER_SIG_FLIP] Valid until: Thu Dec 24 22:34:41 UTC 2026
+[CO][INFO][RESV_TAMPER_SIG_FLIP] 
+=== Discovering Parking Availabilities from SP ===
+[CO][INFO][RESV_TAMPER_SIG_FLIP] Establishing hardened mTLS connection to SP for authenticated discovery...
+[CO][INFO][RESV_TAMPER_SIG_FLIP] ...
+[CO][INFO][RESV_TAMPER_SIG_FLIP]   Protocol: TLSv1.3
+[CO][INFO][RESV_TAMPER_SIG_FLIP]   Cipher suite: TLS_AES_256_GCM_SHA384
+[CO][INFO][RESV_TAMPER_SIG_FLIP]   SP certificate subject: C=BE,O=Parking System,CN=ServiceProvider
+[CO][INFO][RESV_TAMPER_SIG_FLIP]   SP certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+[CO][INFO][RESV_TAMPER_SIG_FLIP] ...
+[CO][INFO][RESV_TAMPER_SIG_FLIP] 
+→ Requesting parking availabilities from SP...
+[CO][ERR][RESV_TAMPER_SIG_FLIP] 
+✖ CRITICAL ERROR: CO failed to start
+[CO][ERR][RESV_TAMPER_SIG_FLIP] Reason: Received fatal alert: bad_certificate
+javax.net.ssl.SSLHandshakeException: Received fatal alert: bad_certificate
+	at java.base/sun.security.ssl.Alert.createSSLException(Unknown Source)
+	at java.base/sun.security.ssl.Alert.createSSLException(Unknown Source)
+	at java.base/sun.security.ssl.TransportContext.fatal(Unknown Source)
+	at java.base/sun.security.ssl.Alert$AlertConsumer.consume(Unknown Source)
+	at java.base/sun.security.ssl.TransportContext.dispatch(Unknown Source)
+	at java.base/sun.security.ssl.SSLTransport.decode(Unknown Source)
+	at java.base/sun.security.ssl.SSLSocketImpl.decode(Unknown Source)
+	at java.base/sun.security.ssl.SSLSocketImpl.readApplicationRecord(Unknown Source)
+	at java.base/sun.security.ssl.SSLSocketImpl$AppInputStream.read(Unknown Source)
+	at java.base/sun.nio.cs.StreamDecoder.readBytes(Unknown Source)
+	at java.base/sun.nio.cs.StreamDecoder.implRead(Unknown Source)
+	at java.base/sun.nio.cs.StreamDecoder.read(Unknown Source)
+	at java.base/java.io.InputStreamReader.read(Unknown Source)
+	at java.base/java.io.BufferedReader.fill(Unknown Source)
+	at java.base/java.io.BufferedReader.readLine(Unknown Source)
+	at java.base/java.io.BufferedReader.readLine(Unknown Source)
+	at com.example.Main.discoverAvailabilities(Main.java:1040)
+	at com.example.Main.main(Main.java:450)
+

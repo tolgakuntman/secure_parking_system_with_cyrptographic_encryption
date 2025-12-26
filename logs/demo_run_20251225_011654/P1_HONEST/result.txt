@@ -1,0 +1,5 @@
+Scenario: P1_HONEST
+Description: CO enrolls, gets tokens, discovers, reserves, and pays successfully
+Exit Code: 0
+Result: PASS
+Timestamp: Thu Dec 25 01:17:22 AM +03 2025

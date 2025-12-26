@@ -1,0 +1,80 @@
+ Container sp-container  Running
+ Container cauth-container  Starting
+ Container cauth-container  Started
+Waiting for CAuth, SP, and HO to start...
+
+=== Car Owner (CO) Starting ===
+No existing certificate found, enrolling with CAuth...
+Step 1: Generating RSA key pair...
+✓ RSA-2048 key pair generated successfully
+
+Step 2: Creating Certificate Signing Request (CSR)...
+✓ CSR created with subject: CN=CarOwner, O=Parking System, C=BE
+
+Step 3: Connecting to CAuth server over TLS...
+[CAuth-1] TEST MODE: Connecting to fake-cauth (skipping server cert validation)
+[CAuth-1] NOTE: This is for testing only - allows enrollment with rogue CA
+✓ TLS connection established to CAuth
+  Protocol: TLSv1.3
+  Cipher suite: TLS_AES_256_GCM_SHA384
+
+→ Sending CSR to CAuth for signing...
+Received CA certificate from CAuth.
+Certificate signed by CAuth!
+✓ Certificate received from CAuth
+
+Step 4: Storing certificate and private key securely...
+✓ Credentials stored in ./keystore/co_keystore.p12
+
+╔═══════════════════════════════════════════╗
+║   CO CRYPTOGRAPHIC IDENTITY ESTABLISHED   ║
+╚═══════════════════════════════════════════╝
+Subject: C=BE,O=Parking System,CN=CarOwner
+Issuer: C=XX,O=Fake Authority,CN=ROGUE-CA-DO-NOT-TRUST
+Valid from: Fri Dec 26 20:24:11 UTC 2025
+Valid until: Sat Dec 26 20:25:11 UTC 2026
+
+═══════════════════════════════════════════════════════════════
+  [CAuth-1] NEGATIVE TEST MODE: FAKE_CAUTH
+═══════════════════════════════════════════════════════════════
+[CAuth-1] Testing rejection of rogue intermediate CA certificate
+[CAuth-1] Enrolled with: fake-cauth:8443
+[CAuth-1] Certificate Details:
+  Subject: C=BE, O=Parking System, CN=CarOwner
+  Issuer:  C=XX, O=Fake Authority, CN=ROGUE-CA-DO-NOT-TRUST
+  Serial:  302299178186718334440856487381911200735
+[CAuth-1] ⚠ DETECTED: Certificate issued by ROGUE CA!
+[CAuth-1] ⚠ This certificate is NOT chained to the trusted Root CA
+
+[CAuth-1] Attempting mTLS connection to SP...
+[CAuth-1] EXPECTED: Connection should FAIL with PKIX validation error
+[CAuth-1] REASON: SP truststore only contains real Root CA, not rogue CA
+
+Establishing hardened mTLS connection to SP for authenticated discovery...
+✓ mTLS connection established to SP
+  Protocol: TLSv1.3
+  Cipher suite: TLS_AES_256_GCM_SHA384
+  SP certificate subject: C=BE,O=Parking System,CN=ServiceProvider
+  SP certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+✓ SP certificate validity verified
+
+→ Requesting parking availabilities from SP...
+
+╔═══════════════════════════════════════════════════════════════╗
+║   [CAuth-1] ✓ SECURITY SUCCESS: Rogue CA Certificate REJECTED║
+╚═══════════════════════════════════════════════════════════════╝
+[CAuth-1] mTLS connection to SP failed as expected!
+[CAuth-1] Error type: SSLHandshakeException
+[CAuth-1] Error message: Received fatal alert: bad_certificate
+
+[CAuth-1] VERIFICATION COMPLETE:
+  ✓ CO successfully enrolled with fake-cauth
+  ✓ CO received certificate signed by rogue CA
+  ✓ CO stored certificate in keystore (normal behavior)
+  ✓ SP rejected mTLS connection (PKIX validation failed)
+  ✓ Certificate chain does not terminate at trusted Root CA
+  ✓ System correctly enforces trust anchor validation
+
+[CAuth-1] CONCLUSION: Rogue intermediate CA properly rejected!
+[CAuth-1] The system is SECURE against untrusted CA attacks.
+

@@ -1,0 +1,4 @@
+Scenario: ROGUE_CO_SELF_SIGNED
+Description: Self-signed cert fails PKIX
+Exit Code: 0
+Result: ✓ PASS

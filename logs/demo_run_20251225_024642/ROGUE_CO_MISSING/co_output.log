@@ -1,0 +1,10 @@
+ Volume secure_software_assignment_co_keystore  Creating
+ Volume secure_software_assignment_co_keystore  Created
+ Container cauth-container  Running
+ Container sp-container  Running
+23:52:33 [ROGUE_CO_MISSING][INFO] Waiting for CAuth, SP, and HO to start...
+23:52:45 [ROGUE_CO_MISSING][INFO] Car Owner (CO) starting
+23:52:45 [ROGUE_CO_MISSING][INFO] ROGUE_CO NEGATIVE TEST: BAD_CERT mode=MISSING
+23:52:45 [ROGUE_CO_MISSING][INFO] Attempting mTLS to SP (expected: FAIL)
+23:52:45 [ROGUE_CO_MISSING][INFO] ROGUE_CO connecting to SP at sp:8444
+23:52:45 [ROGUE_CO_MISSING][SEC_OK] ROGUE_CO/MISSING: mTLS rejected: bad_certificate (expected)

@@ -1,0 +1,4 @@
+Scenario: RESV_TAMPER_SIG_FLIP
+Description: HO detects corrupted signature
+Exit Code: 1
+Result: ✗ FAIL (exit: 1)

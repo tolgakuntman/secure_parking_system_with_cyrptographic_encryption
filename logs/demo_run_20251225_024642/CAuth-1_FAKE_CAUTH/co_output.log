@@ -1,0 +1,10 @@
+ Volume secure_software_assignment_co_keystore  Creating
+ Volume secure_software_assignment_co_keystore  Created
+ Container cauth-container  Running
+ Container sp-container  Running
+23:51:29 [CAuth-1_FAKE_CAUTH][INFO] Waiting for CAuth, SP, and HO to start...
+23:51:41 [CAuth-1_FAKE_CAUTH][INFO] Car Owner (CO) starting
+23:51:41 [CAuth-1_FAKE_CAUTH][INFO] No existing certificate, enrolling with CAuth
+23:51:43 [CAuth-1_FAKE_CAUTH][INFO] Connecting to CAuth server at fake-cauth:8443
+23:51:43 [CAuth-1_FAKE_CAUTH][SEC_ERR] CO failed: PKIX path validation failed
+

@@ -1,0 +1,47 @@
+ Container cauth-container  Running
+ Container sp-container  Running
+Waiting for CAuth, SP, and HO to start...
+
+=== Car Owner (CO) Starting ===
+
+═══════════════════════════════════════════════════════════════
+  [ROGUE_CO] NEGATIVE TEST MODE: BAD_CERT
+  Sub-mode: MISSING
+═══════════════════════════════════════════════════════════════
+[ROGUE_CO] Testing rejection of CO without valid certificate
+[ROGUE_CO] Mode: MISSING
+[ROGUE_CO] MISSING mode: Skipping enrollment, no client certificate
+[ROGUE_CO] Will attempt mTLS without presenting client certificate
+
+[ROGUE_CO] Attempting mTLS connection to SP...
+[ROGUE_CO] EXPECTED: Connection should FAIL
+[ROGUE_CO] REASON: No client certificate presented (peer not authenticated)
+
+[ROGUE_CO] Creating SSLContext WITHOUT client KeyManager
+[ROGUE_CO] Connecting to SP at sp:8444
+[ROGUE_CO] Starting TLS handshake...
+[ROGUE_CO] TLS negotiation completed; validating mTLS acceptance...
+[ROGUE_CO] Server authenticated: C=BE,O=Parking System,CN=ServiceProvider
+[ROGUE_CO] Performing post-handshake proof (send request)...
+[ROGUE_CO] Reading response to confirm mTLS acceptance...
+
+╔═══════════════════════════════════════════════════════════════╗
+║   [ROGUE_CO] ✓ SECURITY SUCCESS: Rogue CO REJECTED          ║
+╚═══════════════════════════════════════════════════════════════╝
+[ROGUE_CO] mTLS rejected by peer during client certificate validation!
+[ROGUE_CO] Error type: SSLHandshakeException
+[ROGUE_CO] Error message: Received fatal alert: bad_certificate
+[ROGUE_CO] Analysis: SP rejected the client certificate (fatal alert: bad_certificate)
+[ROGUE_CO] Reason: No client certificate presented (peer not authenticated)
+
+[ROGUE_CO] VERIFICATION COMPLETE:
+  ✓ CO skipped enrollment (no certificate obtained)
+  ✓ CO attempted mTLS without client certificate
+  ✓ SP rejected connection (peer not authenticated)
+  ✓ System requires valid client certificate for mTLS
+  ✓ System correctly enforces client certificate validation
+  ✓ No bypass mechanisms available (strong security)
+
+[ROGUE_CO] CONCLUSION: Rogue CO properly rejected!
+[ROGUE_CO] The system is SECURE against unauthorized clients.
+

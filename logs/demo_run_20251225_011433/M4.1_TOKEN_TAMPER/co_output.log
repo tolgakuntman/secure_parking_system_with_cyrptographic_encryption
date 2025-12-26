@@ -1,0 +1,192 @@
+ Container cauth-container  Running
+ Container sp-container  Running
+[CO][INFO][M4.1_TOKEN_TAMPER] Waiting for CAuth, SP, and HO to start...
+[CO][INFO][M4.1_TOKEN_TAMPER] 
+=== Car Owner (CO) Starting ===
+[CO][INFO][M4.1_TOKEN_TAMPER] Found existing certificate, loading from keystore...
+[CO][INFO][M4.1_TOKEN_TAMPER] ...
+[CO][INFO][M4.1_TOKEN_TAMPER] 
+╔═══════════════════════════════════════════╗
+[CO][INFO][M4.1_TOKEN_TAMPER] ║   CO CRYPTOGRAPHIC IDENTITY ESTABLISHED   ║
+[CO][INFO][M4.1_TOKEN_TAMPER] ╚═══════════════════════════════════════════╝
+[CO][INFO][M4.1_TOKEN_TAMPER] Subject: C=BE,O=Parking System,CN=CarOwner
+[CO][INFO][M4.1_TOKEN_TAMPER] Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+[CO][INFO][M4.1_TOKEN_TAMPER] Valid from: Wed Dec 24 22:12:59 UTC 2025
+[CO][INFO][M4.1_TOKEN_TAMPER] Valid until: Thu Dec 24 22:13:59 UTC 2026
+[CO][INFO][M4.1_TOKEN_TAMPER] 
+=== Discovering Parking Availabilities from SP ===
+[CO][INFO][M4.1_TOKEN_TAMPER] Establishing hardened mTLS connection to SP for authenticated discovery...
+[CO][INFO][M4.1_TOKEN_TAMPER] ...
+[CO][INFO][M4.1_TOKEN_TAMPER]   Protocol: TLSv1.3
+[CO][INFO][M4.1_TOKEN_TAMPER]   Cipher suite: TLS_AES_256_GCM_SHA384
+[CO][INFO][M4.1_TOKEN_TAMPER]   SP certificate subject: C=BE,O=Parking System,CN=ServiceProvider
+[CO][INFO][M4.1_TOKEN_TAMPER]   SP certificate issuer: CN=172.20.0.10,O=Private Parking,C=BE
+[CO][INFO][M4.1_TOKEN_TAMPER] ...
+[CO][INFO][M4.1_TOKEN_TAMPER] 
+→ Requesting parking availabilities from SP...
+[CO][INFO][M4.1_TOKEN_TAMPER] ← Received availability list from SP
+
+[CO][INFO][M4.1_TOKEN_TAMPER] ╔═══════════════════════════════════════════════════════════╗
+[CO][INFO][M4.1_TOKEN_TAMPER] ║   AUTHENTICATED AVAILABILITY DISCOVERY SUCCESSFUL         ║
+[CO][INFO][M4.1_TOKEN_TAMPER] ╚═══════════════════════════════════════════════════════════╝
+[CO][INFO][M4.1_TOKEN_TAMPER] Discovered 1 parking availability record(s)
+
+[CO][INFO][M4.1_TOKEN_TAMPER] ════════════════════════════════════════════════════════════
+[CO][INFO][M4.1_TOKEN_TAMPER] Availability #1
+[CO][INFO][M4.1_TOKEN_TAMPER] ════════════════════════════════════════════════════════════
+[CO][INFO][M4.1_TOKEN_TAMPER] Availability ID: 5e6ed5f6-a38d-406f-93a0-d87229cc32ae
+[CO][INFO][M4.1_TOKEN_TAMPER] Spot ID: SPOT-A1
+[CO][INFO][M4.1_TOKEN_TAMPER] Price: 5 tokens
+[CO][INFO][M4.1_TOKEN_TAMPER] Valid: 2025-12-24T22:13:45.562387240Z to 2025-12-25T06:13:45.562387240Z
+[CO][INFO][M4.1_TOKEN_TAMPER] Location: Downtown-North
+[CO][INFO][M4.1_TOKEN_TAMPER] Home Owner ID: HO-001
+[CO][INFO][M4.1_TOKEN_TAMPER] 
+[CO][INFO][M4.1_TOKEN_TAMPER] ─ HO Certificate Identity Verification ─
+[CO][INFO][M4.1_TOKEN_TAMPER] ...
+[CO][INFO][M4.1_TOKEN_TAMPER]   Valid from: Wed Dec 24 22:12:45 UTC 2025
+[CO][INFO][M4.1_TOKEN_TAMPER]   Valid until: Thu Dec 24 22:13:45 UTC 2026
+[CO][INFO][M4.1_TOKEN_TAMPER] ⚠ Note: Full chain validation not possible (intermediate CA cert not provided)
+[CO][INFO][M4.1_TOKEN_TAMPER]   Relying on certificate fingerprint verification for trust anchor
+[CO][INFO][M4.1_TOKEN_TAMPER]   In production: SP should include full certificate chain
+[CO][INFO][M4.1_TOKEN_TAMPER] ✓ HO Identity (CN): HomeOwner
+[CO][INFO][M4.1_TOKEN_TAMPER]   Full Subject: CN=HomeOwner,O=Parking System,C=BE
+[CO][INFO][M4.1_TOKEN_TAMPER]   Issuer: CN=172.20.0.10,O=Private Parking,C=BE
+[CO][INFO][M4.1_TOKEN_TAMPER] ✓ Certificate fingerprint verified: 3E37713060E831A2...
+[CO][INFO][M4.1_TOKEN_TAMPER] ✓ Identity binding persisted to ./keystore/ho_identity_bindings.txt
+[CO][INFO][M4.1_TOKEN_TAMPER] 
+...
+[CO][INFO][M4.1_TOKEN_TAMPER]   Spot: SPOT-A1 ⟷ HO: HomeOwner
+[CO][INFO][M4.1_TOKEN_TAMPER]   Fingerprint: 3E37713060E831A293422E7D9FF387F9...
+[CO][INFO][M4.1_TOKEN_TAMPER] 
+[CO][INFO][M4.1_TOKEN_TAMPER] ...
+[CO][INFO][M4.1_TOKEN_TAMPER] ════════════════════════════════════════════════════════════
+[CO][INFO][M4.1_TOKEN_TAMPER] ✓✓✓ AVAILABILITY DISCOVERY COMPLETE ✓✓...
+[CO][INFO][M4.1_TOKEN_TAMPER] ════════════════════════════════════════════════════════════
+[CO][INFO][M4.1_TOKEN_TAMPER] All HO identities verified and bound to availabilities
+[CO][INFO][M4.1_TOKEN_TAMPER] Identity bindings persisted for future interaction verification
+[CO][INFO][M4.1_TOKEN_TAMPER] 
+=== Requesting Reservation from HO (Milestone 2.4) ===
+[CO][INFO][M4.1_TOKEN_TAMPER] 
+═══════════════════════════════════════════════════════════
+[CO][INFO][M4.1_TOKEN_TAMPER]    MILESTONE 2.4: RESERVATION HANDSHAKE WITH HO
+[CO][INFO][M4.1_TOKEN_TAMPER] ═══════════════════════════════════════════════════════════
+[CO][INFO][M4.1_TOKEN_TAMPER] ✓ CO Identity: CarOwner
+[CO][INFO][M4.1_TOKEN_TAMPER] ✓ Target HO: HomeOwner (ho:8445)
+[CO][INFO][M4.1_TOKEN_TAMPER] ✓ Availability ID: 5e6ed5f6-a38d-406f-93a0-d87229cc32ae
+[CO][INFO][M4.1_TOKEN_TAMPER] 
+--- Loading CO keystore and truststore for mTLS ---
+[CO][INFO][M4.1_TOKEN_TAMPER] ...
+[CO][INFO][M4.1_TOKEN_TAMPER] ...
+[CO][INFO][M4.1_TOKEN_TAMPER] 
+--- Establishing mTLS connection to HO ---
+[CO][INFO][M4.1_TOKEN_TAMPER] ...
+[CO][INFO][M4.1_TOKEN_TAMPER] ...
+[CO][INFO][M4.1_TOKEN_TAMPER]   Protocol: TLSv1.3
+[CO][INFO][M4.1_TOKEN_TAMPER]   Cipher Suite: TLS_AES_256_GCM_SHA384
+[CO][INFO][M4.1_TOKEN_TAMPER] 
+--- Verifying HO certificate binding ---
+[CO][INFO][M4.1_TOKEN_TAMPER]   Expected fingerprint: 3E37713060E831A293422E7D9FF387F9717BB04395EC8FCA8B60E5D5EFCF3D7F
+[CO][INFO][M4.1_TOKEN_TAMPER]   Received fingerprint: 3E37713060E831A293422E7D9FF387F9717BB04395EC8FCA8B60E5D5EFCF3D7F
+[CO][INFO][M4.1_TOKEN_TAMPER] ...
+[CO][INFO][M4.1_TOKEN_TAMPER] ✓ HO peer identity verified: HomeOwner
+[CO][INFO][M4.1_TOKEN_TAMPER] 
+--- Building reservation request ---
+[CO][INFO][M4.1_TOKEN_TAMPER]   Request fields:
+[CO][INFO][M4.1_TOKEN_TAMPER]     availabilityId: 5e6ed5f6-a38d-406f-93a0-d87229cc32ae
+[CO][INFO][M4.1_TOKEN_TAMPER]     spotId: SPOT-A1
+[CO][INFO][M4.1_TOKEN_TAMPER]     validFrom: 2025-12-24T22:13:45.562387240Z
+[CO][INFO][M4.1_TOKEN_TAMPER]     validTo: 2025-12-25T06:13:45.562387240Z
+[CO][INFO][M4.1_TOKEN_TAMPER]     priceTokens: 5
+[CO][INFO][M4.1_TOKEN_TAMPER]     coIdentity: CarOwner
+[CO][INFO][M4.1_TOKEN_TAMPER] ...
+[CO][INFO][M4.1_TOKEN_TAMPER] 
+--- Received reservation response ---
+[CO][INFO][M4.1_TOKEN_TAMPER]   Status: success
+[CO][INFO][M4.1_TOKEN_TAMPER]   Reservation ID: 098fa4df-a11e-43a1-b540-e47a69acde18
+[CO][INFO][M4.1_TOKEN_TAMPER]   Verdict: OK
+[CO][INFO][M4.1_TOKEN_TAMPER]   HO Identity: HomeOwner
+[CO][INFO][M4.1_TOKEN_TAMPER]   Signature Algorithm: SHA256withRSA
+[CO][INFO][M4.1_TOKEN_TAMPER] 
+--- Verifying HO signature (RSA-2048) ---
+[CO][INFO][M4.1_TOKEN_TAMPER] ✓ Signature decoded (256 bytes)
+[CO][INFO][M4.1_TOKEN_TAMPER] ...
+[CO][INFO][M4.1_TOKEN_TAMPER]   reservationId=098fa4df-a11e-43a1-b540-e47a69acde18|verdict=OK|availabilityId=5e6ed5f6-a38d-406f-93a0-d87229cc32ae|spotId=SPOT-A1|validFrom=2025-12-24T22:13:45.562387240Z|validTo=2025-12-25T06:13:45.562387240Z|priceTokens=5|coIdentity=CarOwner
+[CO][INFO][M4.1_TOKEN_TAMPER] ...
+[CO][INFO][M4.1_TOKEN_TAMPER]   reservationId=098fa4df-a11e-43a1-b540-e47a69acde18|verdict=OK|availabilityId=5e6ed5f6-a38d-406f-93a0-d87229cc32ae|spotId=SPOT-A1|validFrom=2025-12-24T22:13:45.562387240Z|validTo=2025-12-25T06:13:45.562387240Z|priceTokens=5|coIdentity=CarOwner
+[CO][INFO][M4.1_TOKEN_TAMPER] ...
+[CO][INFO][M4.1_TOKEN_TAMPER] ...
+[CO][INFO][M4.1_TOKEN_TAMPER] ✓ HO identity confirmed: HomeOwner
+[CO][INFO][M4.1_TOKEN_TAMPER] ...
+[CO][INFO][M4.1_TOKEN_TAMPER] ...
+[CO][INFO][M4.1_TOKEN_TAMPER] ✓ Cryptographic proof stored: ./keystore/reservations/098fa4df-a11e-43a1-b540-e47a69acde18.json
+[CO][INFO][M4.1_TOKEN_TAMPER] 
+--- Sending payment request to HO (Milestone 3.2 - Using SP tokens) ---
+[CO][INFO][M4.1_TOKEN_TAMPER] ...
+[CO][INFO][M4.1_TOKEN_TAMPER]   Protocol: TLSv1.3
+[CO][INFO][M4.1_TOKEN_TAMPER]   Cipher suite: TLS_AES_256_GCM_SHA384
+[CO][INFO][M4.1_TOKEN_TAMPER]   SP certificate: C=BE,O=Parking System,CN=ServiceProvider
+[CO][INFO][M4.1_TOKEN_TAMPER] [M3.4] SP certificate cached for receipt verification
+[CO][INFO][M4.1_TOKEN_TAMPER] 
+→ Requesting 5 payment tokens from SP...
+[CO][INFO][M4.1_TOKEN_TAMPER] 
+← Received response from SP
+[CO][INFO][M4.1_TOKEN_TAMPER] {
+  "tokenHashAlg": "SHA-256",
+  "signatureAlg": "SHA256withRSA",
+  "chainId": "42626cb2-31cf-439a-b543-ed15eaa2ac0b",
+  "rootSignature": "OhPAwtjORbMMv4rprYBtMfHL9Fe1VGJ1a2rRADtoNDHGA+Saqx4a+UVve2XSJ8ZCJUKc77Igf2a3FXSQJfOS+adzPYsZXPV1mtRHIDy2o/ZeA5O6GtNtRJ1hjI8XC5zq+5dawxGIRDU9S/GgwBrmWZjxB87FKnyolf5Sk5YJ7eZxrfhPwWGvZIebdOEA0II1ZmXXd4G9nsWiXlPmcJsIt/8Rj+V74TPDPB0VOaFX7fL0qTtQYGmAMrno032DAT8hliCynrC08FKG2vSqJMb5DlWNEbgDIhZCp31UK6iOKnl6dhbc3pu+MzTZzlU7NPxSZ75F7S51yLldMvUQE40bLw==",
+  "root": "imEmDfgL/R2lmEbdspEfNTeqdTBLGn+9E1ULDxvD2vY=",
+  "x": 5,
+  "tokens": [
+    "CTyqlhbvMt5AFi0b3jtr3iHI1/rDw1Pj9oCVdJ/vIEA=",
+    "Mi+qGhVyR/UsLJO0R2sVJFkXdwVLx2x1yntbR0jiPFM=",
+    "4bRo8wEvwOuCSBEAwYYm9MqfFncK07eqeyA1kMl8hKs=",
+    "3tRqM6MOPRL42XaVD1pZZ7Hai4WfjG1+9KycKMIU70w=",
+    "imEmDfgL/R2lmEbdspEfNTeqdTBLGn+9E1ULDxvD2vY="
+  ],
+  "status": "success"
+}
+[CO][INFO][M4.1_TOKEN_TAMPER] 
+=== Verifying Token Batch ===
+[CO][INFO][M4.1_TOKEN_TAMPER] Chain ID: 42626cb2-31cf-439a-b543-ed15eaa2ac0b
+[CO][INFO][M4.1_TOKEN_TAMPER] Token count: 5
+[CO][INFO][M4.1_TOKEN_TAMPER] Tokens received: 5
+[CO][INFO][M4.1_TOKEN_TAMPER] ...
+[CO][INFO][M4.1_TOKEN_TAMPER] Root hash: 8A61260DF80BFD1DA59846DDB2911F3537AA75304B1A7FBD13550B0F1BC3DAF6
+[CO][INFO][M4.1_TOKEN_TAMPER] ...
+[CO][INFO][M4.1_TOKEN_TAMPER] 
+Verifying hash chain:
+[CO][INFO][M4.1_TOKEN_TAMPER]   Starting with token[0]: 093CAA9616EF32DE...
+[CO][INFO][M4.1_TOKEN_TAMPER]   Chain verified: 5 hashes lead to signed root
+[CO][INFO][M4.1_TOKEN_TAMPER] ...
+[CO][INFO][M4.1_TOKEN_TAMPER] 
+═════════════════════════════════════════════
+[CO][INFO][M4.1_TOKEN_TAMPER] ✓✓✓ TOKEN BATCH VERIFIED SUCCESSFULLY ✓✓...
+[CO][INFO][M4.1_TOKEN_TAMPER] ═════════════════════════════════════════════
+[CO][INFO][M4.1_TOKEN_TAMPER] Received 5 valid payment tokens from SP
+[CO][INFO][M4.1_TOKEN_TAMPER] Chain ID: 42626cb2-31cf-439a-b543-ed15eaa2ac0b
+[CO][INFO][M4.1_TOKEN_TAMPER]   Using SP-issued token batch, chainId=42626cb2-31cf-439a-b543-ed15eaa2ac0b
+[CO][INFO][M4.1_TOKEN_TAMPER]   tokensToSpend: indices [0, 5)
+[CO][INFO][M4.1_TOKEN_TAMPER]   Total tokens to spend: 5 (matching reservation price)
+[CO][INFO][M4.1_TOKEN_TAMPER] 
+[M4] Negative Test Mode: TAMPER
+[CO][INFO][M4.1_TOKEN_TAMPER] [M4.1] Tampering token[0] byte[0]
+[CO][INFO][M4.1_TOKEN_TAMPER] [M4.1] TOKEN TAMPERING ENABLED: flipped byte 0 of token index 0
+[CO][INFO][M4.1_TOKEN_TAMPER] [M4.1] Expect HO rejection (adjacency/anchor check failure)
+[CO][INFO][M4.1_TOKEN_TAMPER] → Sending TAMPERED pay request to HO at ho:8445
+[CO][INFO][M4.1_TOKEN_TAMPER] ← HO pay response:
+[CO][INFO][M4.1_TOKEN_TAMPER] {
+  "reason": "security_violation",
+  "code": "token_tampering_detected",
+  "message": "adjacency check failed at i=0 - possible token tampering",
+  "status": "error"
+}
+[CO][INFO][M4.1_TOKEN_TAMPER] [M4.1] ✓ Expected rejection received from HO: security_violation
+[CO][INFO][M4.1_TOKEN_TAMPER] 
+═══════════════════════════════════════════════════════════
+[CO][INFO][M4.1_TOKEN_TAMPER]    RESERVATION HANDSHAKE COMPLETE
+[CO][INFO][M4.1_TOKEN_TAMPER]    Verdict: OK
+[CO][INFO][M4.1_TOKEN_TAMPER]    Non-repudiable proof stored: 098fa4df-a11e-43a1-b540-e47a69acde18
+[CO][INFO][M4.1_TOKEN_TAMPER] ═══════════════════════════════════════════════════════════
+[CO][INFO][M4.1_TOKEN_TAMPER] 
+✓✓✓ CO SERVICE COMPLETED SUCCESSFULLY ✓✓...

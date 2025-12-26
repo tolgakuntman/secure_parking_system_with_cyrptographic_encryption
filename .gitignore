@@ -1,0 +1,76 @@
+# Logs from test runs
+logs/
+*.log
+
+# Java build artifacts
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Keystore files (sensitive crypto material)
+*.p12
+*.jks
+*.keystore
+*_keystore.p12
+*_truststore.p12
+keystore/
+*/keystore/
+
+# Certificates (keep the initial setup ones in crypto_do_once)
+*.crt
+*.pem
+*.key
+!crypto_do_once/*.crt
+!crypto_do_once/*.pem
+!crypto_do_once/*.p12
+
+# Docker volumes and container data
+.docker/
+
+# OS-specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.project
+.classpath
+.settings/
+*.swp
+*.swo
+*~
+
+# Maven
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Temporary files
+*.tmp
+*.temp
+/tmp/
+output.txt
+co_output.txt
+diagnostic_output.txt
+
+# Test certificates and identity bindings
+ho_identity_bindings.txt
+reservations/
+receipts/

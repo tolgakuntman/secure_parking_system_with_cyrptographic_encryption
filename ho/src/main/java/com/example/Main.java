@@ -944,12 +944,8 @@ private static String extractCN(X509Certificate cert) {
 
             // 2. DOUBLE-SPEND PREVENTION: check if this chain has been spent already
             Long lastSpentIndex = chainSpendTracking.getOrDefault(chainId, -1L);
-            if (startIndex <= lastSpentIndex && !REPLAY_TEST_MODE) {
+            if (startIndex <= lastSpentIndex) {
                 throw new SecurityException("Double-spend detected: startIndex=" + startIndex + " <= lastSpentIndex=" + lastSpentIndex);
-            }
-            
-            if (startIndex <= lastSpentIndex && REPLAY_TEST_MODE) {
-                System.out.println(logTag + "[M4.2] REPLAY_TEST_MODE: allowing duplicate chain spend (startIndex=" + startIndex + ", lastSpentIndex=" + lastSpentIndex + ")");
             }
 
             // 3. HASH-CHAIN VERIFICATION: decode tokens and verify hash forward to root

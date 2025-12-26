@@ -639,26 +639,7 @@ public class Main {
 
                 // Get peer certificates - this will throw SSLPeerUnverifiedException if client didn't provide cert
                 X509Certificate[] clientCerts = (X509Certificate[]) clientSocket.getSession().getPeerCertificates();
-                
-                if (clientCerts == null || clientCerts.length == 0) {
-                    System.err.println("[SP] No client certificate presented or certificate chain is empty");
-                    throw new javax.net.ssl.SSLPeerUnverifiedException("Empty client certificate chain");
-                }
-                
-                // Log client certificate details
-                X509Certificate clientCert = clientCerts[0];
-                String dn = clientCert.getSubjectX500Principal().getName();
-                
-                // Compute certificate fingerprint
-                MessageDigest digest = MessageDigest.getInstance("SHA-256");
-                byte[] fingerprint = digest.digest(clientCert.getEncoded());
-                String fingerprintHex = bytesToHex(fingerprint).substring(0, 32) + "...";
-                
-                System.out.println("[SP] ✓ Client certificate received and validated:");
-                System.out.println("[SP]   Subject: " + clientCert.getSubjectX500Principal().getName());
-                System.out.println("[SP]   Issuer:  " + clientCert.getIssuerX500Principal().getName());
-                System.out.println("[SP]   Serial:  " + clientCert.getSerialNumber().toString(16).toUpperCase());
-                System.out.println("[SP]   SHA-256: " + fingerprintHex);
+                String dn = clientCerts[0].getSubjectX500Principal().getName();
 
                 try {
                     LdapName ldapDN = new LdapName(dn);
@@ -735,47 +716,11 @@ public class Main {
                     }
                 }
 
-            } catch (javax.net.ssl.SSLPeerUnverifiedException pe) {
-                System.err.println("[SP] ✗ Client authentication failed: " + pe.getMessage());
-                System.err.println("[SP] Case: SSLPeerUnverifiedException");
-                System.err.println("[SP] Reason: No client certificate presented (empty certificate chain)");
-                System.err.println("[SP] This indicates the client did not provide any certificate during TLS handshake");
             } catch (SSLHandshakeException hs) {
-                System.err.println("[SP] ✗ TLS handshake failed during client authentication");
-                System.err.println("[SP] Error: " + hs.getMessage());
-                
-                // Check for PKIX validation failure (untrusted certificate chain)
-                Throwable cause = hs.getCause();
-                boolean isPKIXFailure = false;
-                while (cause != null) {
-                    String causeClassName = cause.getClass().getName();
-                    if (cause instanceof java.security.cert.CertPathValidatorException ||
-                        causeClassName.contains("ValidatorException") ||
-                        causeClassName.contains("CertPathBuilderException")) {
-                        isPKIXFailure = true;
-                        System.err.println("[SP] Case: CertPathValidatorException (PKIX validation)");
-                        System.err.println("[SP] Root cause: " + cause.getClass().getSimpleName() + ": " + cause.getMessage());
-                        System.err.println("[SP] Reason: Client presented certificate but it is not chained to trusted Root CA");
-                        System.err.println("[SP] This indicates the client certificate was received but rejected as untrusted");
-                        break;
-                    }
-                    cause = cause.getCause();
-                }
-                
-                if (!isPKIXFailure) {
-                    System.err.println("[SP] Case: SSLHandshakeException (other cause)");
-                    System.err.println("[SP] Details: " + hs.getMessage());
-                    if (hs.getCause() != null) {
-                        System.err.println("[SP] Root cause: " + hs.getCause().getClass().getSimpleName() + ": " + hs.getCause().getMessage());
-                    }
-                }
+                System.err.println("TLS handshake failed (missing/invalid client cert): " + hs.getMessage());
             } catch (Exception e) {
-                System.err.println("[SP] Error handling client: " + e.getMessage());
-                if (e instanceof java.io.IOException) {
-                    // Network or I/O error, less verbose
-                } else {
-                    e.printStackTrace();
-                }
+                System.err.println("Error handling client: " + e.getMessage());
+                e.printStackTrace();
             } finally {
                 try {
                     if (reader != null) reader.close();

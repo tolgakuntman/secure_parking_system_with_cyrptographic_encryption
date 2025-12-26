@@ -5,8 +5,6 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.*;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import javax.naming.ldap.LdapName;
 import javax.naming.ldap.Rdn;
@@ -15,9 +13,6 @@ import javax.net.ssl.*;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x509.*;
-import org.bouncycastle.cert.X509CertificateHolder;
-import org.bouncycastle.cert.X509v3CertificateBuilder;
-import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
@@ -53,14 +48,12 @@ public class Main {
             System.getenv().getOrDefault("TRUSTSTORE_PASSWORD", "trustpassword");
 
     // ═════════════════════════════════════════════════════════════
-    // M4 Negative Scenario Flags (M4.1, M4.2, CAuth-1, ROGUE_CO)
+    // M4 Negative Scenario Flags (Refactored for M4.1 + M4.2)
     // ═════════════════════════════════════════════════════════════
     // NEG_TEST_MODE: selects which scenario to run
-    //   NONE       = normal M3.x flow (default)
-    //   TAMPER     = M4.1 token tampering: flip 1 byte of 1 token
-    //   REPLAY     = M4.2 replay payment: send same pay twice
-    //   FAKE_CAUTH = CAuth-1 rogue intermediate CA: enroll with untrusted CA
-    //   BAD_CERT   = ROGUE_CO: CO without valid certificate (MISSING or SELF_SIGNED)
+    //   NONE   = normal M3.x flow (default)
+    //   TAMPER = M4.1 token tampering: flip 1 byte of 1 token
+    //   REPLAY = M4.2 replay payment: send same pay twice
     //
     // HOW TO TEST EACH SCENARIO:
     // ═════════════════════════════════════════════════════════════
@@ -84,25 +77,6 @@ public class Main {
     //              SP rejects 2nd settle with code=replay_or_double_spend
     //              CO logs [M4.2] EXPECTED: SP rejected 2nd settle
     //
-    // 4) CAuth-1 ROGUE INTERMEDIATE CA (negative: mTLS fails - cert not chained to Root CA):
-    //    docker-compose up -d fake-cauth sp ho
-    //    docker-compose run --rm -e NEG_TEST_MODE=FAKE_CAUTH -e CAUTH_HOST=fake-cauth co
-    //    Expected: CO enrolls with fake-cauth successfully
-    //              CO receives certificate signed by rogue CA (not chained to Root CA)
-    //              CO attempts mTLS with SP
-    //              SP rejects with PKIX path validation error (untrusted issuer)
-    //              CO logs [CAuth-1] SECURITY SUCCESS: Rogue intermediate CA rejected
-    //
-    // 5) ROGUE_CO / BAD_CERT (negative: CO without valid certificate):
-    //    docker-compose up -d cauth sp ho
-    //    docker-compose run --rm -e NEG_TEST_MODE=BAD_CERT -e BAD_CERT_MODE=MISSING co
-    //    OR: -e BAD_CERT_MODE=SELF_SIGNED
-    //    Expected MISSING: CO skips enrollment, attempts mTLS without client cert
-    //                      SP/HO reject with "peer not authenticated" or similar
-    //    Expected SELF_SIGNED: CO generates self-signed cert, attempts mTLS
-    //                          SP/HO reject with PKIX validation error
-    //              CO logs [ROGUE_CO] SECURITY SUCCESS: Rogue CO rejected
-    //
     // ═════════════════════════════════════════════════════════════
     private static final String NEG_TEST_MODE = 
             System.getenv().getOrDefault("NEG_TEST_MODE", "NONE").toUpperCase();
@@ -116,21 +90,6 @@ public class Main {
     // Replay configuration (used when NEG_TEST_MODE=REPLAY)
     private static final long REPLAY_DELAY_MS = 
             Long.parseLong(System.getenv().getOrDefault("REPLAY_DELAY_MS", "500"));
-    
-    // BAD_CERT configuration (used when NEG_TEST_MODE=BAD_CERT)
-    // BAD_CERT_MODE: MISSING = no client cert, SELF_SIGNED = untrusted self-signed cert
-    private static final String BAD_CERT_MODE = 
-            System.getenv().getOrDefault("BAD_CERT_MODE", "MISSING").toUpperCase();
-    
-    // RESV_TAMPER configuration (used when NEG_TEST_MODE=RESV_TAMPER)
-    // Tests that CO detects tampering with HO-signed reservation responses
-    // RESV_TAMPER_MODE values:
-    //   FIELD_EDIT: Modify a signed field value (e.g., priceTokens=5 -> priceTokens=1)
-    //   REORDER: Reorder key-value pairs (tests canonical order binding)
-    //   SIG_FLIP: Flip 1 bit in signature bytes (tests signature integrity)
-    //   DROP_FIELD: Remove a required signed field (tests field-stripping protection)
-    private static final String RESV_TAMPER_MODE = 
-            System.getenv().getOrDefault("RESV_TAMPER_MODE", "FIELD_EDIT").toUpperCase();
 
     private static KeyPair coKeyPair;
     private static X509Certificate coCertificate;
@@ -203,144 +162,6 @@ public class Main {
 
             ensureParentDirExists(CO_KEYSTORE_PATH);
 
-            // ═════════════════════════════════════════════════════════════
-            // ROGUE_CO / BAD_CERT Negative Test: CO without valid certificate
-            // ═════════════════════════════════════════════════════════════
-            if ("BAD_CERT".equals(NEG_TEST_MODE)) {
-                System.out.println("\n═══════════════════════════════════════════════════════════════");
-                System.out.println("  [ROGUE_CO] NEGATIVE TEST MODE: BAD_CERT");
-                System.out.println("  Sub-mode: " + BAD_CERT_MODE);
-                System.out.println("═══════════════════════════════════════════════════════════════");
-                System.out.println("[ROGUE_CO] Testing rejection of CO without valid certificate");
-                System.out.println("[ROGUE_CO] Mode: " + BAD_CERT_MODE);
-                
-                if ("MISSING".equals(BAD_CERT_MODE)) {
-                    System.out.println("[ROGUE_CO] MISSING mode: Skipping enrollment, no client certificate");
-                    System.out.println("[ROGUE_CO] Will attempt mTLS without presenting client certificate");
-                    // Leave coKeyPair and coCertificate null - no enrollment
-                    
-                } else if ("SELF_SIGNED".equals(BAD_CERT_MODE)) {
-                    System.out.println("[ROGUE_CO] SELF_SIGNED mode: Generating untrusted self-signed certificate");
-                    generateSelfSignedCertificate();
-                    System.out.println("[ROGUE_CO] Generated self-signed certificate:");
-                    System.out.println("  Subject: " + coCertificate.getSubjectX500Principal());
-                    System.out.println("  Issuer:  " + coCertificate.getIssuerX500Principal());
-                    System.out.println("  Serial:  " + coCertificate.getSerialNumber());
-                    System.out.println("[ROGUE_CO] ⚠ This certificate is NOT chained to trusted Root CA");
-                    System.out.println("[ROGUE_CO] ⚠ It is self-signed and will be rejected by services");
-                    
-                } else {
-                    System.err.println("[ROGUE_CO] ERROR: Unknown BAD_CERT_MODE: " + BAD_CERT_MODE);
-                    System.err.println("[ROGUE_CO] Valid modes: MISSING, SELF_SIGNED");
-                    System.exit(1);
-                }
-                
-                System.out.println("\n[ROGUE_CO] Attempting mTLS connection to SP...");
-                System.out.println("[ROGUE_CO] EXPECTED: Connection should FAIL");
-                if ("MISSING".equals(BAD_CERT_MODE)) {
-                    System.out.println("[ROGUE_CO] REASON: No client certificate presented (peer not authenticated)");
-                } else {
-                    System.out.println("[ROGUE_CO] REASON: Self-signed cert not chained to Root CA (PKIX validation fails)");
-                }
-                System.out.println();
-                
-                // Attempt to request tokens from SP - this should fail
-                try {
-                    testRogueCoConnection();
-                    
-                    // If we reach here, the test FAILED
-                    System.err.println("\n╔═══════════════════════════════════════════════════════════════╗");
-                    System.err.println("║ [ROGUE_CO] ✗ TEST FAILED: SP ACCEPTED ROGUE CO!              ║");
-                    System.err.println("╚═══════════════════════════════════════════════════════════════╝");
-                    System.err.println("[ROGUE_CO] CRITICAL SECURITY FAILURE:");
-                    System.err.println("[ROGUE_CO] SP should have rejected CO without valid certificate!");
-                    if ("MISSING".equals(BAD_CERT_MODE)) {
-                        System.err.println("[ROGUE_CO] No client certificate was presented!");
-                    } else {
-                        System.err.println("[ROGUE_CO] Self-signed certificate not chained to Root CA!");
-                    }
-                    System.err.println("[ROGUE_CO] This indicates a client authentication bypass vulnerability!\n");
-                    System.exit(1);
-                    
-                } catch (java.io.IOException e) {
-                    // This is the EXPECTED outcome (includes SSLException)
-                    System.out.println("\n╔═══════════════════════════════════════════════════════════════╗");
-                    System.out.println("║   [ROGUE_CO] ✓ SECURITY SUCCESS: Rogue CO REJECTED          ║");
-                    System.out.println("╚═══════════════════════════════════════════════════════════════╝");
-                    System.out.println("[ROGUE_CO] mTLS rejected by peer during client certificate validation!");
-                    System.out.println("[ROGUE_CO] Error type: " + e.getClass().getSimpleName());
-                    System.out.println("[ROGUE_CO] Error message: " + e.getMessage());
-                    
-                    // Analyze the error to provide specific feedback
-                    boolean isBadCertAlert = e.getMessage() != null && 
-                        e.getMessage().contains("Received fatal alert: bad_certificate");
-                    
-                    boolean isPKIXFailure = false;
-                    Throwable cause = e.getCause();
-                    while (cause != null) {
-                        if (cause instanceof java.security.cert.CertPathValidatorException) {
-                            isPKIXFailure = true;
-                            System.out.println("[ROGUE_CO] Root cause: PKIX path validation failure (detected locally)");
-                            System.out.println("[ROGUE_CO] Reason: " + cause.getMessage());
-                            break;
-                        }
-                        cause = cause.getCause();
-                    }
-                    
-                    // Provide specific analysis based on error type
-                    if (isBadCertAlert && !isPKIXFailure) {
-                        System.out.println("[ROGUE_CO] Analysis: SP rejected the client certificate (fatal alert: bad_certificate)");
-                        if ("MISSING".equals(BAD_CERT_MODE)) {
-                            System.out.println("[ROGUE_CO] Reason: No client certificate presented (peer not authenticated)");
-                        } else {
-                            System.out.println("[ROGUE_CO] Reason: Client certificate not chained to trusted Root CA");
-                            System.out.println("[ROGUE_CO] (SP-side PKIX validation rejected untrusted/self-signed chain)");
-                        }
-                    }
-                    
-                    System.out.println("\n[ROGUE_CO] VERIFICATION COMPLETE:");
-                    if ("MISSING".equals(BAD_CERT_MODE)) {
-                        System.out.println("  ✓ CO skipped enrollment (no certificate obtained)");
-                        System.out.println("  ✓ CO attempted mTLS without client certificate");
-                        System.out.println("  ✓ SP rejected connection (peer not authenticated)");
-                        System.out.println("  ✓ System requires valid client certificate for mTLS");
-                    } else {
-                        System.out.println("  ✓ CO generated self-signed certificate");
-                        System.out.println("  ✓ CO attempted mTLS with untrusted certificate");
-                        System.out.println("  ✓ SP rejected connection (PKIX validation failed)");
-                        System.out.println("  ✓ Certificate not chained to trusted Root CA");
-                    }
-                    System.out.println("  ✓ System correctly enforces client certificate validation");
-                    System.out.println("  ✓ No bypass mechanisms available (strong security)");
-                    System.out.println("\n[ROGUE_CO] CONCLUSION: Rogue CO properly rejected!");
-                    System.out.println("[ROGUE_CO] The system is SECURE against unauthorized clients.\n");
-                    System.exit(0);
-                    
-                } catch (Exception e) {
-                    // Unexpected error type
-                    System.err.println("\n[ROGUE_CO] Unexpected error type: " + e.getClass().getName());
-                    System.err.println("[ROGUE_CO] Message: " + e.getMessage());
-                    e.printStackTrace();
-                    System.exit(1);
-                }
-                
-            } else if ("RESV_TAMPER".equals(NEG_TEST_MODE)) {
-                // FORGED_RESERVATION scenario: Test that CO detects tampering with HO-signed reservation
-                System.out.println("\n═══════════════════════════════════════════════════════════════");
-                System.out.println("  [RESV_TAMPER] NEGATIVE TEST MODE: FORGED_RESERVATION");
-                System.out.println("  Sub-mode: " + RESV_TAMPER_MODE);
-                System.out.println("═══════════════════════════════════════════════════════════════");
-                System.out.println("[RESV_TAMPER] Testing detection of forged/tampered reservation responses");
-                System.out.println("[RESV_TAMPER] Mode: " + RESV_TAMPER_MODE);
-                System.out.println("[RESV_TAMPER] Tampering will be applied BEFORE signature verification");
-                System.out.println("[RESV_TAMPER] Expected: Signature verification MUST fail\n");
-                
-                // Proceed with normal enrollment and discovery
-                // Tampering will occur in requestReservation() before verification
-                // Fall through to normal flow
-            }
-            // ═════════════════════════════════════════════════════════════
-
             // STEP 1: Establish cryptographic identity
             if (hasCertificate()) {
                 System.out.println("Found existing certificate, loading from keystore...");
@@ -362,88 +183,6 @@ public class Main {
             System.out.println("Issuer: " + coCertificate.getIssuerX500Principal().getName());
             System.out.println("Valid from: " + coCertificate.getNotBefore());
             System.out.println("Valid until: " + coCertificate.getNotAfter());
-
-            // ═════════════════════════════════════════════════════════════
-            // CAuth-1 FAKE_CAUTH Negative Test: Rogue Intermediate CA
-            // ═════════════════════════════════════════════════════════════
-            if ("FAKE_CAUTH".equals(NEG_TEST_MODE)) {
-                System.out.println("\n═══════════════════════════════════════════════════════════════");
-                System.out.println("  [CAuth-1] NEGATIVE TEST MODE: FAKE_CAUTH");
-                System.out.println("═══════════════════════════════════════════════════════════════");
-                System.out.println("[CAuth-1] Testing rejection of rogue intermediate CA certificate");
-                System.out.println("[CAuth-1] Enrolled with: " + CAUTH_HOST + ":" + CAUTH_PORT);
-                System.out.println("[CAuth-1] Certificate Details:");
-                System.out.println("  Subject: " + coCertificate.getSubjectX500Principal());
-                System.out.println("  Issuer:  " + coCertificate.getIssuerX500Principal());
-                System.out.println("  Serial:  " + coCertificate.getSerialNumber());
-                
-                // Check if issuer indicates fake CA
-                String issuerDN = coCertificate.getIssuerX500Principal().getName();
-                if (issuerDN.contains("ROGUE") || issuerDN.contains("Fake Authority") || 
-                    issuerDN.contains("DO-NOT-TRUST")) {
-                    System.out.println("[CAuth-1] ⚠ DETECTED: Certificate issued by ROGUE CA!");
-                    System.out.println("[CAuth-1] ⚠ This certificate is NOT chained to the trusted Root CA");
-                } else {
-                    System.out.println("[CAuth-1] NOTE: Issuer DN: " + issuerDN);
-                }
-                
-                System.out.println("\n[CAuth-1] Attempting mTLS connection to SP...");
-                System.out.println("[CAuth-1] EXPECTED: Connection should FAIL with PKIX validation error");
-                System.out.println("[CAuth-1] REASON: SP truststore only contains real Root CA, not rogue CA\n");
-                
-                // Attempt connection to SP - this should fail with trust validation error
-                try {
-                    discoverAvailabilities();
-                    // If we reach here, the test FAILED (connection should have been rejected)
-                    System.err.println("\n╔═══════════════════════════════════════════════════════════════╗");
-                    System.err.println("║ [CAuth-1] ✗ TEST FAILED: SP ACCEPTED UNTRUSTED CERTIFICATE!  ║");
-                    System.err.println("╚═══════════════════════════════════════════════════════════════╝");
-                    System.err.println("[CAuth-1] CRITICAL SECURITY FAILURE:");
-                    System.err.println("[CAuth-1] SP should have rejected the rogue CA certificate!");
-                    System.err.println("[CAuth-1] The certificate chain does NOT terminate at Root CA.");
-                    System.err.println("[CAuth-1] This indicates a trust validation bypass vulnerability!\n");
-                    System.exit(1);
-                    
-                } catch (javax.net.ssl.SSLException e) {
-                    // This is the EXPECTED outcome (SSLHandshakeException is a subtype)
-                    System.out.println("\n╔═══════════════════════════════════════════════════════════════╗");
-                    System.out.println("║   [CAuth-1] ✓ SECURITY SUCCESS: Rogue CA Certificate REJECTED║");
-                    System.out.println("╚═══════════════════════════════════════════════════════════════╝");
-                    System.out.println("[CAuth-1] mTLS connection to SP failed as expected!");
-                    System.out.println("[CAuth-1] Error type: " + e.getClass().getSimpleName());
-                    System.out.println("[CAuth-1] Error message: " + e.getMessage());
-                    
-                    // Check for PKIX path validation error
-                    Throwable cause = e.getCause();
-                    while (cause != null) {
-                        if (cause instanceof java.security.cert.CertPathValidatorException) {
-                            System.out.println("[CAuth-1] Root cause: PKIX path validation failure");
-                            System.out.println("[CAuth-1] Reason: " + cause.getMessage());
-                            break;
-                        }
-                        cause = cause.getCause();
-                    }
-                    
-                    System.out.println("\n[CAuth-1] VERIFICATION COMPLETE:");
-                    System.out.println("  ✓ CO successfully enrolled with fake-cauth");
-                    System.out.println("  ✓ CO received certificate signed by rogue CA");
-                    System.out.println("  ✓ CO stored certificate in keystore (normal behavior)");
-                    System.out.println("  ✓ SP rejected mTLS connection (PKIX validation failed)");
-                    System.out.println("  ✓ Certificate chain does not terminate at trusted Root CA");
-                    System.out.println("  ✓ System correctly enforces trust anchor validation");
-                    System.out.println("\n[CAuth-1] CONCLUSION: Rogue intermediate CA properly rejected!");
-                    System.out.println("[CAuth-1] The system is SECURE against untrusted CA attacks.\n");
-                    System.exit(0);
-                    
-                } catch (Exception e) {
-                    // Unexpected error type
-                    System.err.println("\n[CAuth-1] Unexpected error type: " + e.getClass().getName());
-                    System.err.println("[CAuth-1] Message: " + e.getMessage());
-                    e.printStackTrace();
-                    System.exit(1);
-                }
-            }
-            // ═════════════════════════════════════════════════════════════
 
             // STEP 2: Discover parking availabilities from SP with identity binding
             System.out.println("\n=== Discovering Parking Availabilities from SP ===");
@@ -676,301 +415,6 @@ public class Main {
 
         try (FileOutputStream fos = new FileOutputStream(CO_KEYSTORE_PATH)) {
             ks.store(fos, CO_KEYSTORE_PASSWORD.toCharArray());
-        }
-    }
-
-    // -------------------------
-    // ROGUE_CO / BAD_CERT Helper Methods
-    // -------------------------
-
-    /**
-     * KeyManager wrapper that forces selection of a specific client alias.
-     * This prevents JSSE from silently declining to send a certificate.
-     */
-    private static class ForcedAliasKeyManager extends javax.net.ssl.X509ExtendedKeyManager {
-        private final javax.net.ssl.X509KeyManager delegate;
-        private final String forcedAlias;
-        
-        public ForcedAliasKeyManager(javax.net.ssl.X509KeyManager delegate, String forcedAlias) {
-            this.delegate = delegate;
-            this.forcedAlias = forcedAlias;
-        }
-        
-        @Override
-        public String chooseClientAlias(String[] keyType, java.security.Principal[] issuers, java.net.Socket socket) {
-            System.out.println("[ROGUE_CO] chooseClientAlias called - forcing alias: " + forcedAlias);
-            return forcedAlias;
-        }
-        
-        @Override
-        public String chooseEngineClientAlias(String[] keyType, java.security.Principal[] issuers, javax.net.ssl.SSLEngine engine) {
-            System.out.println("[ROGUE_CO] chooseEngineClientAlias called - forcing alias: " + forcedAlias);
-            return forcedAlias;
-        }
-        
-        @Override
-        public String chooseServerAlias(String keyType, java.security.Principal[] issuers, java.net.Socket socket) {
-            return delegate.chooseServerAlias(keyType, issuers, socket);
-        }
-        
-        @Override
-        public String chooseEngineServerAlias(String keyType, java.security.Principal[] issuers, javax.net.ssl.SSLEngine engine) {
-            if (delegate instanceof javax.net.ssl.X509ExtendedKeyManager) {
-                return ((javax.net.ssl.X509ExtendedKeyManager) delegate).chooseEngineServerAlias(keyType, issuers, engine);
-            }
-            return delegate.chooseServerAlias(keyType, issuers, null);
-        }
-        
-        @Override
-        public X509Certificate[] getCertificateChain(String alias) {
-            return delegate.getCertificateChain(alias);
-        }
-        
-        @Override
-        public String[] getClientAliases(String keyType, java.security.Principal[] issuers) {
-            return delegate.getClientAliases(keyType, issuers);
-        }
-        
-        @Override
-        public java.security.PrivateKey getPrivateKey(String alias) {
-            return delegate.getPrivateKey(alias);
-        }
-        
-        @Override
-        public String[] getServerAliases(String keyType, java.security.Principal[] issuers) {
-            return delegate.getServerAliases(keyType, issuers);
-        }
-    }
-
-    /**
-     * Generate a self-signed certificate for ROGUE_CO SELF_SIGNED mode.
-     * This certificate is NOT signed by any trusted CA and will be rejected by services.
-     */
-    private static void generateSelfSignedCertificate() throws Exception {
-        System.out.println("[ROGUE_CO] Generating RSA-2048 keypair for self-signed certificate...");
-        // Generate keypair
-        coKeyPair = generateKeyPair();
-        
-        // Create self-signed certificate with proper client auth extensions
-        X500Name subject = new X500Name("CN=ROGUE-CO-UNTRUSTED, O=Unauthorized, C=XX");
-        BigInteger serial = new BigInteger(128, new SecureRandom()).abs();
-        
-        Instant now = Instant.now();
-        Date notBefore = Date.from(now.minus(1, ChronoUnit.MINUTES));
-        Date notAfter = Date.from(now.plus(365, ChronoUnit.DAYS));
-        
-        X509v3CertificateBuilder certBuilder = new X509v3CertificateBuilder(
-            subject,  // issuer = subject (self-signed)
-            serial,
-            notBefore,
-            notAfter,
-            subject,  // subject
-            org.bouncycastle.asn1.x509.SubjectPublicKeyInfo.getInstance(coKeyPair.getPublic().getEncoded())
-        );
-        
-        // CRITICAL: Mark as NOT a CA (this is a leaf certificate)
-        certBuilder.addExtension(org.bouncycastle.asn1.x509.Extension.basicConstraints, true,
-            new org.bouncycastle.asn1.x509.BasicConstraints(false));
-        
-        // CRITICAL: Key usage for TLS client authentication
-        certBuilder.addExtension(org.bouncycastle.asn1.x509.Extension.keyUsage, true,
-            new org.bouncycastle.asn1.x509.KeyUsage(
-                org.bouncycastle.asn1.x509.KeyUsage.digitalSignature | 
-                org.bouncycastle.asn1.x509.KeyUsage.keyEncipherment));
-        
-        // CRITICAL: Extended Key Usage for client auth
-        certBuilder.addExtension(org.bouncycastle.asn1.x509.Extension.extendedKeyUsage, true,
-            new org.bouncycastle.asn1.x509.ExtendedKeyUsage(
-                org.bouncycastle.asn1.x509.KeyPurposeId.id_kp_clientAuth));
-        
-        // Sign with own private key (self-signed)
-        ContentSigner signer = new JcaContentSignerBuilder("SHA256withRSA")
-            .setProvider("BC")
-            .build(coKeyPair.getPrivate());
-        
-        X509CertificateHolder holder = certBuilder.build(signer);
-        coCertificate = new JcaX509CertificateConverter()
-            .setProvider("BC")
-            .getCertificate(holder);
-        
-        System.out.println("[ROGUE_CO] Self-signed certificate created:");
-        System.out.println("[ROGUE_CO]   BasicConstraints: CA=false");
-        System.out.println("[ROGUE_CO]   KeyUsage: digitalSignature, keyEncipherment");
-        System.out.println("[ROGUE_CO]   ExtendedKeyUsage: clientAuth");
-        
-        // Store as PrivateKeyEntry in keystore (cert + private key)
-        KeyStore ks = KeyStore.getInstance("PKCS12");
-        ks.load(null, null);
-        ks.setKeyEntry(
-            CO_KEY_ALIAS,
-            coKeyPair.getPrivate(),
-            CO_KEYSTORE_PASSWORD.toCharArray(),
-            new X509Certificate[]{coCertificate}
-        );
-        
-        ensureParentDirExists(CO_KEYSTORE_PATH);
-        try (FileOutputStream fos = new FileOutputStream(CO_KEYSTORE_PATH)) {
-            ks.store(fos, CO_KEYSTORE_PASSWORD.toCharArray());
-        }
-        
-        System.out.println("[ROGUE_CO] Certificate stored in keystore as PrivateKeyEntry");
-        System.out.println("[ROGUE_CO] Keystore path: " + CO_KEYSTORE_PATH);
-    }
-
-    /**
-     * Test rogue CO connection to SP.
-     * Used for BAD_CERT modes to demonstrate rejection of unauthorized clients.
-     */
-    private static void testRogueCoConnection() throws Exception {
-        // Load truststore (always needed to validate server cert)
-        KeyStore trustStore = KeyStore.getInstance("PKCS12");
-        try (FileInputStream fis = new FileInputStream(TRUSTSTORE_PATH)) {
-            trustStore.load(fis, TRUSTSTORE_PASSWORD.toCharArray());
-        }
-        TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-        tmf.init(trustStore);
-        
-        SSLContext sslContext;
-        
-        if ("MISSING".equals(BAD_CERT_MODE)) {
-            // MISSING mode: No client certificate (no KeyManager)
-            System.out.println("[ROGUE_CO] Creating SSLContext WITHOUT client KeyManager");
-            sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(null, tmf.getTrustManagers(), new SecureRandom());
-            
-        } else {
-            // SELF_SIGNED mode: Use the self-signed certificate
-            System.out.println("[ROGUE_CO] Creating SSLContext WITH self-signed certificate");
-            System.out.println("[ROGUE_CO] Loading keystore to verify certificate availability...");
-            
-            KeyStore keyStore = KeyStore.getInstance("PKCS12");
-            try (FileInputStream fis = new FileInputStream(CO_KEYSTORE_PATH)) {
-                keyStore.load(fis, CO_KEYSTORE_PASSWORD.toCharArray());
-            }
-            
-            // Detailed keystore inspection
-            System.out.println("[ROGUE_CO] Keystore loaded successfully:");
-            System.out.println("[ROGUE_CO]   Type: " + keyStore.getType());
-            System.out.println("[ROGUE_CO]   Path: " + CO_KEYSTORE_PATH);
-            
-            java.util.Enumeration<String> aliases = keyStore.aliases();
-            int aliasCount = 0;
-            String foundAlias = null;
-            while (aliases.hasMoreElements()) {
-                String alias = aliases.nextElement();
-                aliasCount++;
-                foundAlias = alias;
-                System.out.println("[ROGUE_CO]   Alias [" + aliasCount + "]: " + alias);
-                
-                if (keyStore.isKeyEntry(alias)) {
-                    X509Certificate cert = (X509Certificate) keyStore.getCertificate(alias);
-                    System.out.println("[ROGUE_CO]     Entry type: PrivateKeyEntry (has private key)");
-                    System.out.println("[ROGUE_CO]     Subject: " + cert.getSubjectX500Principal().getName());
-                    System.out.println("[ROGUE_CO]     Issuer: " + cert.getIssuerX500Principal().getName());
-                    
-                    // Compute fingerprint
-                    MessageDigest digest = MessageDigest.getInstance("SHA-256");
-                    byte[] fingerprint = digest.digest(cert.getEncoded());
-                    System.out.println("[ROGUE_CO]     SHA-256: " + bytesToHex(fingerprint).substring(0, 32) + "...");
-                }
-            }
-            
-            if (aliasCount == 0) {
-                throw new IllegalStateException("[ROGUE_CO] CRITICAL: Keystore is empty, no certificate to present!");
-            }
-            
-            System.out.println("[ROGUE_CO] Certificate is available and ready to be sent during TLS handshake");
-            
-            // Initialize KeyManagerFactory
-            KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            kmf.init(keyStore, CO_KEYSTORE_PASSWORD.toCharArray());
-            
-            javax.net.ssl.KeyManager[] keyManagers = kmf.getKeyManagers();
-            System.out.println("[ROGUE_CO] KeyManagers created: " + (keyManagers != null ? keyManagers.length : 0) + " manager(s)");
-            
-            if (keyManagers == null || keyManagers.length == 0) {
-                throw new IllegalStateException("[ROGUE_CO] CRITICAL: No KeyManagers available!");
-            }
-            
-            // Wrap KeyManager to FORCE client alias selection (prevent JSSE from declining)
-            final String forcedAlias = foundAlias;
-            javax.net.ssl.KeyManager[] wrappedKeyManagers = new javax.net.ssl.KeyManager[keyManagers.length];
-            for (int i = 0; i < keyManagers.length; i++) {
-                if (keyManagers[i] instanceof javax.net.ssl.X509KeyManager) {
-                    wrappedKeyManagers[i] = new ForcedAliasKeyManager(
-                        (javax.net.ssl.X509KeyManager) keyManagers[i], 
-                        forcedAlias
-                    );
-                    System.out.println("[ROGUE_CO] KeyManager wrapped to force alias selection: " + forcedAlias);
-                } else {
-                    wrappedKeyManagers[i] = keyManagers[i];
-                }
-            }
-            
-            sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(wrappedKeyManagers, tmf.getTrustManagers(), new SecureRandom());
-            System.out.println("[ROGUE_CO] SSLContext initialized with wrapped KeyManagers");
-        }
-        
-        // Attempt connection to SP (request tokens endpoint)
-        System.out.println("[ROGUE_CO] Connecting to SP at " + SP_HOST + ":" + SP_PORT);
-        
-        SSLSocket socket = null;
-        PrintWriter writer = null;
-        BufferedReader reader = null;
-        
-        try {
-            socket = (SSLSocket) sslContext.getSocketFactory().createSocket(SP_HOST, SP_PORT);
-            
-            // Harden TLS
-            String[] desiredProtocols = new String[]{"TLSv1.3", "TLSv1.2"};
-            String[] protocols = intersect(socket.getSupportedProtocols(), desiredProtocols);
-            if (protocols.length == 0) {
-                throw new IllegalStateException("No TLS 1.3/1.2 support available");
-            }
-            socket.setEnabledProtocols(protocols);
-            
-            System.out.println("[ROGUE_CO] Starting TLS handshake...");
-            socket.startHandshake();
-            
-            // Post-handshake validation: verify connection is truly usable
-            System.out.println("[ROGUE_CO] TLS negotiation completed; validating mTLS acceptance...");
-            
-            // Verify server identity is available (confirms server auth succeeded)
-            java.security.cert.Certificate[] peerCerts = socket.getSession().getPeerCertificates();
-            System.out.println("[ROGUE_CO] Server authenticated: " + 
-                ((X509Certificate)peerCerts[0]).getSubjectX500Principal().getName());
-            
-            // Perform post-handshake proof: attempt minimal write+read
-            writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8), true);
-            reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-            
-            // Try to request tokens (this will trigger server-side client cert validation)
-            JSONObject tokenRequest = new JSONObject();
-            tokenRequest.put("method", "requestTokens");
-            tokenRequest.put("count", 5);
-            
-            System.out.println("[ROGUE_CO] Performing post-handshake proof (send request)...");
-            writer.println(tokenRequest.toString());
-            writer.flush();
-            
-            System.out.println("[ROGUE_CO] Reading response to confirm mTLS acceptance...");
-            String response = reader.readLine();
-            
-            if (response != null) {
-                // If we get a valid response, mTLS was fully established
-                System.out.println("[ROGUE_CO] mTLS established successfully (unexpected!)");
-                System.out.println("[ROGUE_CO] Protocol: " + socket.getSession().getProtocol());
-                System.out.println("[ROGUE_CO] Cipher suite: " + socket.getSession().getCipherSuite());
-                System.out.println("[ROGUE_CO] Received response: " + response);
-            }
-            
-            // If we get here, the test FAILED - connection should have been rejected
-            
-        } finally {
-            if (reader != null) try { reader.close(); } catch (Exception ignored) {}
-            if (writer != null) try { writer.close(); } catch (Exception ignored) {}
-            if (socket != null) try { socket.close(); } catch (Exception ignored) {}
         }
     }
 
@@ -1444,121 +888,22 @@ public class Main {
             String signatureAlg = response.getString("signatureAlg");
             String signedData = response.getString("signedData");
 
-            // RESV_TAMPER: Apply tampering BEFORE verification (simulates on-path attacker)
-            if ("RESV_TAMPER".equals(NEG_TEST_MODE)) {
-                System.out.println("\n[RESV_TAMPER] ⚠ APPLYING TAMPERING (simulating attacker) ⚠");
-                System.out.println("[RESV_TAMPER] Original signedData: " + signedData);
-                System.out.println("[RESV_TAMPER] Original signature (Base64): " + signatureB64.substring(0, Math.min(32, signatureB64.length())) + "...");
-                
-                switch (RESV_TAMPER_MODE) {
-                    case "FIELD_EDIT":
-                        // Tamper: Change priceTokens value (e.g., 5 -> 1)
-                        String originalPrice = "priceTokens=" + avail.priceTokens;
-                        String tamperedPrice = "priceTokens=1";
-                        signedData = signedData.replace(originalPrice, tamperedPrice);
-                        System.out.println("[RESV_TAMPER] FIELD_EDIT: Changed '" + originalPrice + "' to '" + tamperedPrice + "'");
-                        System.out.println("[RESV_TAMPER] Tampered signedData: " + signedData);
-                        break;
-                        
-                    case "REORDER":
-                        // Tamper: Reorder key-value pairs (breaks canonical order)
-                        String[] parts = signedData.split("\\|");
-                        if (parts.length >= 2) {
-                            // Swap first two fields
-                            String temp = parts[0];
-                            parts[0] = parts[1];
-                            parts[1] = temp;
-                            signedData = String.join("|", parts);
-                            System.out.println("[RESV_TAMPER] REORDER: Swapped first two fields");
-                            System.out.println("[RESV_TAMPER] Tampered signedData: " + signedData);
-                        }
-                        break;
-                        
-                    case "SIG_FLIP":
-                        // Tamper: Flip 1 bit in signature
-                        byte[] sigBytes = Base64.getDecoder().decode(signatureB64);
-                        if (sigBytes.length > 0) {
-                            sigBytes[0] ^= 0x01; // Flip least significant bit of first byte
-                            signatureB64 = Base64.getEncoder().encodeToString(sigBytes);
-                            System.out.println("[RESV_TAMPER] SIG_FLIP: Flipped 1 bit in signature byte 0");
-                            System.out.println("[RESV_TAMPER] Tampered signature (Base64): " + signatureB64.substring(0, Math.min(32, signatureB64.length())) + "...");
-                        }
-                        break;
-                        
-                    case "DROP_FIELD":
-                        // Tamper: Remove coIdentity field
-                        String fieldToRemove = "|coIdentity=" + coIdentity;
-                        if (signedData.contains(fieldToRemove)) {
-                            signedData = signedData.replace(fieldToRemove, "");
-                            System.out.println("[RESV_TAMPER] DROP_FIELD: Removed 'coIdentity' field");
-                            System.out.println("[RESV_TAMPER] Tampered signedData: " + signedData);
-                        }
-                        break;
-                        
-                    default:
-                        System.err.println("[RESV_TAMPER] Unknown mode: " + RESV_TAMPER_MODE);
-                }
-                
-                System.out.println("[RESV_TAMPER] Signature unchanged: " + ("SIG_FLIP".equals(RESV_TAMPER_MODE) ? "NO (tampered)" : "YES"));
-                System.out.println("[RESV_TAMPER] Proceeding to verification with tampered data...\n");
-            }
-
             System.out.println("  Reservation ID: " + reservationId);
             System.out.println("  Verdict: " + verdict);
             System.out.println("  HO Identity: " + hoIdentityResp);
             System.out.println("  Signature Algorithm: " + signatureAlg);
 
-            // Verify signature (will fail if tampered)
-            try {
-                verifyReservationSignature(
-                    avail,
-                    signedData,
-                    signatureB64,
-                    signatureAlg,
-                    reservationId,
-                    verdict,
-                    coIdentity,
-                    hoIdentityResp
-                );
-                
-                // If RESV_TAMPER mode and verification passed, that's a FAILURE
-                if ("RESV_TAMPER".equals(NEG_TEST_MODE)) {
-                    System.err.println("\n╔═══════════════════════════════════════════════════════════════╗");
-                    System.err.println("║   [RESV_TAMPER] ✗ TEST FAILED: Tampering NOT detected!      ║");
-                    System.err.println("╚═══════════════════════════════════════════════════════════════╝");
-                    System.err.println("[RESV_TAMPER] CRITICAL: Signature verification passed despite tampering!");
-                    System.err.println("[RESV_TAMPER] This indicates a vulnerability in signature verification.");
-                    System.exit(1);
-                }
-                
-            } catch (SecurityException e) {
-                if ("RESV_TAMPER".equals(NEG_TEST_MODE)) {
-                    // This is the EXPECTED outcome for RESV_TAMPER mode
-                    System.out.println("\n╔═══════════════════════════════════════════════════════════════╗");
-                    System.out.println("║   [RESV_TAMPER] ✓ SECURITY SUCCESS                          ║");
-                    System.out.println("╚═══════════════════════════════════════════════════════════════╝");
-                    System.out.println("[RESV_TAMPER] Forged reservation detected!");
-                    System.out.println("[RESV_TAMPER] Failure reason: " + e.getMessage());
-                    System.out.println("[RESV_TAMPER] Tampering mode: " + RESV_TAMPER_MODE);
-                    
-                    System.out.println("\n[RESV_TAMPER] VERIFICATION COMPLETE:");
-                    System.out.println("  ✓ CO applied " + RESV_TAMPER_MODE + " tampering");
-                    System.out.println("  ✓ Signature verification correctly FAILED");
-                    System.out.println("  ✓ SecurityException thrown: " + e.getMessage());
-                    System.out.println("  ✓ CO failed closed (rejected forged reservation)");
-                    System.out.println("  ✓ HO identity binding enforced (cert fingerprint verified)");
-                    System.out.println("  ✓ No bypass mechanisms available");
-                    
-                    System.out.println("\n[RESV_TAMPER] CONCLUSION:");
-                    System.out.println("  SECURITY SUCCESS: Forged reservation detected");
-                    System.out.println("  (signature/canonical data mismatch)");
-                    System.out.println("  The system is SECURE against reservation tampering.\n");
-                    System.exit(0);
-                } else {
-                    // In normal mode, signature failure is an error
-                    throw e;
-                }
-            }
+            // Verify signature
+            verifyReservationSignature(
+                avail,
+                signedData,
+                signatureB64,
+                signatureAlg,
+                reservationId,
+                verdict,
+                coIdentity,
+                hoIdentityResp
+            );
 
             // Store signed reservation as cryptographic proof
             storeReservationProof(reservationId, response, avail);

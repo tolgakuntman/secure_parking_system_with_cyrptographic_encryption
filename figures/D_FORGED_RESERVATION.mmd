@@ -1,0 +1,34 @@
+---
+title: "D) FORGED_RESERVATION (RESV_TAMPER)"
+---
+sequenceDiagram
+    participant CO as Car Owner
+    participant SP as Service Provider
+    participant HO as Home Owner
+    
+    CO->>SP: Request reservation
+    SP->>SP: Sign(canonicalize(reservation))
+    SP-->>CO: Signed reservation + signature
+    
+    CO->>CO: Tamper reservation
+    
+    alt FIELD_EDIT (modify price)
+        Note over CO: Change priceTokens value
+    else REORDER (alter field order)
+        Note over CO: Reorder JSON fields
+    else SIG_FLIP (corrupt signature)
+        Note over CO: Flip signature byte
+    else DROP_FIELD (remove field)
+        Note over CO: Remove required field
+    end
+    
+    CO->>HO: /pay (tampered reservation)
+    
+    alt Schema validation
+        HO-->>CO: Reject: missing required field
+    else Signature verification
+        HO->>HO: Verify(sig, canonicalize(data))
+        HO-->>CO: Reject: signature_invalid
+    end
+    
+    Note over CO,HO: Tampering detected<br/>Payment refused

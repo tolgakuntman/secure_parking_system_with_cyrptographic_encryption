@@ -1,0 +1,22 @@
+---
+title: "F) RECEIPT_TAMPERING (Settlement Receipt Forgery)"
+---
+sequenceDiagram
+    participant HO as Home Owner
+    participant SP as Service Provider
+    participant CO as Car Owner
+    
+    HO->>SP: /settle (valid tokens)
+    SP->>SP: Process settlement
+    SP->>SP: Sign(canonicalize(receipt))
+    SP-->>HO: Signed receipt
+    
+    Note over HO: Attacker intercepts/modifies
+    HO->>HO: Tamper receipt content
+    HO-->>CO: Tampered receipt
+    
+    CO->>CO: Verify receipt signature
+    Note right of CO: Signature over original bytes<br/>≠ tampered content
+    CO->>CO: Verification FAILED
+    
+    Note over CO: Receipt marked as<br/>potentially forged

@@ -1,0 +1,20 @@
+---
+title: "E) FAKE_CAUTH (Rogue Intermediate CA)"
+---
+sequenceDiagram
+    participant CO as Car Owner
+    participant FakeCA as Fake CAuth
+    participant SP as Service Provider
+    
+    Note over FakeCA: Rogue CA on same IP
+    
+    CO->>FakeCA: Enrollment request
+    FakeCA->>FakeCA: Issue certificate (rogue chain)
+    FakeCA-->>CO: Rogue certificate
+    
+    CO->>SP: mTLS connection (rogue cert)
+    SP->>SP: PKIX path validation
+    Note right of SP: Certificate chain does not<br/>terminate at trusted root CA
+    SP-->>CO: TLS Alert: certificate_unknown
+    
+    Note over CO,SP: Rogue certificates rejected<br/>Trust anchor: legitimate Root CA only

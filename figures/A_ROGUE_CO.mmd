@@ -1,0 +1,18 @@
+---
+title: "A) ROGUE_CO - Client Authentication Failures"
+---
+sequenceDiagram
+    participant CO as Rogue CO
+    participant SP as Service Provider
+    
+    CO->>SP: mTLS Connection Attempt
+    
+    alt MISSING Certificate
+        SP-->>CO: TLS Alert: peer not authenticated
+        Note right of SP: No client cert in handshake
+    else SELF_SIGNED Certificate
+        SP-->>CO: TLS Alert: PKIX validation failed
+        Note right of SP: Cert not signed by trusted CA
+    end
+    
+    Note over CO,SP: Connection terminated<br/>No application data exchanged

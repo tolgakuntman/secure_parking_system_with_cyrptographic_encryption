@@ -24,7 +24,6 @@ keystore/
 *.key
 !crypto_do_once/*.crt
 !crypto_do_once/*.pem
-!crypto_do_once/*.p12
 
 # Docker volumes and container data
 .docker/

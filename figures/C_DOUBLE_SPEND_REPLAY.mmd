@@ -1,0 +1,27 @@
+---
+title: "C) DOUBLE_SPEND / REPLAY (M4.2)"
+---
+sequenceDiagram
+    participant CO as Car Owner
+    participant HO as Home Owner
+    participant SP as Service Provider
+    
+    CO->>HO: /pay (tokens[0..n], attempt #1)
+    HO->>HO: Validate tokens
+    HO->>SP: /settle (tokens[0..n])
+    SP->>SP: Update lastSpentIndex = n
+    SP-->>HO: Settlement accepted
+    HO-->>CO: Receipt (success)
+    
+    Note over CO: Replay: send identical request
+    CO->>HO: /pay (tokens[0..n], attempt #2)
+    
+    alt Production Mode (HO detection)
+        HO-->>CO: Reject: duplicate reservationId
+        Note right of HO: Local state check
+    else Test Mode (SP detection)
+        HO->>SP: /settle (tokens[0..n])
+        SP->>SP: startIndex ≤ lastSpentIndex
+        SP-->>HO: Reject: DOUBLE_SPEND_DETECTED
+        HO-->>CO: Reject: replay_or_double_spend
+    end

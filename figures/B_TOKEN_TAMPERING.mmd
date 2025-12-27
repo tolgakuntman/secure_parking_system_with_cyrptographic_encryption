@@ -1,0 +1,17 @@
+---
+title: "B) TOKEN_TAMPERING (M4.1)"
+---
+sequenceDiagram
+    participant CO as Car Owner
+    participant HO as Home Owner
+    
+    Note over CO: Legitimate tokens acquired from SP
+    CO->>CO: Tamper token[i] (flip byte)
+    CO->>HO: /pay (tampered tokens)
+    
+    HO->>HO: Hash chain verification
+    Note right of HO: H(token[i]) ≠ expected<br/>Adjacency check fails
+    
+    HO-->>CO: Reject: token_tampering_detected
+    
+    Note over CO,HO: Attack detected at HO layer<br/>SP never contacted

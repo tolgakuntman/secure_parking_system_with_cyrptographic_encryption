@@ -96,21 +96,16 @@ sudo docker compose down -v
 
 ## Security Test Scenarios
 
-The system includes automated tests for 11 security scenarios:
+The system includes automated tests for 6 security scenario categories:
 
 | # | Scenario | Description | Expected Result |
 |---|----------|-------------|-----------------|
 | 1 | **P1_HONEST** | Normal payment flow (baseline) | ✓ Payment succeeds |
 | 2 | **M4.1_TOKEN_TAMPER** | Flip byte in payment token | ✗ HO rejects (hash chain fails) |
-| 3 | **M4.2_REPLAY_PROD** | Replay same payment twice | ✗ HO rejects (duplicate) |
-| 4 | **M4.2_REPLAY_SP** | Replay with HO bypass | ✗ SP rejects (double-spend) |
-| 5 | **FAKE_CAUTH** | Enroll with rogue CA | ✗ SP rejects (PKIX validation) |
-| 6 | **ROGUE_CO_MISSING** | Connect without certificate | ✗ TLS handshake fails |
-| 7 | **ROGUE_CO_SELF_SIGNED** | Connect with self-signed cert | ✗ TLS handshake fails |
-| 8 | **RESV_TAMPER_FIELD_EDIT** | Modify reservation price | ✗ Signature verification fails |
-| 9 | **RESV_TAMPER_REORDER** | Reorder JSON fields | ✗ Canonicalization detects |
-| 10 | **RESV_TAMPER_SIG_FLIP** | Corrupt signature bytes | ✗ Signature invalid |
-| 11 | **RESV_TAMPER_DROP_FIELD** | Remove required field | ✗ Schema validation fails |
+| 3 | **M4.2_REPLAY** | Replay same payment twice (HO-level and SP-level detection) | ✗ Rejected as duplicate/double-spend |
+| 4 | **FAKE_CAUTH** | Enroll with rogue CA, connect to SP | ✗ SP rejects (PKIX validation fails) |
+| 5 | **ROGUE_CO** | Connect without cert (MISSING) or with self-signed cert (SELF_SIGNED) | ✗ TLS handshake fails |
+| 6 | **RESV_TAMPER** | Tamper reservation: modify price, reorder fields, corrupt signature, or drop fields | ✗ Signature/schema validation fails |
 
 Run all scenarios:
 
@@ -159,13 +154,3 @@ Run all scenarios:
 ├── run_all_scenarios.sh # Automated test runner
 └── SECURITY_EVALUATION.md # Detailed security analysis
 ```
-
-## Documentation
-
-- [SECURITY_EVALUATION.md](SECURITY_EVALUATION.md) - Detailed security scenario analysis with log outputs
-- [M4_TEST_GUIDE.md](M4_TEST_GUIDE.md) - Token tampering and replay attack test guide
-- [figures/](figures/) - Mermaid sequence diagrams for each attack scenario
-
-## License
-
-University coursework - Secure Software Development

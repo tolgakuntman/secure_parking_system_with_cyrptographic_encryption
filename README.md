@@ -94,7 +94,7 @@ sudo docker compose down -v
 
 ## Security Test Scenarios
 
-The system includes automated tests for 6 security scenario categories:
+The system includes 1 positive and 6 negative security scenarios:
 
 | # | Scenario | Description | Expected Result |
 |---|----------|-------------|-----------------|
@@ -104,6 +104,7 @@ The system includes automated tests for 6 security scenario categories:
 | 4 | **FAKE_CAUTH** | Enroll with rogue CA, connect to SP | ✗ SP rejects (PKIX validation fails) |
 | 5 | **ROGUE_CO** | Connect without cert (MISSING) or with self-signed cert (SELF_SIGNED) | ✗ TLS handshake fails |
 | 6 | **RESV_TAMPER** | Tamper reservation: modify price, reorder fields, corrupt signature, or drop fields | ✗ Signature/schema validation fails |
+| 7 | **RECEIPT_TAMPER** | Modify SP-signed settlement receipt before delivery to CO | ✗ CO rejects (signature verification fails) |
 
 Run all scenarios:
 

@@ -17,7 +17,7 @@ target/
 *_truststore.p12
 keystore/
 */keystore/
-
+*.crt
 # Certificates (keep the initial setup ones in crypto_do_once)
 *.crt
 *.pem

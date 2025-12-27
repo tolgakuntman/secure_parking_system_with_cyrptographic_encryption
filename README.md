@@ -60,9 +60,7 @@ sequenceDiagram
 ### Setup PKI Infrastructure
 
 ```bash
-cd crypto_do_once
-./setup_trust.sh
-cd ..
+./crypto_do_once/setup_trust.sh
 ```
 
 This generates all keystores, truststores, and the Root CA certificate.
@@ -70,7 +68,7 @@ This generates all keystores, truststores, and the Root CA certificate.
 ### Run Interactive Dashboard
 
 ```bash
-./start.sh
+sudo ./start.sh
 ```
 
 This opens a 6-pane tmux dashboard showing real-time logs from all services and runs all security test scenarios automatically.

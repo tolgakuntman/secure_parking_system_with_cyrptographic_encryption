@@ -2,6 +2,11 @@
 
 A distributed parking payment system implementing mutual TLS (mTLS) authentication, hash-chain based micropayments, and comprehensive security controls. Built as a security-focused demonstration of cryptographic protocols for IoT/embedded payment scenarios.
 
+## Developers
+
+### Tolga Kuntman(kuntmantolga@gmail.com)
+### Michel Moussally (moussallymichel@gmail.com)
+
 ## Architecture Overview
 
 The system consists of four main components communicating over mTLS:
